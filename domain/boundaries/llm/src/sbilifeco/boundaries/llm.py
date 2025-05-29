@@ -10,7 +10,7 @@ class ChatMessage(BaseModel):
 
 
 class ILLM(Protocol):
-    def set_context(self, context: list[ChatMessage]) -> None:
+    def add_context(self, context: list[ChatMessage]) -> None:
         raise NotImplementedError()
 
     def set_metadata(self, db: DB) -> None:
