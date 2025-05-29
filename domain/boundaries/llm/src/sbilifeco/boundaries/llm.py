@@ -10,10 +10,10 @@ class ChatMessage(BaseModel):
 
 
 class ILLM(Protocol):
-    async def set_context(self, context: list[ChatMessage]) -> Response[None]:
+    def set_context(self, context: list[ChatMessage]) -> None:
         raise NotImplementedError()
 
-    async def set_metadata(self, DB: DB) -> Response[None]:
+    def set_metadata(self, db: DB) -> None:
         raise NotImplementedError()
 
     async def generate_sql(self, question: str) -> Response[str]:
