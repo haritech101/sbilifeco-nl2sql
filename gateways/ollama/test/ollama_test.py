@@ -1,5 +1,5 @@
 from unittest import IsolatedAsyncioTestCase
-from sbilifeco.gateways.ollama import Ollama
+from sbilifeco.gateways.ollama import Ollama, ChatMessage
 from sbilifeco.models.db_metadata import DB, Table, Field
 from uuid import uuid4
 from faker import Faker
@@ -37,6 +37,13 @@ class OllamaTest(IsolatedAsyncioTestCase):
         )
 
         self.ollama.set_metadata(db)
+        self.ollama.add_context(
+            [
+                ChatMessage(
+                    role="system", content="Assume that the database is in PostGreSQL"
+                )
+            ]
+        )
         await self.ollama.async_init()
 
     async def asyncTearDown(self) -> None:
