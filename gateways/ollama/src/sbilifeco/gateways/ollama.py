@@ -22,22 +22,30 @@ class Ollama(ILLM):
         self.host = host
         return self
 
-    def add_context(self, context: list[ChatMessage]) -> None:
-        self.context.extend(context)
-
-    def set_metadata(self, db: DB) -> None:
-        self.context.append(
-            ChatMessage(
-                role="system",
-                content=f"You are a SQL generation assistant.\n"
-                f"You have access to the following database metadata in JSON format:\n\n"
-                f"{db.model_dump_json(indent=2)}\n\n"
-                f"Please generate the SQL query for the questions asked below.\n\n",
-            )
-        )
-
     async def async_init(self) -> None:
         self.client = AsyncClient(self.host)
+
+    async def add_context(self, context: list[ChatMessage]) -> Response[None]:
+        try:
+            self.context.extend(context)
+            return Response.ok(None)
+        except Exception as e:
+            return Response.error(e)
+
+    async def set_metadata(self, db: DB) -> Response[None]:
+        try:
+            self.context.append(
+                ChatMessage(
+                    role="system",
+                    content=f"You are a SQL generation assistant.\n"
+                    f"You have access to the following database metadata in JSON format:\n\n"
+                    f"{db.model_dump_json(indent=2)}\n\n"
+                    f"Please generate the SQL query for the questions asked below.\n\n",
+                )
+            )
+            return Response.ok(None)
+        except Exception as e:
+            return Response.error(e)
 
     async def generate_sql(self, question: str) -> Response[str]:
         try:

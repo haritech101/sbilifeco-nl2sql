@@ -11,7 +11,13 @@ class OllamaTest(IsolatedAsyncioTestCase):
         self.ollama.set_model("codellama")
         self.ollama.set_host("localhost")
         self.faker = Faker()
+        await self.ollama.async_init()
 
+    async def asyncTearDown(self) -> None:
+        return await super().asyncTearDown()
+
+    async def test_generate_query(self) -> None:
+        # Arrange
         db = DB(
             id=uuid4().hex,
             name="HR",
@@ -36,21 +42,20 @@ class OllamaTest(IsolatedAsyncioTestCase):
             ],
         )
 
-        self.ollama.set_metadata(db)
-        self.ollama.add_context(
+        # Act
+        response = await self.ollama.set_metadata(db)
+        self.assertTrue(response.is_success, response.message)
+
+        response = await self.ollama.add_context(
             [
                 ChatMessage(
-                    role="system", content="Assume that the database is in PostGreSQL"
+                    role="system",
+                    content="Assume that the database is in PostGreSQL.\n\n",
                 )
             ]
         )
-        await self.ollama.async_init()
+        self.assertTrue(response.is_success, response.message)
 
-    async def asyncTearDown(self) -> None:
-        return await super().asyncTearDown()
-
-    async def test_generate_query(self) -> None:
-        # Arrange
         questions = [
             "What is the total money spent by the company on salaries?",
             "And what about mean?",
