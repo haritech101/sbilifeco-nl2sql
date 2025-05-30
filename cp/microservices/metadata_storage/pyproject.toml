@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sbilife-cp-microservice-metadata-storage"
+name = "sbilifeco-cp-microservice-metadata-storage"
 version = "0.1.0"
 description = "description"
 dependencies = []
