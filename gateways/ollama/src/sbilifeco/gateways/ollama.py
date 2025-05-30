@@ -34,12 +34,31 @@ class Ollama(ILLM):
 
     async def set_metadata(self, db: DB) -> Response[None]:
         try:
+            db_context = (
+                f"Database Name: {db.name}\n"
+                f"Database Description: {db.description or "None"}\n"
+                "Database Tables:\n"
+            )
+            for table in db.tables or []:
+                db_context += f"\tTable Name: {table.name}\n"
+                f"\tTable Description: {table.description or "None"}\n"
+                "\tTable Fields:\n"
+                for field in table.fields or []:
+                    db_context += (
+                        f"\t\tField Name: {field.name}\n"
+                        f"\t\tField Type: {field.type or "None"}\n"
+                        f"\t\tField Description: {field.description or "None"}\n"
+                        f"\t\tOther Names fo field '{field.name}': {field.aka or "None"}\n\n"
+                    )
+
+            print(db_context)
+
             self.context.append(
                 ChatMessage(
                     role="system",
                     content=f"You are a SQL generation assistant.\n"
-                    f"You have access to the following database metadata in JSON format:\n\n"
-                    f"{db.model_dump_json(indent=2)}\n\n"
+                    f"You have access to the following database metadata:\n\n"
+                    f"{db_context}\n\n"
                     f"Please generate the SQL query for the questions asked below.\n\n",
                 )
             )
