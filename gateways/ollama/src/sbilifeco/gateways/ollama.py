@@ -27,6 +27,8 @@ class Ollama(ILLM):
 
     async def add_context(self, context: list[ChatMessage]) -> Response[None]:
         try:
+            for piece in context:
+                print(f"Role: {piece.role}\nContent: {piece.content}\n\n")
             self.context.extend(context)
             return Response.ok(None)
         except Exception as e:
@@ -51,17 +53,17 @@ class Ollama(ILLM):
                         f"\t\tOther Names fo field '{field.name}': {field.aka or "None"}\n\n"
                     )
 
-            print(db_context)
-
-            self.context.append(
-                ChatMessage(
-                    role="system",
-                    content=f"You are a SQL generation assistant.\n"
-                    f"You have access to the following database metadata:\n\n"
-                    f"{db_context}\n\n"
-                    f"Please generate the SQL query for the questions asked below.\n\n",
-                )
+            chat_message = ChatMessage(
+                role="system",
+                content=f"You are a SQL generation assistant.\n"
+                f"You have access to the following database metadata:\n\n"
+                f"{db_context}\n\n"
+                f"Please generate the SQL query for the questions asked below.\n\n",
             )
+
+            print(f"Role: {chat_message.role}\nContent: {chat_message.content}\n\n")
+
+            self.context.append(chat_message)
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)
