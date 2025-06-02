@@ -29,7 +29,11 @@ class QueryFlow(IQueryFlow):
             if db is None:
                 return Response.fail("Metadata is inexplicably blank", 500)
 
-            await self.llm.set_metadata(db)
+            set_metdata_response = await self.llm.set_metadata(db)
+            if not set_metdata_response.is_success:
+                return Response.fail(
+                    set_metdata_response.message, set_metdata_response.code
+                )
 
             query_response = await self.llm.generate_sql(question)
             if not query_response.is_success:
