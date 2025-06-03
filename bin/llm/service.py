@@ -1,5 +1,5 @@
 from asyncio import run, sleep
-from sbilifeco.gateways.ollama import Ollama
+from sbilifeco.gateways.gemini import Gemini
 from sbilifeco.cp.llm.microservice import LLMMicroservice
 from dotenv import load_dotenv
 from os import getenv
@@ -11,13 +11,17 @@ async def start():
 
     http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
     llm_model = getenv(EnvVars.llm_model, Defaults.llm_model)
+    api_key = getenv(EnvVars.api_key, None)
 
-    ollama = Ollama()
-    ollama.set_host("localhost").set_model(llm_model)
-    await ollama.async_init()
+    if not api_key:
+        raise ValueError("API_KEY environment variable is required.")
+
+    gemini = Gemini()
+    gemini.set_api_key(api_key).set_model(llm_model)
+    await gemini.async_init()
 
     microservice = LLMMicroservice()
-    microservice.set_llm(ollama).set_http_port(http_port)
+    microservice.set_llm(gemini).set_http_port(http_port)
 
     await microservice.listen()
 
