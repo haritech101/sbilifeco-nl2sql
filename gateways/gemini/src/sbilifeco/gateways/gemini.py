@@ -12,7 +12,11 @@ class Gemini(ILLM):
         self.api_key: str
         self.client: Client
         self.context: list[str] = [
-            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n"
+            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
+            "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
+            "You will also be given the context of the conversation, which includes previous questions and answers.\n",
+            "You will generate the SQL query based on the question and the database metadata.\n",
+            "You will return just the SQL query without any other adornments\n",
         ]
 
     def set_model(self, model: str) -> Gemini:
@@ -62,13 +66,18 @@ class Gemini(ILLM):
     async def generate_sql(self, question: str) -> Response[str]:
         try:
             challenge = "".join([item for item in self.context])
-            challenge += (
-                f"\nGenerate a query against this question/statement: {question}\n"
-            )
+            line = f"\nGenerate a query against this question/statement:\n{question}\n"
+            challenge += line
             print(challenge)
+
+            self.context.append(line)
+
             gemini_response = self.client.models.generate_content(
                 model=self.model, contents=challenge
             )
-            return Response.ok((gemini_response.text or "").strip())
+            answer = (gemini_response.text or "").strip()
+            self.context.append(answer)
+
+            return Response.ok(answer)
         except Exception as e:
             return Response.error(e)
