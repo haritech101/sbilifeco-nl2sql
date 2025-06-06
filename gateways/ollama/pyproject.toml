@@ -5,5 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-gateways-ollama"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "LLM using Ollama"
+dependencies = [
+    "ollama>=0.4.9",
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-models-db-metadata>=0.1.0",
+    "sbilifeco-boundaries-llm>=0.1.0",
+]

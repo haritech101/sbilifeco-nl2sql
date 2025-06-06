@@ -5,5 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-http-server"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "A base HTTP server to be used by all HTTP-enabled microservices"
+dependencies = [
+    "fastapi>=0.115.12",
+    "uvicorn>=0.34.2"
+]

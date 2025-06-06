@@ -6,4 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sbilifeco-models-db-metadata"
 version = "0.1.0"
 description = "description"
-dependencies = []
+dependencies = [
+    "pydantic==2.11.5",
+    "sbilifeco-models-base>=0.1.0"
+]

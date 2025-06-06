@@ -5,5 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-http-client"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "HTTP client used within microservices to access other HTTP-based microservices"
+dependencies = [
+    "requests>=2.32.3",
+    "sbilifeco-models-base>=0.1.0"
+]

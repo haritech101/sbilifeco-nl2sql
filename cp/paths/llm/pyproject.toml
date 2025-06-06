@@ -5,5 +5,5 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-paths-llm"
 version = "0.1.0"
-description = "description"
+description = "Paths for LLM microservice"
 dependencies = []

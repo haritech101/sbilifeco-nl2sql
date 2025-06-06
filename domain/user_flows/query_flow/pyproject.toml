@@ -5,5 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-user-flows-query-flow"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "User flow for query and reply"
+dependencies = [
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-boundaries-metadata-storage>=0.1.0",
+    "sbilifeco-boundaries-llm>=0.1.0",
+    "sbilifeco-boundaries-query-flow>=0.1.0",
+]

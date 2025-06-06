@@ -5,5 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-http-client-llm"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "HTTP client to talk to LLM microservice"
+dependencies = [
+    "requests>=2.32.3",
+    "sbilifeco-cp-http-client>=0.1.0",
+    "sbilifeco-boundaries-llm>=0.1.0",
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-cp-paths-llm>=0.1.0",
+    "sbilifeco-models-db-metadata>=0.1.0",
+]

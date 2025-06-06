@@ -5,5 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-microservice-llm"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "Microservice over LLM gateway"
+dependencies = [
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-models-db-metadata>=0.1.0",
+    "sbilifeco-boundaries-llm>=0.1.0",
+    "sbilifeco-cp-paths-llm>=0.1.0",
+    "sbilifeco-cp-http-server>=0.1.0",
+]

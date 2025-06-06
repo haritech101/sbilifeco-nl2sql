@@ -5,5 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-gateways-fs-metadata-storage"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "Metadata storage using file system"
+dependencies = [
+    "uuid>=1.30",
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-models-db-metadata>=0.1.0",
+    "sbilifeco-boundaries-metadata-storage>=0.1.0"
+]

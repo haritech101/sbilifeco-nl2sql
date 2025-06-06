@@ -6,4 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "sbilifeco-models-base"
 version = "0.1.0"
 description = "The most fundamental model classes for SbiLifeCo."
-dependencies = []
+dependencies = [
+    "pydantic>=2.11.5"
+]

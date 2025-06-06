@@ -5,5 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-gateways-gemini"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "LLM using Gemini"
+dependencies = [
+    "google-genai>=1.18.0",
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-models-db-metadata>=0.1.0",
+    "sbilifeco-boundaries-llm>=0.1.0"
+]

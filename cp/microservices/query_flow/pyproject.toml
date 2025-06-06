@@ -5,5 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-microservice-query-flow"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "Microservice over query flow"
+dependencies = [
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-cp-paths-query-flow>=0.1.0",
+    "sbilifeco-cp-http-server>=0.1.0",
+    "sbilifeco-user-flows-query-flow>=0.1.0",
+]

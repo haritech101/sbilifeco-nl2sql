@@ -5,5 +5,5 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-paths-metadata-storage"
 version = "0.1.0"
-description = "description"
+description = "Paths for metadata storage microservice"
 dependencies = []

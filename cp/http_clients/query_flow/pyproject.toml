@@ -5,5 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sbilifeco-cp-http-client-query-flow"
 version = "0.1.0"
-description = "description"
-dependencies = []
+description = "HTTP client to access query flow microservice"
+dependencies = [
+    "requests>=2.32.3",
+    "sbilifeco-models-base>=0.1.0",
+    "sbilifeco-boundaries-query-flow>=0.1.0",
+    "sbilifeco-cp-paths-query-flow>=0.1.0",
+    "sbilifeco-cp-http-client>=0.1.0",
+    "sbilifeco-cp-http-client-llm>=0.1.0",
+    "sbilifeco-cp-http-client-metadata-storage>=0.1.0",
+]
