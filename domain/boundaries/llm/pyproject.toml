@@ -7,10 +7,10 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundaries-llm"
-version = "0.1.0"
+version = "0.1.1"
 description = "description"
 dependencies = [
     "pydantic>=2.11.5",
-    "sbilifeco-models-base>=0.1.0",
-    "sbilifeco-models-db-metadata>=0.1.0"
+    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-models-db-metadata>=0.1.1"
 ]

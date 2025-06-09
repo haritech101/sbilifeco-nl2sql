@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-paths-query-flow"
-version = "0.1.0"
+version = "0.1.1"
 description = "Paths for query flow microservice"
 dependencies = [
     "pydantic>=2.11.5"

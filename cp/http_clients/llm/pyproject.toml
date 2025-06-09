@@ -7,13 +7,13 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-http-client-llm"
-version = "0.1.0"
+version = "0.1.1"
 description = "HTTP client to talk to LLM microservice"
 dependencies = [
     "requests>=2.32.3",
-    "sbilifeco-cp-http-client>=0.1.0",
-    "sbilifeco-boundaries-llm>=0.1.0",
-    "sbilifeco-models-base>=0.1.0",
-    "sbilifeco-cp-paths-llm>=0.1.0",
-    "sbilifeco-models-db-metadata>=0.1.0",
+    "sbilifeco-cp-http-client>=0.1.1",
+    "sbilifeco-boundaries-llm>=0.1.1",
+    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-cp-paths-llm>=0.1.1",
+    "sbilifeco-models-db-metadata>=0.1.1",
 ]

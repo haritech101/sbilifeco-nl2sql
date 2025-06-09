@@ -7,6 +7,6 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-paths-metadata-storage"
-version = "0.1.0"
+version = "0.1.1"
 description = "Paths for metadata storage microservice"
 dependencies = []

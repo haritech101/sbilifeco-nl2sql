@@ -7,6 +7,6 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-paths-llm"
-version = "0.1.0"
+version = "0.1.1"
 description = "Paths for LLM microservice"
 dependencies = []
