@@ -6,8 +6,8 @@ WORKDIR /usr/local/metadata-storage
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.0 \
-    sbilifeco-gateways-fs-metadata-storage==0.1.0 \
-    sbilifeco-cp-microservice-metadata-storage==0.1.0 
+    sbilifeco-gateways-fs-metadata-storage==0.1.1 \
+    sbilifeco-cp-microservice-metadata-storage==0.1.1 
 
 EXPOSE 80
 
