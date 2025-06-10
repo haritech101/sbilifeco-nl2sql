@@ -2,6 +2,14 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
+class KPI(BaseModel):
+    id: str = ""
+    name: str
+    aka: str = ""
+    description: str = ""
+    formula: str = ""
+
+
 class Field(BaseModel):
     id: str = ""
     name: str
@@ -22,3 +30,4 @@ class DB(BaseModel):
     name: str
     description: str = ""
     tables: list[Table] | None = None
+    kpis: list[KPI] | None = None
