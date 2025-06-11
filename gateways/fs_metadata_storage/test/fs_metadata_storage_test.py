@@ -1,3 +1,7 @@
+import sys, os
+
+sys.path.append("./src")
+
 from pathlib import Path
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
@@ -7,7 +11,7 @@ from faker import Faker
 
 from sbilifeco.gateways.fs_metadata_storage import FSMetadataStorage
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB, Field, Table
+from sbilifeco.models.db_metadata import DB, Field, Table, KPI
 
 
 class FSMetadataStorageTest(IsolatedAsyncioTestCase):
@@ -273,3 +277,89 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
         assert response.payload is not None, "Payload is None"
         for db in dbs:
             self.assertIn(db, response.payload)
+
+    async def test_upsert_kpi(self) -> None:
+        # Arrange
+        db_id = uuid4().hex
+        Path(f"{self.PATH}/{db_id}").mkdir(parents=True, exist_ok=True)
+
+        kpi = KPI(
+            id=uuid4().hex,
+            name=self.faker.word(),
+            aka=self.faker.word(),
+            description=self.faker.sentence(),
+            formula=self.faker.sentence(),
+        )
+
+        # Act
+        response: Response[str] = await self.gateway.upsert_kpi(db_id, kpi)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        self.assertEqual(response.payload, kpi.id)
+
+        kpi_response = await self.gateway.get_kpi(db_id, kpi.id)
+        self.assertTrue(kpi_response.is_success, kpi_response.message)
+        self.assertEqual(kpi_response.payload, kpi)
+
+    async def test_delete_kpi(self) -> None:
+        # Arrange
+        db_id = uuid4().hex
+        Path(f"{self.PATH}/{db_id}").mkdir(parents=True, exist_ok=True)
+
+        kpi = KPI(
+            id=uuid4().hex,
+            name=self.faker.word(),
+            aka=self.faker.word(),
+            description=self.faker.sentence(),
+            formula=self.faker.sentence(),
+        )
+        await self.gateway.upsert_kpi(db_id, kpi)
+        assert kpi.id is not None, "KPI must have an ID"
+
+        # Act
+        response: Response[None] = await self.gateway.delete_kpi(db_id, kpi.id)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+
+        kpi_response = await self.gateway.get_kpi(db_id, kpi.id)
+        self.assertFalse(kpi_response.is_success, kpi_response.message)
+        self.assertEqual(kpi_response.code, 404, "KPI should not be found")
+
+    async def test_get_kpis(self) -> None:
+        # Arrange
+        db_id = uuid4().hex
+        Path(f"{self.PATH}/{db_id}").mkdir(parents=True, exist_ok=True)
+        other_db_id = uuid4().hex
+        Path(f"{self.PATH}/{other_db_id}").mkdir(parents=True, exist_ok=True)
+
+        kpis = [
+            KPI(
+                id=uuid4().hex,
+                name=self.faker.word(),
+                aka=self.faker.word(),
+                description=self.faker.sentence(),
+                formula=self.faker.sentence(),
+            )
+            for _ in range(3)
+        ]
+        for kpi in kpis:
+            await self.gateway.upsert_kpi(db_id, kpi)
+
+        # Act
+        response: Response[list[KPI]] = await self.gateway.get_kpis(db_id)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        assert response.payload is not None, "Payload is None"
+        for kpi in kpis:
+            self.assertIn(kpi, response.payload)
+
+        # Act
+        response: Response[list[KPI]] = await self.gateway.get_kpis(other_db_id)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        assert response.payload is not None, "Payload is None"
+        self.assertEqual(response.payload, [])

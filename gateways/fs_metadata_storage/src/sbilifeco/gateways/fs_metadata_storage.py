@@ -5,7 +5,7 @@ from uuid import uuid4
 from shutil import rmtree
 
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB, Table, Field
+from sbilifeco.models.db_metadata import DB, KPI, Table, Field
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 
 
@@ -215,4 +215,63 @@ class FSMetadataStorage(IMetadataStorage):
 
             return Response.ok(db)
         except Exception as e:
+            return Response.error(e)
+
+    async def upsert_kpi(self, db_id: str, kpi: KPI) -> Response[str]:
+        try:
+            db_path = Path(f"{self.metadata_path}/{db_id}")
+            if not db_path.exists():
+                return Response.fail(f"Database {db_id} not found", 404)
+
+            kpi_path = db_path / f"{kpi.id}.json"
+            kpi.id = kpi.id or uuid4().hex
+
+            kpi_path.write_text(kpi.model_dump_json())
+
+            return Response.ok(kpi.id)
+        except Exception as e:
+            print(e)
+            return Response.error(e)
+
+    async def delete_kpi(self, db_id: str, kpi_id: str) -> Response[None]:
+        try:
+            kpi_path = Path(f"{self.metadata_path}/{db_id}/{kpi_id}.json")
+            if not kpi_path.exists():
+                return Response.fail(f"KPI {kpi_id} not found", 404)
+
+            unlink(kpi_path)
+            return Response.ok(None)
+        except Exception as e:
+            print(e)
+            return Response.error(e)
+
+    async def get_kpis(self, db_id: str) -> Response[list[KPI]]:
+        try:
+            kpis_path = Path(f"{self.metadata_path}/{db_id}")
+            if not kpis_path.exists():
+                return Response.fail(f"Database {db_id} not found", 404)
+
+            kpis: list[KPI] = []
+            for kpi_file in kpis_path.glob("*.json"):
+                try:
+                    kpis.append(KPI.model_validate_json(kpi_file.read_text()))
+                except Exception as e:
+                    continue  # Skip files that cannot be read
+
+            kpis.sort(key=lambda k: k.name)
+
+            return Response.ok(kpis)
+        except Exception as e:
+            print(e)
+            return Response.error(e)
+
+    async def get_kpi(self, db_id: str, kpi_id: str) -> Response[KPI]:
+        try:
+            kpi_path = Path(f"{self.metadata_path}/{db_id}/{kpi_id}.json")
+            if not kpi_path.exists():
+                return Response.fail(f"KPI {kpi_id} not found", 404)
+
+            return Response.ok(KPI.model_validate_json(kpi_path.read_text()))
+        except Exception as e:
+            print(e)
             return Response.error(e)

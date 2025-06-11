@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB, Table, Field
+from sbilifeco.models.db_metadata import DB, Table, Field, KPI
 
 
 class IMetadataStorage(Protocol):
@@ -50,4 +50,16 @@ class IMetadataStorage(Protocol):
     async def get_field(
         self, db_id: str, table_id: str, field_id: str
     ) -> Response[Field]:
+        raise NotImplementedError()
+
+    async def upsert_kpi(self, db_id: str, kpi: KPI) -> Response[str]:
+        raise NotImplementedError()
+
+    async def delete_kpi(self, db_id: str, kpi_id: str) -> Response[None]:
+        raise NotImplementedError()
+
+    async def get_kpis(self, db_id: str) -> Response[list[KPI]]:
+        raise NotImplementedError()
+
+    async def get_kpi(self, db_id: str, kpi_id: str) -> Response[KPI]:
         raise NotImplementedError()
