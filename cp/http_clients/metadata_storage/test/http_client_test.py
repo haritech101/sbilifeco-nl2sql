@@ -1,9 +1,14 @@
+import sys
+
+sys.path.append("./src")
+
+
 from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.metadata_storage.microservice import MetadataStorageMicroservice
 from sbilifeco.gateways.fs_metadata_storage import FSMetadataStorage
-from sbilifeco.models.db_metadata import DB, Table, Field
+from sbilifeco.models.db_metadata import DB, Table, Field, KPI
 from shutil import rmtree
 from uuid import uuid4
 from faker import Faker
@@ -39,6 +44,15 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
         )
 
+    def __generate_kpi(self) -> KPI:
+        return KPI(
+            id=uuid4().hex,
+            name=self.faker.word(),
+            aka=self.faker.word(),
+            description=self.faker.sentence(),
+            formula=self.faker.sentence(),
+        )
+
     def __generate_table(self) -> Table:
         return Table(
             id=uuid4().hex,
@@ -53,6 +67,7 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
             name=self.faker.company(),
             description=self.faker.sentence(),
             tables=[self.__generate_table() for _ in range(2)],
+            kpis=[self.__generate_kpi() for _ in range(5)],
         )
         return db
 
@@ -71,9 +86,14 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
             for field in table.fields:
                 upsert_response = await self.client.upsert_field(db.id, table.id, field)
 
+        assert db.kpis is not None
+        db.kpis.sort(key=lambda k: k.name)
+        for kpi in db.kpis:
+            upsert_response = await self.client.upsert_kpi(db.id, kpi)
+
         # Assert
         fetch_response = await self.client.get_db(
-            db.id, with_tables=True, with_fields=True
+            db.id, with_tables=True, with_fields=True, with_kpis=True
         )
         self.assertTrue(fetch_response.is_success, fetch_response.message)
         self.assertEqual(fetch_response.payload, db)
@@ -99,6 +119,7 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
 
         for db in dbs:
             db.tables = None  # We are not testing tables here
+            db.kpis = None  # We are not testing KPIs here
 
         dbs.sort(key=lambda d: d.name)
 
@@ -199,3 +220,38 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
         # Assert
         self.assertTrue(response.is_success, response.message)
         self.assertEqual(response.payload, fields)
+
+    async def test_delete_kpi(self) -> None:
+        # Arrange
+        db_id = uuid4().hex
+        (Path(self.MD_PATH) / db_id).mkdir(parents=True, exist_ok=True)
+
+        kpi = self.__generate_kpi()
+        await self.client.upsert_kpi(db_id, kpi)
+
+        # Act
+        delete_response = await self.client.delete_kpi(db_id, kpi.id)
+
+        # Assert
+        self.assertTrue(delete_response.is_success, delete_response.message)
+        fetch_response = await self.client.get_kpi(db_id, kpi.id)
+        self.assertFalse(fetch_response.is_success, "KPI should be deleted")
+        self.assertEqual(fetch_response.code, 404, "KPI should not exist")
+
+    async def test_get_kpis(self) -> None:
+        # Arrange
+        db_id = uuid4().hex
+        (Path(self.MD_PATH) / db_id).mkdir(parents=True, exist_ok=True)
+
+        kpis = [self.__generate_kpi() for _ in range(3)]
+        for kpi in kpis:
+            await self.client.upsert_kpi(db_id, kpi)
+
+        kpis.sort(key=lambda k: k.name)
+
+        # Act
+        response = await self.client.get_kpis(db_id)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        self.assertEqual(response.payload, kpis)

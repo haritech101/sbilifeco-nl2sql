@@ -4,7 +4,7 @@ from requests import Request
 from sbilifeco.cp.common.http.client import HttpClient
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB, Field, Table
+from sbilifeco.models.db_metadata import DB, Field, Table, KPI
 from sbilifeco.cp.metadata_storage.paths import Paths
 
 
@@ -47,12 +47,17 @@ class MetadataStorageHttpClient(HttpClient, IMetadataStorage):
             return Response.error(e)
 
     async def get_db(
-        self, db_id: str, with_tables: bool = False, with_fields: bool = False
+        self,
+        db_id: str,
+        with_tables: bool = False,
+        with_fields: bool = False,
+        with_kpis: bool = False,
     ) -> Response[DB]:
         try:
             req = Request(
                 method="GET",
-                url=f"{self.url_base}{Paths.DB_BY_ID_WITH_FLAGS.format(db_id=db_id, with_tables=with_tables, with_fields=with_fields)}",
+                url=f"{self.url_base}"
+                f"{Paths.DB_BY_ID_WITH_FLAGS.format(db_id=db_id, with_tables=with_tables, with_fields=with_fields, with_kpis=with_kpis)}",
             )
 
             response = await self.request_as_model(req)
@@ -126,6 +131,57 @@ class MetadataStorageHttpClient(HttpClient, IMetadataStorage):
                         Field.model_validate(field) for field in table.fields
                     ]
                 response.payload = table
+
+            return response
+        except Exception as e:
+            return Response.error(e)
+
+    async def upsert_kpi(self, db_id: str, kpi: KPI) -> Response[str]:
+        try:
+            req = Request(
+                method="POST",
+                url=f"{self.url_base}{Paths.KPI.format(db_id=db_id)}",
+                json=kpi.model_dump(),
+            )
+            return await self.request_as_model(req)
+        except Exception as e:
+            return Response.error(e)
+
+    async def delete_kpi(self, db_id: str, kpi_id: str) -> Response[None]:
+        try:
+            req = Request(
+                method="DELETE",
+                url=f"{self.url_base}{Paths.KPI_BY_ID.format(db_id=db_id, kpi_id=kpi_id)}",
+            )
+            return await self.request_as_model(req)
+        except Exception as e:
+            return Response.error(e)
+
+    async def get_kpis(self, db_id: str) -> Response[list[KPI]]:
+        try:
+            req = Request(
+                method="GET",
+                url=f"{self.url_base}{Paths.KPI.format(db_id=db_id)}",
+            )
+
+            response = await self.request_as_model(req)
+            if response.payload is not None:
+                response.payload = [KPI.model_validate(kpi) for kpi in response.payload]
+
+            return response
+        except Exception as e:
+            return Response.error(e)
+
+    async def get_kpi(self, db_id: str, kpi_id: str) -> Response[KPI]:
+        try:
+            req = Request(
+                method="GET",
+                url=f"{self.url_base}{Paths.KPI_BY_ID.format(db_id=db_id, kpi_id=kpi_id)}",
+            )
+
+            response = await self.request_as_model(req)
+            if response.payload is not None:
+                response.payload = KPI.model_validate(response.payload)
 
             return response
         except Exception as e:

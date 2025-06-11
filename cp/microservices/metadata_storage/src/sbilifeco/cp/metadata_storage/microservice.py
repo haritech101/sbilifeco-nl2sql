@@ -3,7 +3,7 @@ from sbilifeco.cp.common.http.server import HttpServer
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.cp.metadata_storage.paths import Paths
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB, Table, Field
+from sbilifeco.models.db_metadata import DB, Table, Field, KPI
 
 
 class MetadataStorageMicroservice(HttpServer):
@@ -49,10 +49,15 @@ class MetadataStorageMicroservice(HttpServer):
 
         @self.get(Paths.DB_BY_ID)
         async def get_db(
-            db_id: str, with_tables: bool = False, with_fields: bool = False
+            db_id: str,
+            with_tables: bool = False,
+            with_fields: bool = False,
+            with_kpis: bool = False,
         ) -> Response[DB]:
             try:
-                return await self.storage.get_db(db_id, with_tables, with_fields)
+                return await self.storage.get_db(
+                    db_id, with_tables, with_fields, with_kpis
+                )
             except Exception as e:
                 return Response.error(e)
 
@@ -83,6 +88,34 @@ class MetadataStorageMicroservice(HttpServer):
         ) -> Response[Table]:
             try:
                 return await self.storage.get_table(db_id, table_id, with_fields)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.post(Paths.KPI)
+        async def upsert_kpi(db_id: str, kpi: KPI) -> Response[str]:
+            try:
+                return await self.storage.upsert_kpi(db_id, kpi)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.delete(Paths.KPI_BY_ID)
+        async def delete_kpi(db_id: str, kpi_id: str) -> Response[None]:
+            try:
+                return await self.storage.delete_kpi(db_id, kpi_id)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.get(Paths.KPI)
+        async def get_kpis(db_id: str) -> Response[list[KPI]]:
+            try:
+                return await self.storage.get_kpis(db_id)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.get(Paths.KPI_BY_ID)
+        async def get_kpi(db_id: str, kpi_id: str) -> Response[KPI]:
+            try:
+                return await self.storage.get_kpi(db_id, kpi_id)
             except Exception as e:
                 return Response.error(e)
 
