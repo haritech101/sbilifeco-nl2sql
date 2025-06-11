@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-gateways-fs-metadata-storage"
-version = "0.1.1"
+version = "0.1.2"
 description = "Metadata storage using file system"
 dependencies = [
     "uuid>=1.30",

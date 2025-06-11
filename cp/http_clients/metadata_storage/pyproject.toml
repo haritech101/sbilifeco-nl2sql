@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-http-client-metadata-storage"
-version = "0.1.1"
+version = "0.1.2"
 description = "HTTP client to access metadata storage microservice"
 dependencies = [
     "requests>=2.32.3",

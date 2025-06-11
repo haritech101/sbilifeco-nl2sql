@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-microservice-metadata-storage"
-version = "0.1.1"
+version = "0.1.2"
 description = "Microservice over metadata storage"
 dependencies = [
     "sbilifeco-models-base>=0.1.1",
