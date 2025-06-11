@@ -16,7 +16,11 @@ class IMetadataStorage(Protocol):
         raise NotImplementedError()
 
     async def get_db(
-        self, db_id: str, with_tables: bool = False, with_fields: bool = False
+        self,
+        db_id: str,
+        with_tables: bool = False,
+        with_fields: bool = False,
+        with_kpis: bool = False,
     ) -> Response[DB]:
         raise NotImplementedError()
 

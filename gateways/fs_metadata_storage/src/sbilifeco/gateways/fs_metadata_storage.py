@@ -191,7 +191,11 @@ class FSMetadataStorage(IMetadataStorage):
             return Response.error(e)
 
     async def get_db(
-        self, db_id: str, with_tables: bool = False, with_fields: bool = False
+        self,
+        db_id: str,
+        with_tables: bool = False,
+        with_fields: bool = False,
+        with_kpis: bool = False,
     ) -> Response[DB]:
         try:
             db_path = Path(f"{self.metadata_path}/{db_id}")
@@ -212,6 +216,11 @@ class FSMetadataStorage(IMetadataStorage):
                             fields_response = await self.get_fields(db_id, table.id)
                             if fields_response.payload is not None:
                                 table.fields = fields_response.payload
+
+            if with_kpis:
+                kpis_response = await self.get_kpis(db_id)
+                if kpis_response.payload is not None:
+                    db.kpis = kpis_response.payload
 
             return Response.ok(db)
         except Exception as e:
