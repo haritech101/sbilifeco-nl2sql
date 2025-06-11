@@ -34,6 +34,15 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
         )
 
+    def __generate_kpi(self) -> KPI:
+        return KPI(
+            id=uuid4().hex,
+            name=self.faker.word(),
+            aka=self.faker.word(),
+            description=self.faker.sentence(),
+            formula=self.faker.sentence(),
+        )
+
     def __generate_table(self) -> Table:
         tables = Table(
             id=uuid4().hex,
@@ -53,6 +62,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
             name=self.faker.word(),
             description=self.faker.sentence(),
             tables=[self.__generate_table() for _ in range(3)],
+            kpis=[self.__generate_kpi() for _ in range(6)],
         )
 
         assert db.tables is not None, "DB must have at least one table"
@@ -206,6 +216,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
 
         db = self.__generate_db()
         db.tables = None
+        db.kpis = None
 
         # Act
         response: Response[str] = await self.gateway.upsert_db(db)
@@ -251,9 +262,14 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
             for field in table.fields:
                 await self.gateway.upsert_field(db.id, table.id, field)
 
+        assert db.kpis is not None, "DB must have at least one KPI"
+        db.kpis.sort(key=lambda k: k.name)
+        for kpi in db.kpis:
+            await self.gateway.upsert_kpi(db.id, kpi)
+
         # Act
         response: Response[DB] = await self.gateway.get_db(
-            db.id, with_tables=True, with_fields=True
+            db.id, with_tables=True, with_fields=True, with_kpis=True
         )
 
         # Assert
@@ -267,6 +283,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
         dbs = [self.__generate_db() for _ in range(3)]
         for db in dbs:
             db.tables = None
+            db.kpis = None
             await self.gateway.upsert_db(db)
 
         # Act
