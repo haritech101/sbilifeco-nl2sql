@@ -29,6 +29,14 @@ export type Table = {
     fields?: Field[] | null;
 };
 
+export type KPI = {
+    id?: string;
+    name: string;
+    aka?: string;
+    description?: string;
+    formula: string;
+}
+
 export type DB = {
     id?: string;
     name: string;
@@ -39,6 +47,9 @@ export type DB = {
 export interface Api {
     getDBs: () => Promise<ApiResponse<DB[]>>;
     getTables: (dbId: string) => Promise<ApiResponse<Table[]>>;
+    upsertKPI(dbId: string, kpi: KPI): Promise<ApiResponse<string>>;
+    deleteKPI: (dbId: string, kpiId: string) => Promise<ApiResponse<null>>;
+    getKPIs: (dbId: string) => Promise<ApiResponse<KPI[]>>;
     upsertField: (dbId: string, tableId: string, field: Field) => Promise<ApiResponse<string>>;
     deleteField: (dbId: string, tableId: string, fieldId: string) => Promise<ApiResponse<null>>;
     getFields: (dbId: string, tableId: string) => Promise<ApiResponse<Field[]>>;
@@ -64,6 +75,26 @@ const api: Api = {
     },
     getTables: async (dbId: string): Promise<ApiResponse<Table[]>> => {
         const response = await fetch(`${api_url}/dbs/${dbId}/tables`);
+        return processHttpResponse(response);
+    },
+    upsertKPI: async (dbId: string, kpi: KPI): Promise<ApiResponse<string>> => {
+        const response = await fetch(`${api_url}/dbs/${dbId}/kpis`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(kpi)
+        });
+        return processHttpResponse(response);
+    },
+    deleteKPI: async (dbId: string, kpiId: string): Promise<ApiResponse<null>> => {
+        const response = await fetch(`${api_url}/dbs/${dbId}/kpis/${kpiId}`, {
+            method: 'DELETE'
+        });
+        return processHttpResponse(response);
+    },
+    getKPIs: async (dbId: string): Promise<ApiResponse<KPI[]>> => {
+        const response = await fetch(`${api_url}/dbs/${dbId}/kpis`);
         return processHttpResponse(response);
     },
     upsertField: async (dbId: string, tableId: string, field: Field): Promise<ApiResponse<string>> => {
