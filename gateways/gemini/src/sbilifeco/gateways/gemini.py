@@ -18,9 +18,10 @@ class Gemini(ILLM):
             "Based on the given metadata, context and questions, you will enumerate the tables and fields that are relevant to the question in plain English.\n",
             # "You will generate the SQL query based on the question and the database metadata.\n",
             # "You will return just the SQL query without any other adornments\n",
-            "You will answer in 2 lines.\n"
+            "You will answer in multiple lines.\n"
             "On the first line, you will list out the required tables and their fields.\n",
-            "On the second line, you will list the conditions that are necessary to fulfill the question.\n",
+            "On the next line, you will mention the time period implied by the query. If not specified, it is the current month and year.\n",
+            "On the next line, you will mention the other conditions required by the query.\n",
         ]
 
     def set_model(self, model: str) -> Gemini:
