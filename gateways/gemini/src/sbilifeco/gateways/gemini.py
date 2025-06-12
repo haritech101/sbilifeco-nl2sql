@@ -12,11 +12,15 @@ class Gemini(ILLM):
         self.api_key: str
         self.client: Client
         self.context: list[str] = [
-            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
+            # "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
             "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
             "You will also be given the context of the conversation, which includes previous questions and answers.\n",
-            "You will generate the SQL query based on the question and the database metadata.\n",
-            "You will return just the SQL query without any other adornments\n",
+            "Based on the given metadata, context and questions, you will enumerate the tables and fields that are relevant to the question in plain English.\n",
+            # "You will generate the SQL query based on the question and the database metadata.\n",
+            # "You will return just the SQL query without any other adornments\n",
+            "You will answer in 2 lines.\n"
+            "On the first line, you will list out the required tables and their fields.\n",
+            "On the second line, you will list the conditions that are necessary to fulfill the question.\n",
         ]
 
     def set_model(self, model: str) -> Gemini:
