@@ -74,7 +74,7 @@ function App() {
                 <div className="flex-grow-1 border overflow-auto chat-window d-flex flex-column gap-2 p-3">
                     {chat.map((message, idx) => (<>
                         <p key={idx}>
-                            <strong>{message.role}:</strong> {message.content}
+                            <strong>{message.role}:</strong> {message.content.split("\n").map((line, lineIdx) => (<>{line}<br /></>))}
                         </p>
                     </>))}
                 </div>
