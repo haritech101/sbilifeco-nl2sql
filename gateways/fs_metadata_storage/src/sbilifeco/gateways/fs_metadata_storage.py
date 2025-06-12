@@ -232,8 +232,8 @@ class FSMetadataStorage(IMetadataStorage):
             if not db_path.exists():
                 return Response.fail(f"Database {db_id} not found", 404)
 
-            kpi_path = db_path / f"{kpi.id}.json"
             kpi.id = kpi.id or uuid4().hex
+            kpi_path = db_path / f"{kpi.id}.json"
 
             kpi_path.write_text(kpi.model_dump_json())
 
