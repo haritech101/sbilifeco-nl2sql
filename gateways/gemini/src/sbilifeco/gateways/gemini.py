@@ -4,6 +4,7 @@ from sbilifeco.boundaries.llm import ILLM, ChatMessage
 from google.genai import Client
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
+from datetime import datetime
 
 
 class Gemini(ILLM):
@@ -19,8 +20,10 @@ class Gemini(ILLM):
             # "You will generate the SQL query based on the question and the database metadata.\n",
             # "You will return just the SQL query without any other adornments\n",
             "You will answer in multiple lines.\n"
-            "On the first line, you will list out the required tables and their fields.\n",
-            "On the next line, you will mention the time period implied by the query. If not specified, it is the current month and year.\n",
+            "On the first line, you will identify the KPI that is asked for.\n"
+            "On the next line, you will list out the required tables and their fields.\n",
+            "On the next line, you will mention the time period implied by the query. "
+            f"If not specified, the time period is {datetime.now().strftime("%mmm %Y")}.\n",
             "On the next line, you will mention the other conditions required by the query.\n",
         ]
 
@@ -64,6 +67,15 @@ class Gemini(ILLM):
                             self.context.append(
                                 f"\t\tOther names for field '{field.name}': {field.aka}\n"
                             )
+            if db.kpis is not None:
+                self.context.append("KPIs:\n")
+                for kpi in db.kpis:
+                    self.context.append(f"\tKPI name: {kpi.name}\n")
+                    self.context.append(f"\tKPI other names: {kpi.aka}\n")
+                    self.context.append(f"\tKPI description: {kpi.description}\n")
+                    self.context.append(f"\tKPI formula: {kpi.formula}\n")
+            else:
+                self.context.append("No KPIs defined for this database.\n")
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)
