@@ -11,5 +11,5 @@ version = "0.1.2"
 description = "Contract for metadata storage"
 dependencies = [
     "sbilifeco-models-base>=0.1.1",
-    "sbilifeco-models-db-metadata>=0.1.1"
+    "sbilifeco-models-db-metadata>=0.1.2"
 ]

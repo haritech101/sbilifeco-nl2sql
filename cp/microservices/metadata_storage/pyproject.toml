@@ -11,8 +11,8 @@ version = "0.1.2"
 description = "Microservice over metadata storage"
 dependencies = [
     "sbilifeco-models-base>=0.1.1",
-    "sbilifeco-models-db-metadata>=0.1.1",
-    "sbilifeco-boundaries-metadata-storage>=0.1.1",
-    "sbilifeco-cp-paths-metadata-storage>=0.1.1",
+    "sbilifeco-models-db-metadata>=0.1.2",
+    "sbilifeco-boundaries-metadata-storage>=0.1.2",
+    "sbilifeco-cp-paths-metadata-storage>=0.1.2",
     "sbilifeco-cp-http-server>=0.1.1",
 ]
