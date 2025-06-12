@@ -21,7 +21,7 @@ class QueryFlow(IQueryFlow):
     async def query(self, dbId: str, question: str) -> Response[str]:
         try:
             db_response = await self.metadata_storage.get_db(
-                dbId, with_tables=True, with_fields=True
+                dbId, with_tables=True, with_fields=True, with_kpis=True
             )
             if not db_response.is_success:
                 return Response.fail(db_response.message, db_response.code)
