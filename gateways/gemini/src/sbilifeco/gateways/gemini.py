@@ -13,18 +13,18 @@ class Gemini(ILLM):
         self.api_key: str
         self.client: Client
         self.context: list[str] = [
-            # "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
+            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
             "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
             "You will also be given the context of the conversation, which includes previous questions and answers.\n",
             "Based on the given metadata, context and questions, you will enumerate the tables and fields that are relevant to the question in plain English.\n",
-            # "You will generate the SQL query based on the question and the database metadata.\n",
-            # "You will return just the SQL query without any other adornments\n",
             "You will answer in multiple lines.\n"
             "On the first line, you will identify the KPI that is asked for.\n"
             "On the next line, you will list out the required tables and their fields.\n",
-            "On the next line, you will mention the time period implied by the query. "
-            f"If not specified, the time period is {datetime.now().strftime("%mmm %Y")}.\n",
+            "On the next line, you will mention the time period implied by the query.\n"
+            f"If the year is not specified, then assume {datetime.now().strftime("%Y")}.\n"
+            f"If month is not specified where month is required, then assume {datetime.now().strftime("%b")}.\n",
             "On the next line, you will mention the other conditions required by the query.\n",
+            "Finally generate the relevant SQL query.\n",
         ]
 
     def set_model(self, model: str) -> Gemini:
