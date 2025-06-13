@@ -7,14 +7,14 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-http-client-query-flow"
-version = "0.1.1"
+version = "0.1.2"
 description = "HTTP client to access query flow microservice"
 dependencies = [
     "requests>=2.32.3",
     "sbilifeco-models-base>=0.1.1",
-    "sbilifeco-boundaries-query-flow>=0.1.1",
+    "sbilifeco-boundaries-query-flow>=0.1.2",
     "sbilifeco-cp-paths-query-flow>=0.1.1",
     "sbilifeco-cp-http-client>=0.1.1",
-    "sbilifeco-cp-http-client-llm>=0.1.1",
-    "sbilifeco-cp-http-client-metadata-storage>=0.1.1",
+    "sbilifeco-cp-http-client-llm>=0.1.2",
+    "sbilifeco-cp-http-client-metadata-storage>=0.1.3",
 ]
