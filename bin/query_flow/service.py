@@ -12,17 +12,25 @@ from envvars import EnvVars, Defaults
 async def start() -> None:
     load_dotenv()
 
+    llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
+    llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
     llm_port = int(getenv(EnvVars.llm_port, Defaults.llm_port))
+
+    storage_proto = getenv(
+        EnvVars.metadata_storage_proto, Defaults.metadata_storage_proto
+    )
+    storage_host = getenv(EnvVars.metadata_storage_host, Defaults.metadata_storage_host)
     storage_port = int(
         getenv(EnvVars.metadata_storage_port, Defaults.metadata_storage_port)
     )
+
     flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
     llm = LLMHttpClient()
-    llm.set_proto("http").set_host("localhost").set_port(llm_port)
+    llm.set_proto(llm_proto).set_host(llm_host).set_port(llm_port)
 
     storage = MetadataStorageHttpClient()
-    storage.set_proto("http").set_host("localhost").set_port(storage_port)
+    storage.set_proto(storage_proto).set_host(storage_host).set_port(storage_port)
 
     flow = QueryFlow()
     flow.set_llm(llm).set_metadata_storage(storage)
