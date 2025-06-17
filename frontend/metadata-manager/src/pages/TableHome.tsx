@@ -75,8 +75,7 @@ export default function DBHomePage() {
 
     const onEditField = (index: number, key: string, value: string) => {
         const updatedFields = [...loadedFields];
-        const field = updatedFields[index];
-        updatedFields[index][key] = value;
+        updatedFields[index][key as keyof Field] = value;
         setLoadedFields(updatedFields);
     }
 
