@@ -42,3 +42,20 @@ services:
         ports:
             - 11200:80
             - 11201:8080
+    metadata-manager:
+        image: sbilife/metadata-manager:202506.20.1519
+        restart: always
+        environment:
+            - VITE_API_PROTO=${VITE_API_PROTO:-http}
+            - VITE_API_HOST=${VITE_API_HOST:-localhost}
+            - VITE_API_PORT=${VITE_API_PORT:-80}
+        ports:
+            - 11205:80
+    query-generator-ui:
+        image: sbilife/query-generator-ui:202506.20.1606
+        restart: always
+        environment:
+            - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
+            - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
+        ports:
+            - 11206:80
