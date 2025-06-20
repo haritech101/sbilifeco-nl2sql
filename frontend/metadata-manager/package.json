@@ -15,7 +15,8 @@
     "react-dom": "^19.1.0",
     "react-router": "^7.6.1",
     "react-router-dom": "^7.6.1",
-    "router-dom": "^3.0.3"
+    "router-dom": "^3.0.3",
+    "serve": "^14.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
