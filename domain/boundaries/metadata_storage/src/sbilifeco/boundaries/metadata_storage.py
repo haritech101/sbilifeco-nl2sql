@@ -21,6 +21,7 @@ class IMetadataStorage(Protocol):
         with_tables: bool = False,
         with_fields: bool = False,
         with_kpis: bool = False,
+        with_additional_info: bool = False,
     ) -> Response[DB]:
         raise NotImplementedError()
 
