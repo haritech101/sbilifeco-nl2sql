@@ -31,3 +31,4 @@ class DB(BaseModel):
     description: str = ""
     tables: list[Table] | None = None
     kpis: list[KPI] | None = None
+    additional_info: str | None = None
