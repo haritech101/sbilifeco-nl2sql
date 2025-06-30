@@ -7,11 +7,11 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-microservice-llm"
-version = "0.1.2"
+version = "0.1.3"
 description = "Microservice over LLM gateway"
 dependencies = [
     "sbilifeco-models-base>=0.1.1",
-    "sbilifeco-models-db-metadata>=0.1.3",
+    "sbilifeco-models-db-metadata>=0.1.4",
     "sbilifeco-boundaries-llm>=0.1.2",
     "sbilifeco-cp-paths-llm>=0.1.1",
     "sbilifeco-cp-http-server>=0.1.1",

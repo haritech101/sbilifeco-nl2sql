@@ -156,6 +156,10 @@ class FSMetadataStorage(IMetadataStorage):
             with open(db_path / ".description", "w") as file:
                 file.write(db.description)
 
+            if db.additional_info:
+                with open(db_path / ".additional_info", "w") as file:
+                    file.write(db.additional_info)
+
             return Response.ok(db.id)
         except Exception as e:
             return Response.error(e)
@@ -196,6 +200,7 @@ class FSMetadataStorage(IMetadataStorage):
         with_tables: bool = False,
         with_fields: bool = False,
         with_kpis: bool = False,
+        with_additional_info: bool = False,
     ) -> Response[DB]:
         try:
             db_path = Path(f"{self.metadata_path}/{db_id}")
@@ -221,6 +226,11 @@ class FSMetadataStorage(IMetadataStorage):
                 kpis_response = await self.get_kpis(db_id)
                 if kpis_response.payload is not None:
                     db.kpis = kpis_response.payload
+
+            if with_additional_info:
+                additional_info_path = db_path / ".additional_info"
+                if additional_info_path.exists():
+                    db.additional_info = additional_info_path.read_text().strip()
 
             return Response.ok(db)
         except Exception as e:
