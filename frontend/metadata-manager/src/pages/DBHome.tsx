@@ -18,9 +18,15 @@ export default function DBHomePage() {
     const [currentKpiId, setCurrentKpiId] = useState<string>("");
     const [isEditingKPI, setIsEditingKPI] = useState<boolean>(false);
     const [isDeletingKPI, setIsDeletingKPI] = useState<boolean>(false);
+    const [isSavingInstructions, setIsSavingInstructions] = useState<boolean>(false);
+    const [instructions, setInstructions] = useState<string>("");
 
     useEffect(() => {
-        (async () => { loadTables(); loadKPIs(); })();
+        (async () => {
+            loadTables();
+            loadKPIs();
+            loadAdditionalInstructions();
+        })();
     }, []);
 
     const loadTables = async () => {
@@ -49,6 +55,16 @@ export default function DBHomePage() {
         }
 
         setLoadedKPIs(response.payload);
+    }
+
+    const loadAdditionalInstructions = async () => {
+        const response = await api.getDBById(dbId, false, false, false, true);
+        if (!response.is_success || !response.payload) {
+            console.error("Failed to load additional instructions:", response.message);
+            return;
+        }
+
+        setInstructions(response.payload.additional_info || "");
     }
 
     const handleStartCreateKPI = () => {
@@ -118,6 +134,29 @@ export default function DBHomePage() {
 
         resetDeleteKPI();
         loadKPIs();
+    }
+
+    const handleSaveInstructions = async () => {
+        try {
+            let fetch_response = await api.getDBById(dbId, false, false, false, true);
+            if (!fetch_response.is_success || !fetch_response.payload) {
+                console.error("Failed to fetch database details:", fetch_response.message);
+                return;
+            }
+
+            const db = fetch_response.payload;
+            db.additional_info = instructions;
+
+            const upsert_response = await api.upsertDB(db);
+            if (!upsert_response.is_success) {
+                console.error("Failed to save additional instructions:", upsert_response.message);
+                return;
+            }
+
+            loadAdditionalInstructions();
+        } finally {
+            setIsSavingInstructions(false);
+        }
     }
 
     return (
@@ -269,6 +308,31 @@ export default function DBHomePage() {
                     )}
                 </div>
             </div>
+            <div className="p-5 d-flex flex-column gap-2">
+                <div className="d-flex flex-row align-items-center">
+                    <label className="form-label flex-grow-1">Additional Instructions</label>
+                    {
+                        isSavingInstructions ? (
+                            <div className="spinner-border"></div>
+                        ) : (
+                            <button
+                                className="btn bg-primary-subtle ms-2"
+                                name="start-save-instructions"
+                                onClick={handleSaveInstructions}
+                            >Save Instructions</button>
+                        )
+                    }
+
+
+                </div>
+                <textarea
+                    name="additional-instructions"
+                    className="form-control"
+                    rows={5}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    value={instructions}
+                />
+            </div >
         </>
     );
 }

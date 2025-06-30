@@ -6,7 +6,6 @@ COPY package*.json ./
 RUN npm install
 COPY *.ts *.json *.js *.html ./
 COPY src ./src/
-COPY public ./public/
 ENV VITE_API_PROTO=http
 ENV VITE_API_HOST=localhost
 ENV VITE_API_PORT=80

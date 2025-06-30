@@ -43,7 +43,7 @@ services:
             - 11200:80
             - 11201:8080
     metadata-manager:
-        image: sbilife/metadata-manager:202506.20.1519
+        image: sbilife/metadata-manager:202506.30.1955
         restart: always
         environment:
             - VITE_API_PROTO=${VITE_API_PROTO:-http}
