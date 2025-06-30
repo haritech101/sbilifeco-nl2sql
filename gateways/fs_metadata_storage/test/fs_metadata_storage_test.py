@@ -63,6 +63,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
             tables=[self.__generate_table() for _ in range(3)],
             kpis=[self.__generate_kpi() for _ in range(6)],
+            additional_info=self.faker.paragraph(),
         )
 
         assert db.tables is not None, "DB must have at least one table"
@@ -217,6 +218,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
         db = self.__generate_db()
         db.tables = None
         db.kpis = None
+        db.additional_info = None
 
         # Act
         response: Response[str] = await self.gateway.upsert_db(db)
@@ -269,7 +271,11 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
 
         # Act
         response: Response[DB] = await self.gateway.get_db(
-            db.id, with_tables=True, with_fields=True, with_kpis=True
+            db.id,
+            with_tables=True,
+            with_fields=True,
+            with_kpis=True,
+            with_additional_info=True,
         )
 
         # Assert
@@ -284,6 +290,7 @@ class FSMetadataStorageTest(IsolatedAsyncioTestCase):
         for db in dbs:
             db.tables = None
             db.kpis = None
+            db.additional_info = None
             await self.gateway.upsert_db(db)
 
         # Act
