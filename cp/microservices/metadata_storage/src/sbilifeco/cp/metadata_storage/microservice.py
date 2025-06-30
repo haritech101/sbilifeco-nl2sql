@@ -53,10 +53,11 @@ class MetadataStorageMicroservice(HttpServer):
             with_tables: bool = False,
             with_fields: bool = False,
             with_kpis: bool = False,
+            with_additional_info: bool = False,
         ) -> Response[DB]:
             try:
                 return await self.storage.get_db(
-                    db_id, with_tables, with_fields, with_kpis
+                    db_id, with_tables, with_fields, with_kpis, with_additional_info
                 )
             except Exception as e:
                 return Response.error(e)

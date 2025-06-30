@@ -16,5 +16,5 @@ dependencies = [
     "sbilifeco-cp-paths-query-flow>=0.1.1",
     "sbilifeco-cp-http-client>=0.1.1",
     "sbilifeco-cp-http-client-llm>=0.1.2",
-    "sbilifeco-cp-http-client-metadata-storage>=0.1.3",
+    "sbilifeco-cp-http-client-metadata-storage>=0.1.4",
 ]

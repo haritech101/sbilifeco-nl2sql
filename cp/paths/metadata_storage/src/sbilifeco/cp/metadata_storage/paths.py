@@ -5,7 +5,7 @@ class Paths:
     DB_BY_ID = DB + "/{db_id}"
     DB_BY_ID_WITH_FLAGS = (
         DB_BY_ID
-        + "?with_tables={with_tables}&with_fields={with_fields}&with_kpis={with_kpis}"
+        + "?with_tables={with_tables}&with_fields={with_fields}&with_kpis={with_kpis}&with_additional_info={with_additional_info}"
     )
 
     TABLE = DB_BY_ID + "/tables"

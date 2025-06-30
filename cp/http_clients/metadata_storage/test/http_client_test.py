@@ -68,6 +68,7 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
             tables=[self.__generate_table() for _ in range(2)],
             kpis=[self.__generate_kpi() for _ in range(5)],
+            additional_info=self.faker.paragraph(),
         )
         return db
 
@@ -76,24 +77,28 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
         db = self.__generate_db()
 
         # Act
-        upsert_response = await self.client.upsert_db(db)
+        await self.client.upsert_db(db)
         assert db.tables is not None
         db.tables.sort(key=lambda t: t.name)
         for table in db.tables:
-            upsert_response = await self.client.upsert_table(db.id, table)
+            await self.client.upsert_table(db.id, table)
             assert table.fields is not None
             table.fields.sort(key=lambda f: f.name)
             for field in table.fields:
-                upsert_response = await self.client.upsert_field(db.id, table.id, field)
+                await self.client.upsert_field(db.id, table.id, field)
 
         assert db.kpis is not None
         db.kpis.sort(key=lambda k: k.name)
         for kpi in db.kpis:
-            upsert_response = await self.client.upsert_kpi(db.id, kpi)
+            await self.client.upsert_kpi(db.id, kpi)
 
         # Assert
         fetch_response = await self.client.get_db(
-            db.id, with_tables=True, with_fields=True, with_kpis=True
+            db.id,
+            with_tables=True,
+            with_fields=True,
+            with_kpis=True,
+            with_additional_info=True,
         )
         self.assertTrue(fetch_response.is_success, fetch_response.message)
         self.assertEqual(fetch_response.payload, db)
@@ -120,6 +125,7 @@ class MetadataStorageHttpClientTest(IsolatedAsyncioTestCase):
         for db in dbs:
             db.tables = None  # We are not testing tables here
             db.kpis = None  # We are not testing KPIs here
+            db.additional_info = None  # We are not testing additional info here
 
         dbs.sort(key=lambda d: d.name)
 

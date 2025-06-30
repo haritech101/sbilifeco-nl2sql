@@ -52,12 +52,20 @@ class MetadataStorageHttpClient(HttpClient, IMetadataStorage):
         with_tables: bool = False,
         with_fields: bool = False,
         with_kpis: bool = False,
+        with_additional_info: bool = False,
     ) -> Response[DB]:
         try:
+            the_path = Paths.DB_BY_ID_WITH_FLAGS.format(
+                db_id=db_id,
+                with_tables=with_tables,
+                with_fields=with_fields,
+                with_kpis=with_kpis,
+                with_additional_info=with_additional_info,
+            )
+
             req = Request(
                 method="GET",
-                url=f"{self.url_base}"
-                f"{Paths.DB_BY_ID_WITH_FLAGS.format(db_id=db_id, with_tables=with_tables, with_fields=with_fields, with_kpis=with_kpis)}",
+                url=f"{self.url_base}{the_path}",
             )
 
             response = await self.request_as_model(req)
