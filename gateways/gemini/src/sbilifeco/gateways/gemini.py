@@ -16,13 +16,11 @@ class Gemini(ILLM):
             "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
             "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
             "You will also be given the context of the conversation, which includes previous questions and answers.\n",
-            "Based on the given metadata, context and questions, you will enumerate the tables and fields that are relevant to the question in plain English.\n",
-            "You will answer in multiple lines.\n"
+            f"The current month and year are {datetime.now().strftime("%b %Y")}.\n",
+            "Based on the given metadata, context and questions, you will answer in multiple lines.\n"
             "On the first line, you will identify the KPI that is asked for.\n"
             "On the next line, you will list out the required tables and their fields.\n",
             "On the next line, you will mention the time period implied by the query.\n"
-            f"If the year is not specified, then assume {datetime.now().strftime("%Y")}.\n"
-            f"If month is not specified where month is required, then assume {datetime.now().strftime("%b")}.\n",
             "On the next line, you will mention the other conditions required by the query.\n",
             "Finally generate the relevant SQL query.\n",
         ]
@@ -76,6 +74,13 @@ class Gemini(ILLM):
                     self.context.append(f"\tKPI formula: {kpi.formula}\n")
             else:
                 self.context.append("No KPIs defined for this database.\n")
+
+            if db.additional_info is not None:
+                self.context.append(
+                    "Also keep in mind the following additional points.\n"
+                    f"{db.additional_info}\n"
+                )
+
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)
