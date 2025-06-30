@@ -42,10 +42,14 @@ export type DB = {
     name: string;
     description?: string;
     tables?: Table[] | null;
+    kpis?: KPI[] | null;
+    additional_info?: string;
 };
 
 export interface Api {
+    upsertDB: (db: DB) => Promise<ApiResponse<string>>;
     getDBs: () => Promise<ApiResponse<DB[]>>;
+    getDBById: (dbId: string, withTables: boolean, withFields: boolean, withKPIs: boolean, withAdditionalInfo: boolean) => Promise<ApiResponse<DB>>;
     getTables: (dbId: string) => Promise<ApiResponse<Table[]>>;
     upsertKPI(dbId: string, kpi: KPI): Promise<ApiResponse<string>>;
     deleteKPI: (dbId: string, kpiId: string) => Promise<ApiResponse<null>>;
@@ -69,8 +73,22 @@ export const processHttpResponse = async (response: Response): Promise<ApiRespon
 }
 
 const api: Api = {
+    upsertDB: async (db: DB): Promise<ApiResponse<string>> => {
+        const response = await fetch(`${api_url}/dbs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(db)
+        });
+        return processHttpResponse(response);
+    },
     getDBs: async (): Promise<ApiResponse<DB[]>> => {
         const response = await fetch(`${api_url}/dbs`);
+        return processHttpResponse(response);
+    },
+    getDBById: async (dbId: string, withTables: boolean, withFields: boolean, withKPIs: boolean, withAdditionalInfo: boolean): Promise<ApiResponse<DB>> => {
+        const response = await fetch(`${api_url}/dbs/${dbId}?with_tables=${withTables}&with_fields=${withFields}&with_kpis=${withKPIs}&with_additional_info=${withAdditionalInfo}`);
         return processHttpResponse(response);
     },
     getTables: async (dbId: string): Promise<ApiResponse<Table[]>> => {
