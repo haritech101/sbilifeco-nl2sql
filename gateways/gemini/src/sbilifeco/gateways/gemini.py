@@ -17,11 +17,7 @@ class Gemini(ILLM):
             "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
             "You will also be given the context of the conversation, which includes previous questions and answers.\n",
             f"The current month and year are {datetime.now().strftime("%b %Y")}.\n",
-            "Based on the given metadata, context and questions, you will answer in multiple lines.\n"
-            "On the first line, you will identify the KPI that is asked for.\n"
-            "On the next line, you will list out the required tables and their fields.\n",
-            "On the next line, you will mention the time period implied by the query.\n"
-            "On the next line, you will mention the other conditions required by the query.\n",
+            "If there are any additional points to keep in mind, they will be provided after the metadata\n",
             "Finally generate the relevant SQL query.\n",
         ]
 
