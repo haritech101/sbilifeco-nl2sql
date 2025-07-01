@@ -7,7 +7,7 @@ RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.0 \
     sbilifeco-cp-microservice-llm==0.1.3 \
-    sbilifeco-gateway-gemini==0.1.4
+    sbilifeco-gateway-gemini==0.1.5
 
 EXPOSE 80
 
