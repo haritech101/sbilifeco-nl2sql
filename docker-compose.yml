@@ -10,7 +10,7 @@ services:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
     llm:
-        image: sbilife/llm:202506.30.2037
+        image: sbilife/llm:202507.01.0829
         restart: always
         environment:
             - LLM_MODEL=gemini-1.5-flash
