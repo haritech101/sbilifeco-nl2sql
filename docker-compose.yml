@@ -62,15 +62,18 @@ services:
 
     redis:
         image: redis:7.0.0
+        restart: always
 
     postgres:
         image: postgres:13
+        restart: always
         volumes:
             - ./.local/.pg:/var/lib/postgresql/data
         env_file: .local/pg.env
 
     cubestore:
         image: cubejs/cubestore:v0.35.33
+        restart: always
         env_file: .local/cube.env
         volumes:
             - ./.local/.cube:/cube/data
