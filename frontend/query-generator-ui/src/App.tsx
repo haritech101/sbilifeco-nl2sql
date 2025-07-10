@@ -33,7 +33,7 @@ function App() {
     }
 
     const handleSubmitMessage = async () => {
-        const updatedChat: ChatMessage[] = [...chat, { role: "You", content: currentQuestion }];
+        let updatedChat: ChatMessage[] = [...chat, { role: "You", content: currentQuestion }, { role: "Me", content: "..." }];
         setChat(updatedChat);
         setCurrentQuestion("");
 
@@ -46,12 +46,17 @@ function App() {
 
         const response = await api.query(chosenSchemaId, currentQuestion);
         if (!response.is_success) {
-            const updatedChat = [...chat, { role: "Me", content: `Error: ${response.message}` }];
+            updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
+            updatedChat = [
+                ...updatedChat,
+                { role: "Me", content: `Error: ${response.message}` }];
+            setChat(updatedChat);
             return;
         }
 
-        const updatedChatWithResponse: ChatMessage[] = [...updatedChat, { role: "Me", content: response.payload }];
-        setChat(updatedChatWithResponse);
+        updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
+        updatedChat = [...updatedChat, { role: "Me", content: response.payload }];
+        setChat(updatedChat);
     }
 
     return (
@@ -74,7 +79,15 @@ function App() {
                 <div className="flex-grow-1 border overflow-auto chat-window d-flex flex-column gap-2 p-3">
                     {chat.map((message, idx) => (<>
                         <p key={idx}>
-                            <strong>{message.role}:</strong> {message.content.split("\n").map((line, lineIdx) => (<>{line}<br /></>))}
+                            <strong>{message.role}:</strong>{
+                                message.content === "..." ? (
+                                    <div className="spinner-border"></div>
+                                ) : (
+                                    <>{
+                                        message.content.split("\n").map((line, lineIdx) => (<>{line}<br /></>))
+                                    }</>
+                                )
+                            }
                         </p>
                     </>))}
                 </div>
