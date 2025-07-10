@@ -59,3 +59,26 @@ services:
             - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
         ports:
             - 11206:80
+
+    redis:
+        image: redis:7.0.0
+
+    postgres:
+        image: postgres:13
+        volumes:
+            - ./.local/.pg:/var/lib/postgresql/data
+        env_file: .local/pg.env
+
+    cubestore:
+        image: cubejs/cubestore:v0.35.33
+        env_file: .local/cube.env
+        volumes:
+            - ./.local/.cube:/cube/data
+
+    synmetrix:
+        image: synmetrix/stack:latest
+        restart: always
+        ports:
+            - 11207:8888
+            - 11208:4000
+        env_file: .local/synmetrix.env
