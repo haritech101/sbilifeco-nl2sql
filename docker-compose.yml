@@ -59,7 +59,6 @@ services:
             - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
         ports:
             - 11206:80
-
     redis:
         image: redis:7.0.0
         restart: always
@@ -85,3 +84,9 @@ services:
             - 11207:8888
             - 11208:4000
         env_file: .local/synmetrix.env
+    materialsed-data:
+        image: postgres:17.5
+        restart: always
+        env_file: ./.local/materialised.env
+        volumes:
+            - ./.local/.materialised:/var/lib/postgresql/data
