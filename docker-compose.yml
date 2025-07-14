@@ -59,3 +59,9 @@ services:
             - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
         ports:
             - 11206:80
+    materialsed-data:
+        image: postgres:17.5
+        restart: always
+        env_file: ./.local/materialised.env
+        volumes:
+            - ./.local/.materialised:/var/lib/postgresql/data
