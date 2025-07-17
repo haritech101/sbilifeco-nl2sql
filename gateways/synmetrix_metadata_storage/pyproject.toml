@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-gateway-synmetrix"
+version = "0.1.0"
+description = "Gateway to Synmetrix for semantic layer"
+dependencies = [
+    "psycopg>=3.2.9",
+    "requests>=2.32.4",
+    "pydantic>=2.11.5",
+    "sbilifeco-boundaries-metadata-storage>=0.1.4",
+    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-models-db-metadata>=0.1.4",
+    "sbilifeco-cp-http-client>=0.1.1",
+]
