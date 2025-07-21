@@ -38,12 +38,12 @@ class Synmetrix(IMetadataStorage):
         self.db_port = self.DEFAULT_PG_PORT
         self.db_name = ""
 
-        self.api_proto = "http"
-        self.api_host = "localhost"
-        self.api_port = 0
-        self.api_path = ""
-        self.api_username = ""
-        self.api_password = ""
+        self.auth_proto = "http"
+        self.auth_host = "localhost"
+        self.auth_port = 0
+        self.auth_path = ""
+        self.auth_username = ""
+        self.auth_password = ""
 
         self.cube_api_proto = "http"
         self.cube_api_host = "localhost"
@@ -72,28 +72,28 @@ class Synmetrix(IMetadataStorage):
         self.db_name = db_name
         return self
 
-    def set_api_proto(self, proto: str) -> Synmetrix:
-        self.api_proto = proto
+    def set_auth_proto(self, proto: str) -> Synmetrix:
+        self.auth_proto = proto
         return self
 
-    def set_api_host(self, host: str) -> Synmetrix:
-        self.api_host = host
+    def set_auth_host(self, host: str) -> Synmetrix:
+        self.auth_host = host
         return self
 
-    def set_api_port(self, port: int) -> Synmetrix:
-        self.api_port = port
+    def set_auth_port(self, port: int) -> Synmetrix:
+        self.auth_port = port
         return self
 
-    def set_api_path(self, path: str) -> Synmetrix:
-        self.api_path = path
+    def set_auth_path(self, path: str) -> Synmetrix:
+        self.auth_path = path
         return self
 
-    def set_api_username(self, username: str) -> Synmetrix:
-        self.api_username = username
+    def set_auth_username(self, username: str) -> Synmetrix:
+        self.auth_username = username
         return self
 
-    def set_api_password(self, password: str) -> Synmetrix:
-        self.api_password = password
+    def set_auth_password(self, password: str) -> Synmetrix:
+        self.auth_password = password
         return self
 
     def set_cube_api_proto(self, proto: str) -> Synmetrix:
@@ -127,15 +127,15 @@ class Synmetrix(IMetadataStorage):
         if self.api_jwt is None:
             http_client = (
                 HttpClient()
-                .set_proto(self.api_proto)
-                .set_host(self.api_host)
-                .set_port(self.api_port)
+                .set_proto(self.auth_proto)
+                .set_host(self.auth_host)
+                .set_port(self.auth_port)
             )
             req = Request(
                 method="POST",
-                url=f"{http_client.url_base}{self.api_path}",
+                url=f"{http_client.url_base}{self.auth_path}",
                 json=SynmetricApiCredentials(
-                    email=self.api_username, password=self.api_password
+                    email=self.auth_username, password=self.auth_password
                 ).model_dump(),
             )
 
