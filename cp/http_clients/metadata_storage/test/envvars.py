@@ -1,7 +1,9 @@
 class EnvVars:
+    test_environment = "TEST_ENVIRONMENT"
     microservice_proto = "MICROSERVICE_PROTO"
     microservice_host = "MICROSERVICE_HOST"
-    microservice_port = "MICROSERVICE_PORT"
+    local_microservice_port = "LOCAL_MICROSERVICE_PORT"
+    remote_microservice_port = "REMOTE_MICROSERVICE_PORT"
     db_host = "DB_HOST"
     db_port = "DB_PORT"
     db_username = "DB_USERNAME"
@@ -15,9 +17,11 @@ class EnvVars:
 
 
 class Defaults:
+    test_environment = "local"
     microservice_proto = "http"
     microservice_host = "localhost"
-    microservice_port = "80"
+    local_microservice_port = "80"
+    remote_microservice_port = "80"
     db_host = "localhost"
     db_port = "5432"
     db_username = "user"

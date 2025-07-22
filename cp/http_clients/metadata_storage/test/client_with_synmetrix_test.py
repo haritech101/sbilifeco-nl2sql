@@ -4,6 +4,8 @@ from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.metadata_storage.microservice import MetadataStorageMicroservice
 from dotenv import load_dotenv
 from os import getenv
+
+import test
 from .envvars import EnvVars, Defaults
 
 
@@ -11,55 +13,75 @@ class ClientWithSynmetrixTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         load_dotenv()
 
-        db_host = getenv(EnvVars.db_host, Defaults.db_host)
-        db_port = int(getenv(EnvVars.db_port, Defaults.db_port))
-        db_username = getenv(EnvVars.db_username, Defaults.db_username)
-        db_password = getenv(EnvVars.db_password, Defaults.db_password)
-        db_name = getenv(EnvVars.db_name, Defaults.db_name)
-        auth_port = int(getenv(EnvVars.auth_port, Defaults.auth_port))
-        auth_username = getenv(EnvVars.auth_username, Defaults.auth_username)
-        auth_password = getenv(EnvVars.auth_password, Defaults.auth_password)
-        auth_path = getenv(EnvVars.auth_path, Defaults.auth_path)
-        cube_port = int(getenv(EnvVars.cube_port, Defaults.cube_port))
-
-        self.gateway = Synmetrix()
-        (
-            self.gateway.set_db_host(db_host)
-            .set_db_port(db_port)
-            .set_db_username(db_username)
-            .set_db_password(db_password)
-            .set_db_name(db_name)
-            .set_auth_port(auth_port)
-            .set_auth_username(auth_username)
-            .set_auth_password(auth_password)
-            .set_auth_path(auth_path)
-            .set_cube_api_port(cube_port)
+        self.test_environment = getenv(
+            EnvVars.test_environment, Defaults.test_environment
         )
 
-        microservice_proto = getenv(
-            EnvVars.microservice_proto, Defaults.microservice_proto
-        )
-        microservice_host = getenv(
-            EnvVars.microservice_host, Defaults.microservice_host
-        )
-        microservice_port = int(
-            getenv(EnvVars.microservice_port, Defaults.microservice_port)
-        )
+        if self.test_environment == "local":
+            db_host = getenv(EnvVars.db_host, Defaults.db_host)
+            db_port = int(getenv(EnvVars.db_port, Defaults.db_port))
+            db_username = getenv(EnvVars.db_username, Defaults.db_username)
+            db_password = getenv(EnvVars.db_password, Defaults.db_password)
+            db_name = getenv(EnvVars.db_name, Defaults.db_name)
+            auth_port = int(getenv(EnvVars.auth_port, Defaults.auth_port))
+            auth_username = getenv(EnvVars.auth_username, Defaults.auth_username)
+            auth_password = getenv(EnvVars.auth_password, Defaults.auth_password)
+            auth_path = getenv(EnvVars.auth_path, Defaults.auth_path)
+            cube_port = int(getenv(EnvVars.cube_port, Defaults.cube_port))
+
+            self.gateway = Synmetrix()
+            (
+                self.gateway.set_db_host(db_host)
+                .set_db_port(db_port)
+                .set_db_username(db_username)
+                .set_db_password(db_password)
+                .set_db_name(db_name)
+                .set_auth_port(auth_port)
+                .set_auth_username(auth_username)
+                .set_auth_password(auth_password)
+                .set_auth_path(auth_path)
+                .set_cube_api_port(cube_port)
+            )
+
+            microservice_proto = getenv(
+                EnvVars.microservice_proto, Defaults.microservice_proto
+            )
+            microservice_host = getenv(
+                EnvVars.microservice_host, Defaults.microservice_host
+            )
+            microservice_port = int(
+                getenv(
+                    EnvVars.local_microservice_port, Defaults.local_microservice_port
+                )
+            )
+
+            self.microservice = MetadataStorageMicroservice()
+            self.microservice.set_metadata_storage(self.gateway).set_http_port(
+                microservice_port
+            )
+
+            await self.microservice.start()
+        else:
+            microservice_proto = getenv(
+                EnvVars.microservice_proto, Defaults.microservice_proto
+            )
+            microservice_host = getenv(
+                EnvVars.microservice_host, Defaults.microservice_host
+            )
+            microservice_port = int(
+                getenv(
+                    EnvVars.remote_microservice_port, Defaults.remote_microservice_port
+                )
+            )
 
         self.client = MetadataStorageHttpClient()
         self.client.set_proto(microservice_proto).set_host(microservice_host).set_port(
             microservice_port
         )
 
-        self.microservice = MetadataStorageMicroservice()
-        self.microservice.set_metadata_storage(self.gateway).set_http_port(
-            microservice_port
-        )
-
-        await self.microservice.start()
-
     async def asyncTearDown(self) -> None:
-        await self.microservice.stop()
+        if self.test_environment == "local":
+            await self.microservice.stop()
 
     async def test_get_dbs(self) -> None:
         # Arrange
