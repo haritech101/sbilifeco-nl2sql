@@ -1,6 +1,6 @@
 services:
     metadata-storage:
-        image: sbilife/metadata-storage:202507.21.1438
+        image: sbilife/metadata-storage:202507.22.1435
         restart: always
         volumes:
             - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
@@ -19,6 +19,7 @@ services:
             - AUTH_USERNAME=demo@synmetrix.org
             - AUTH_PASSWORD=demodemo
             - AUTH_PATH=/auth/login
+            - CUBE_HOST=synmetrix
             - CUBE_PORT=4000
 
         labels:
