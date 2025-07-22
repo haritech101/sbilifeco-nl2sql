@@ -14,6 +14,8 @@ async def start():
     db_username = getenv(EnvVars.db_username, Defaults.db_username)
     db_password = getenv(EnvVars.db_password, Defaults.db_password)
     db_name = getenv(EnvVars.db_name, Defaults.db_name)
+    auth_proto = getenv(EnvVars.auth_proto, Defaults.auth_proto)
+    auth_host = getenv(EnvVars.auth_host, Defaults.auth_host)
     auth_port = int(getenv(EnvVars.auth_port, Defaults.auth_port))
     auth_username = getenv(EnvVars.auth_username, Defaults.auth_username)
     auth_password = getenv(EnvVars.auth_password, Defaults.auth_password)
