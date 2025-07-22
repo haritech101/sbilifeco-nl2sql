@@ -13,6 +13,8 @@ class EnvVars:
     auth_username = "AUTH_USERNAME"
     auth_password = "AUTH_PASSWORD"
     auth_path = "AUTH_PATH"
+    cube_proto = "CUBE_PROTO"
+    cube_host = "CUBE_HOST"
     cube_port = "CUBE_PORT"
 
 
@@ -31,4 +33,6 @@ class Defaults:
     auth_username = "auth_user"
     auth_password = "auth_password"
     auth_path = "/auth"
+    cube_proto = "http"
+    cube_host = "localhost"
     cube_port = "4000"
