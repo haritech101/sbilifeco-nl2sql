@@ -14,13 +14,18 @@ async def start():
     db_username = getenv(EnvVars.db_username, Defaults.db_username)
     db_password = getenv(EnvVars.db_password, Defaults.db_password)
     db_name = getenv(EnvVars.db_name, Defaults.db_name)
+    print(f"Database details: {db_host}:{db_port}, {db_username}, {db_name}")
+
     auth_proto = getenv(EnvVars.auth_proto, Defaults.auth_proto)
     auth_host = getenv(EnvVars.auth_host, Defaults.auth_host)
     auth_port = int(getenv(EnvVars.auth_port, Defaults.auth_port))
     auth_username = getenv(EnvVars.auth_username, Defaults.auth_username)
     auth_password = getenv(EnvVars.auth_password, Defaults.auth_password)
     auth_path = getenv(EnvVars.auth_path, Defaults.auth_path)
+    print(f"Auth details: {auth_proto}://{auth_host}:{auth_port}, {auth_username}")
+
     cube_port = int(getenv(EnvVars.cube_port, Defaults.cube_port))
+    print(f"Cube details: {cube_port}")
 
     gateway = Synmetrix()
     (
@@ -29,6 +34,8 @@ async def start():
         .set_db_username(db_username)
         .set_db_password(db_password)
         .set_db_name(db_name)
+        .set_auth_proto(auth_proto)
+        .set_auth_host(auth_host)
         .set_auth_port(auth_port)
         .set_auth_username(auth_username)
         .set_auth_password(auth_password)
