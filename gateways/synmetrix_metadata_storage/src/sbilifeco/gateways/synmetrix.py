@@ -110,15 +110,14 @@ class Synmetrix(IMetadataStorage):
 
     async def __with_db_connection(self, func: Callable | None, *args, **kwargs) -> Any:
         if self.conn is None:
-            if self.conn is None:
-                conn_string = self.CONN_STRING_TEMPLATE.format(
-                    user=self.db_username,
-                    password=self.db_password,
-                    host=self.db_host,
-                    port=self.db_port,
-                    database=self.db_name,
-                )
-                self.conn = await AsyncConnection.connect(conn_string)
+            conn_string = self.CONN_STRING_TEMPLATE.format(
+                user=self.db_username,
+                password=self.db_password,
+                host=self.db_host,
+                port=self.db_port,
+                database=self.db_name,
+            )
+            self.conn = await AsyncConnection.connect(conn_string)
 
         if func is not None:
             return await func(*args, **kwargs)
