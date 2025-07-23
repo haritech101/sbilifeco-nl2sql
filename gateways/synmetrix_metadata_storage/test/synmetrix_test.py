@@ -90,3 +90,10 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
 
             assert table.fields is not None
             self.assertTrue(table.fields)
+
+            for field in table.fields:
+                self.assertTrue(field.id)
+                self.assertTrue(field.name)
+                self.assertTrue(field.type)
+                self.assertTrue(field.description)
+                self.assertTrue(field.aka)
