@@ -1,11 +1,27 @@
 services:
     metadata-storage:
-        image: sbilife/metadata-storage:202506.30.1332
+        image: sbilife/metadata-storage:202507.23.1257
         restart: always
         volumes:
             - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
         ports:
             - 11202:80
+        environment:
+            - MICROSERVICE_PORT=80
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USERNAME=synmetrix
+            - DB_PASSWORD=synmetrix
+            - DB_NAME=synmetrix
+            - AUTH_PROTO=http
+            - AUTH_HOST=synmetrix
+            - AUTH_PORT=8081
+            - AUTH_USERNAME=demo@synmetrix.org
+            - AUTH_PASSWORD=demodemo
+            - AUTH_PATH=/auth/login
+            - CUBE_HOST=synmetrix
+            - CUBE_PORT=4000
+
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
@@ -59,6 +75,34 @@ services:
             - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
         ports:
             - 11206:80
+    redis:
+        image: redis:7.0.0
+        restart: always
+
+    postgres:
+        image: postgres:13
+        restart: always
+        ports:
+            - 11210:5432
+        volumes:
+            - ./.local/.pg:/var/lib/postgresql/data
+        env_file: .local/pg.env
+
+    cubestore:
+        image: cubejs/cubestore:v0.35.33
+        restart: always
+        env_file: .local/cube.env
+        volumes:
+            - ./.local/.cube:/cube/data
+
+    synmetrix:
+        image: synmetrix/stack:latest
+        restart: always
+        ports:
+            - 11207:8888
+            - 11208:4000
+            - 11209:8081
+        env_file: .local/synmetrix.env
     materialsed-data:
         image: postgres:17.5
         restart: always
