@@ -6,7 +6,7 @@ WORKDIR /usr/local/metadata-storage
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.0 \
-    sbilifeco-gateway-synmetrix==0.1.0 \
+    sbilifeco-gateway-synmetrix==0.1.1 \
     sbilifeco-cp-microservice-metadata-storage==0.1.4
 
 EXPOSE 80
