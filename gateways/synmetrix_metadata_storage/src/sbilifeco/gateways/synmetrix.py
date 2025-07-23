@@ -110,6 +110,10 @@ class Synmetrix(IMetadataStorage):
 
     async def __with_db_connection(self, func: Callable | None, *args, **kwargs) -> Any:
         if self.conn is None:
+            print(
+                f"Connecting to Synmetrix database... psql://{self.db_username}@{self.db_host}:{self.db_port}/{self.db_name}"
+            )
+
             conn_string = self.CONN_STRING_TEMPLATE.format(
                 user=self.db_username,
                 password=self.db_password,
@@ -124,6 +128,10 @@ class Synmetrix(IMetadataStorage):
 
     async def __with_api_auth(self, func: Callable | None, *args, **kwargs) -> Any:
         if self.api_jwt is None:
+            print(
+                f"Authenticating with Synmetrix API {self.auth_proto}://{self.auth_host}:{self.auth_port}{self.auth_path}"
+            )
+
             http_client = (
                 HttpClient()
                 .set_proto(self.auth_proto)
@@ -156,6 +164,10 @@ class Synmetrix(IMetadataStorage):
     async def __get_meta(self, db_id: str, branch_id: str) -> Response[dict[str, Any]]:
         async def _get_meta(db_id: str, branch_id: str) -> Response[dict[str, Any]]:
             assert self.api_jwt is not None
+
+            print(
+                f"Fetching metadata for database: {self.cube_api_proto}://{self.cube_api_host}:{self.cube_api_port}{self.CUBE_META_PATH}"
+            )
 
             http_client = (
                 HttpClient()
@@ -200,6 +212,8 @@ class Synmetrix(IMetadataStorage):
         async def _get_dbs() -> Response[list[DB]]:
             assert self.conn is not None
 
+            print("Fetching list of databases from data source")
+
             async with self.conn.cursor() as cursor:
                 await cursor.execute(self.SQL_GET_DATASOURCES)
                 rows = await cursor.fetchall()
@@ -221,6 +235,8 @@ class Synmetrix(IMetadataStorage):
     ) -> Response[DB]:
         async def _get_db_by_id() -> Response[DB]:
             assert self.conn is not None
+
+            print(f"Fetching database with ID: {db_id} from data source")
 
             async with self.conn.cursor() as cursor:
                 await cursor.execute(self.SQL_GET_SINGLE_DATASOURCE, [db_id])
