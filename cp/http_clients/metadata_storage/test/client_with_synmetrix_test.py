@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("./src")
+
 from unittest import IsolatedAsyncioTestCase
 from sbilifeco.gateways.synmetrix import Synmetrix
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
@@ -5,7 +9,6 @@ from sbilifeco.cp.metadata_storage.microservice import MetadataStorageMicroservi
 from dotenv import load_dotenv
 from os import getenv
 
-import test
 from .envvars import EnvVars, Defaults
 
 
