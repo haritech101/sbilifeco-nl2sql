@@ -223,7 +223,7 @@ class Synmetrix(IMetadataStorage):
             assert self.conn is not None
 
             async with self.conn.cursor() as cursor:
-                await cursor.execute(self.SQL_GET_SINGLE_DATASOURCE, (db_id,))
+                await cursor.execute(self.SQL_GET_SINGLE_DATASOURCE, [db_id])
                 row = await cursor.fetchone()
                 if row is None:
                     return Response.fail(f"Database with ID {db_id} not found", 404)
