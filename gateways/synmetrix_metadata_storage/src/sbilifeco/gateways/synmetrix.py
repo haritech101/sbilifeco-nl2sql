@@ -320,7 +320,7 @@ class Synmetrix(IMetadataStorage):
                             name=str(field.get("name", "")).split(".")[-1],
                             type=field.get("type", ""),
                             description=field.get("description", "Not defined"),
-                            aka=field.get("aka", "Not defined"),
+                            aka=field.get("meta", {}).get("aka", "Not defined"),
                         )
                         for field in (
                             cube.get("dimensions", []) + cube.get("measures", [])
