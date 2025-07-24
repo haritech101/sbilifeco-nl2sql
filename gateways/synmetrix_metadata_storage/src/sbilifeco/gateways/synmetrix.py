@@ -312,14 +312,15 @@ class Synmetrix(IMetadataStorage):
             tables = [
                 Table(
                     id=cube.get("name", ""),
-                    name=cube.get("title", cube.get("name", "")),
-                    description=cube.get("description", ""),
+                    name=cube.get("name", ""),
+                    description=cube.get("description", "Not defined"),
                     fields=[
                         Field(
                             id=field.get("name", ""),
-                            name=field.get("shortTitle", field.get("title", "")),
+                            name=str(field.get("name", "")).split(".")[-1],
                             type=field.get("type", ""),
-                            description=field.get("description", ""),
+                            description=field.get("description", "Not defined"),
+                            aka=field.get("aka", "Not defined"),
                         )
                         for field in (
                             cube.get("dimensions", []) + cube.get("measures", [])

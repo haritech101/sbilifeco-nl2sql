@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-gateway-synmetrix"
-version = "0.1.1"
+version = "0.1.2"
 description = "Gateway to Synmetrix for semantic layer"
 dependencies = [
     "psycopg>=3.2.9",
