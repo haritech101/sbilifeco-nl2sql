@@ -109,3 +109,9 @@ services:
         env_file: ./.local/materialised.env
         volumes:
             - ./.local/.materialised:/var/lib/postgresql/data
+    dematerialised-data:
+        image: postgres:17.5
+        restart: always
+        env_file: ./.local/dematerialised.env
+        volumes:
+            - ./.local/.dematerialised:/var/lib/postgresql/data
