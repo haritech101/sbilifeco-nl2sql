@@ -45,3 +45,10 @@ class LLMMicroservice(HttpServer):
                 return await self.llm.generate_sql((await req.body()).decode("utf-8"))
             except Exception as e:
                 return Response.error(e)
+
+        @self.post(Paths.RESET_REQUESTS)
+        async def reset_requests() -> Response[None]:
+            try:
+                return await self.llm.reset_context()
+            except Exception as e:
+                return Response.error(e)
