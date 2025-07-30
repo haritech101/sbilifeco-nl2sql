@@ -72,7 +72,7 @@ class Gemini(ILLM):
             if db.additional_info is not None:
                 self.context.append(
                     "Also keep in mind the following additional points.\n"
-                    f"{db.additional_info}\n"
+                    f"{db.additional_info or "No additional points provided"}\n"
                 )
 
             return Response.ok(None)
