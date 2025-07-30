@@ -13,6 +13,9 @@ class ILLM(Protocol):
     async def add_context(self, context: list[ChatMessage]) -> Response[None]:
         raise NotImplementedError()
 
+    async def reset_context(self) -> Response[None]:
+        raise NotImplementedError()
+
     async def set_metadata(self, db: DB) -> Response[None]:
         raise NotImplementedError()
 
