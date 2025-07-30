@@ -12,14 +12,7 @@ class Gemini(ILLM):
         self.model: str = "gemini-1.5-flash"
         self.api_key: str
         self.client: Client
-        self.context: list[str] = [
-            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
-            "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
-            "You will also be given the context of the conversation, which includes previous questions and answers.\n",
-            f"The current month and year are {datetime.now().strftime("%b %Y")}.\n",
-            "If there are any additional points to keep in mind, they will be provided after the metadata\n",
-            "Finally generate the relevant SQL query.\n",
-        ]
+        self.context: list[str] = []
 
     def set_model(self, model: str) -> Gemini:
         self.model = model
@@ -31,10 +24,27 @@ class Gemini(ILLM):
 
     async def async_init(self) -> None:
         self.client = Client(api_key=self.api_key)
+        self.context: list[str] = [
+            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
+            "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
+            "You will also be given the context of the conversation, which includes previous questions and answers.\n",
+            f"The current month and year are {datetime.now().strftime("%b %Y")}.\n",
+            "If there are any additional points to keep in mind, they will be provided after the metadata\n",
+            "Finally generate the relevant SQL query.\n",
+        ]
 
     async def add_context(self, context: list[ChatMessage]) -> Response[None]:
         try:
             self.context.extend([message.content for message in context])
+            return Response.ok(None)
+        except Exception as e:
+            return Response.error(e)
+
+    async def reset_context(self) -> Response[None]:
+        try:
+            self.client = None
+            self.context = []
+            await self.async_init()
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)
