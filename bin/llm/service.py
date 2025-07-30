@@ -6,27 +6,32 @@ from os import getenv
 from envvars import EnvVars, Defaults
 
 
-async def start():
-    load_dotenv()
+class LLMExecutable:
+    async def start(self) -> None:
+        load_dotenv()
 
-    http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
-    llm_model = getenv(EnvVars.llm_model, Defaults.llm_model)
-    api_key = getenv(EnvVars.api_key, None)
+        http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        llm_model = getenv(EnvVars.llm_model, Defaults.llm_model)
+        api_key = getenv(EnvVars.api_key, None)
 
-    if not api_key:
-        raise ValueError("API_KEY environment variable is required.")
+        if not api_key:
+            raise ValueError("API_KEY environment variable is required.")
 
-    gemini = Gemini()
-    gemini.set_api_key(api_key).set_model(llm_model)
-    await gemini.async_init()
+        gemini = Gemini()
+        gemini.set_api_key(api_key).set_model(llm_model)
+        await gemini.async_init()
 
-    microservice = LLMMicroservice()
-    microservice.set_llm(gemini).set_http_port(http_port)
+        microservice = LLMMicroservice()
+        microservice.set_llm(gemini).set_http_port(http_port)
 
-    await microservice.listen()
+        await microservice.listen()
 
-    while True:
-        await sleep(10000)
+    async def run_forever(self) -> None:
+        await self.start()
+
+        while True:
+            await sleep(10000)
 
 
-run(start())
+if __name__ == "__main__":
+    run(LLMExecutable().run_forever())
