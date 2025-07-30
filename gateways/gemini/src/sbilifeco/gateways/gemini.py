@@ -68,8 +68,6 @@ class Gemini(ILLM):
                     self.context.append(f"\tKPI other names: {kpi.aka}\n")
                     self.context.append(f"\tKPI description: {kpi.description}\n")
                     self.context.append(f"\tKPI formula: {kpi.formula}\n")
-            else:
-                self.context.append("No KPIs defined for this database.\n")
 
             if db.additional_info is not None:
                 self.context.append(
