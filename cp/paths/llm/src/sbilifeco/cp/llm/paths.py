@@ -4,3 +4,4 @@ class Paths:
     CONTEXT = BASE + "/context"
     METADATA = BASE + "/db-metadata"
     QUERIES = BASE + "/queries"
+    RESET_REQUESTS = BASE + "/reset-requests"
