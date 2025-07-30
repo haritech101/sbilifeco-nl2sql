@@ -69,12 +69,12 @@ class Gemini(ILLM):
                     self.context.append(f"\tKPI description: {kpi.description}\n")
                     self.context.append(f"\tKPI formula: {kpi.formula}\n")
             else:
-                self.context.append("No KPIs defined for this database.\n")
+                self.context.append("No KPIs are defined for this database.\n")
 
             if db.additional_info is not None:
                 self.context.append(
                     "Also keep in mind the following additional points.\n"
-                    f"{db.additional_info}\n"
+                    f"{db.additional_info or "No additional points provided"}\n"
                 )
 
             return Response.ok(None)
@@ -83,12 +83,12 @@ class Gemini(ILLM):
 
     async def generate_sql(self, question: str) -> Response[str]:
         try:
-            challenge = "".join([item for item in self.context])
             line = f"\nGenerate a query against this question/statement:\n{question}\n"
-            challenge += line
-            print(challenge)
-
             self.context.append(line)
+            challenge = "".join([item for item in self.context])
+
+            print(challenge)
+            print(f"{len(challenge)} characters consumed\n")
 
             gemini_response = self.client.models.generate_content(
                 model=self.model, contents=challenge
