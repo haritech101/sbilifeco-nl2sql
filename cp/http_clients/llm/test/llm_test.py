@@ -31,6 +31,14 @@ class LLMTest(IsolatedAsyncioTestCase):
         await self.microservice.stop()
         return await super().asyncTearDown()
 
+    async def test_reset(self) -> None:
+        # Act
+        response = await self.client.reset_context()
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        self.assertIsNone(response.payload)
+
     async def test_sequence(self) -> None:
         db = DB(
             id=uuid4().hex,
