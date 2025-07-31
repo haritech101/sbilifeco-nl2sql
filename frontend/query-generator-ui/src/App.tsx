@@ -59,6 +59,18 @@ function App() {
         setChat(updatedChat);
     }
 
+    const handleChooseSchema = async (schemaId: string) => {
+        setChosenSchemaId(schemaId);
+        setChat([]); // Clear chat when a new schema is selected
+        setCurrentQuestion(""); // Clear the current question input
+
+        const resetResponse = await api.reset();
+        if (!resetResponse.is_success) {
+            console.error("Failed to reset state:", resetResponse.message);
+            return;
+        }
+    }
+
     return (
         <div className="d-flex flex-column p-3 gap-3 vh-100">
             <header>
@@ -67,7 +79,7 @@ function App() {
             <main className="d-flex flex-column gap-3 flex-grow-1">
                 <div className="d-flex flex-column gap-2">
                     <label htmlFor="input-schema">Choose a Scheme to generate a query for:</label>
-                    <select id="input-schema" name="schema" className="form-select" value={chosenSchemaId} onChange={(e) => setChosenSchemaId(e.target.value)}>
+                    <select id="input-schema" name="schema" className="form-select" value={chosenSchemaId} onChange={(e) => handleChooseSchema(e.target.value)}>
                         <option value="">Select a Schema</option>
                         {schemas.map((schema, idx: number) => (
                             <option key={schema.id} value={schema.id}>
