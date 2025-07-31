@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("./src")
+
 from unittest import IsolatedAsyncioTestCase
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from sbilifeco.cp.query_flow.microservice import QueryFlowMicroservice
@@ -8,7 +12,7 @@ from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 
 
 class HttpClientTest(IsolatedAsyncioTestCase):
-    LOCATION = "standalone"  # "inbuilt" "standalone"
+    LOCATION = "inbuilt"  # "inbuilt" "standalone"
     LLM_PORT = 11003
     STORAGE_PORT = 11001
     if LOCATION == "inbuilt":
@@ -55,3 +59,10 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         assert response.payload is not None
         print(response.payload)
         self.assertIn("select", response.payload.lower())
+
+    async def test_reset(self) -> None:
+        # Act
+        reset_response = await self.client.reset()
+
+        # Assert
+        self.assertTrue(reset_response.is_success, reset_response.message)

@@ -20,3 +20,15 @@ class QueryFlowHttpClient(HttpClient, IQueryFlow):
             )
         except Exception as e:
             return Response.error(e)
+
+    async def reset(self) -> Response[None]:
+        try:
+            return await self.request_as_model(
+                Request(
+                    method="POST",
+                    url=f"{self.url_base}{Paths.RESET}",
+                    json={},
+                )
+            )
+        except Exception as e:
+            return Response.error(e)
