@@ -28,3 +28,10 @@ class QueryFlowMicroservice(HttpServer):
                 return await self.query_flow.query(req.db_id, req.question)
             except Exception as e:
                 return Response.error(e)
+
+        @self.post(Paths.RESET)
+        async def reset() -> Response[None]:
+            try:
+                return await self.query_flow.reset()
+            except Exception as e:
+                return Response.error(e)

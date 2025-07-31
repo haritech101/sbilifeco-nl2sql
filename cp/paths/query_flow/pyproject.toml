@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-cp-paths-query-flow"
-version = "0.1.1"
+name = "sbilifeco-paths-query-flow"
+version = "0.1.2"
 description = "Paths for query flow microservice"
 dependencies = [
     "pydantic>=2.11.5"

@@ -22,6 +22,13 @@ class GeminiTest(IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         return await super().asyncTearDown()
 
+    async def test_reset_context(self):
+        # Act
+        reset_response = await self.gemini.reset_context()
+
+        # Assert
+        self.assertTrue(reset_response.is_success, reset_response.message)
+
     async def test_generate_sql(self):
         # Arrange
         db = DB(
