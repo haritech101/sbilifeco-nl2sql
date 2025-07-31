@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("./src")
+
 from unittest import IsolatedAsyncioTestCase
 from sbilifeco.user_flows.query_flow import QueryFlow
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
@@ -5,8 +9,8 @@ from sbilifeco.cp.llm.http_client import LLMHttpClient
 
 
 class FlowTest(IsolatedAsyncioTestCase):
-    STORAGE_PORT = 11001
-    LLM_PORT = 11003
+    STORAGE_PORT = 11202
+    LLM_PORT = 11203
 
     async def asyncSetUp(self) -> None:
         self.storage = MetadataStorageHttpClient()
@@ -44,3 +48,10 @@ class FlowTest(IsolatedAsyncioTestCase):
         # self.assertIn(
         #     "SELECT", response.payload, "Response payload should contain a SQL query"
         # )
+
+    async def test_reset(self) -> None:
+        # Act
+        reset_response = await self.flow.reset()
+
+        # Assert
+        self.assertTrue(reset_response.is_success, reset_response.message)
