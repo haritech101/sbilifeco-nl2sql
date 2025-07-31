@@ -9,5 +9,6 @@ COPY src ./src/
 COPY public ./public/
 ENV VITE_METADATA_URL=http://localhost
 ENV VITE_QUERY_FLOW_URL=http://localhost
+ENV VITE_APP_PORT=80
 EXPOSE 80
 ENTRYPOINT [ "npm", "run", "dev"]
