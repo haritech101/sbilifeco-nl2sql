@@ -19,6 +19,7 @@ export type Schema = {
 export interface Api {
     getSchemas: () => Promise<ApiResponse<Schema[]>>;
     query: (schemaId: string, question: string) => Promise<ApiResponse<string>>;
+    reset: () => Promise<ApiResponse<null>>;
 }
 
 export const ApiContext = React.createContext<Api>({
@@ -36,6 +37,14 @@ export const ApiContext = React.createContext<Api>({
             code: 501,
             message: "Not implemented",
             payload: ""
+        };
+    },
+    reset: async () => {
+        return {
+            is_success: false,
+            code: 501,
+            message: "Not implemented",
+            payload: null
         };
     }
 });
@@ -57,7 +66,7 @@ const processHttpResponse = async (httpResponse: Response): Promise<ApiResponse<
         return {
             is_success: false,
             code: 500,
-            message: "An error occurred while processing the response.",
+            message: `An error occurred while processing the response: ${error}`,
             payload: null
         }
     }
@@ -84,6 +93,17 @@ const api: Api = {
                 })
             })
         )
+    },
+    reset: async () => {
+        return processHttpResponse(
+            await fetch(`${queryFlowUrl}/api/v1/query-flow/reset-requests`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({})
+            })
+        );
     }
 }
 
