@@ -1,6 +1,3 @@
-from pyexpat import model
-
-
 class EnvVars:
     http_port = "HTTP_PORT"
     llm_model = "LLM_MODEL"
