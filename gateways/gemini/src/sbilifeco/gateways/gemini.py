@@ -13,6 +13,8 @@ class Gemini(ILLM):
         self.api_key: str
         self.client: Client
         self.context: list[str] = []
+        self.preamble = ""
+        self.postamble = ""
 
     def set_model(self, model: str) -> Gemini:
         self.model = model
@@ -22,16 +24,20 @@ class Gemini(ILLM):
         self.api_key = api_key
         return self
 
+    async def set_preamble(self, instruction: str) -> Response[None]:
+        self.preamble = instruction
+        return Response.ok(None)
+
+    async def set_postamble(self, instruction: str) -> Response[None]:
+        self.postamble = instruction
+        return Response.ok(None)
+
+    def __fill_in(self, template: str) -> str:
+        return template.format(this_month=datetime.now().strftime("%b %Y"))
+
     async def async_init(self) -> None:
         self.client = Client(api_key=self.api_key)
-        self.context: list[str] = [
-            "You are a SQL expert. You will be given a question and you will generate the SQL query to answer it.\n",
-            "You will be given the database metadata, which includes the database name, description, tables, and fields.\n",
-            "You will also be given the context of the conversation, which includes previous questions and answers.\n",
-            f"The current month and year are {datetime.now().strftime("%b %Y")}.\n",
-            "If there are any additional points to keep in mind, they will be provided after the metadata\n",
-            "Finally generate the relevant SQL query.\n",
-        ]
+        self.context: list[str] = [self.__fill_in(self.preamble)]
 
     async def add_context(self, context: list[ChatMessage]) -> Response[None]:
         try:
@@ -86,6 +92,9 @@ class Gemini(ILLM):
                     "Also keep in mind the following additional points.\n"
                     f"{db.additional_info or "No additional points provided"}\n"
                 )
+
+            if self.postamble:
+                self.context.append(self.__fill_in(self.postamble))
 
             return Response.ok(None)
         except Exception as e:

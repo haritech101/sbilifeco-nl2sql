@@ -16,7 +16,12 @@ class GeminiTest(IsolatedAsyncioTestCase):
         api_key = getenv("API_KEY", "")
         model = getenv("MODEL", "gemini-1.5-flash")
 
+        preamble = open(getenv("PREAMBLE_FILE", ".local/preamble.txt")).read()
+        postamble = open(getenv("POSTAMBLE_FILE", ".local/postamble.txt")).read()
+
         self.gemini = Gemini().set_api_key(api_key).set_model(model)
+        await self.gemini.set_preamble(preamble)
+        await self.gemini.set_postamble(postamble)
         await self.gemini.async_init()
 
     async def asyncTearDown(self) -> None:
