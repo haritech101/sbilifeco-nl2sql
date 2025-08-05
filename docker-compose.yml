@@ -125,3 +125,5 @@ services:
         restart: always
         volumes:
             - ./.local/.redis-for-sessions:/data
+        ports:
+            - 11211:6379
