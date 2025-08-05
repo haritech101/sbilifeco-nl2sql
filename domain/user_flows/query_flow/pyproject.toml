@@ -13,5 +13,6 @@ dependencies = [
     "sbilifeco-models-base>=0.1.1",
     "sbilifeco-boundaries-metadata-storage>=0.1.4",
     "sbilifeco-boundaries-llm>=0.1.4",
+    "sbilifeco-boundary-session-data-manager>=0.1.0",
     "sbilifeco-boundary-query-flow>=0.1.4",
 ]

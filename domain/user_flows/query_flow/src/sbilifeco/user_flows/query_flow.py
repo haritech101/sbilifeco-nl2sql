@@ -1,6 +1,7 @@
 from __future__ import annotations
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
+from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
 
@@ -9,7 +10,7 @@ class QueryFlow(IQueryFlow):
     def __init__(self):
         self.metadata_storage: IMetadataStorage
         self.llm: ILLM
-        self.is_metadata_sent = False
+        self.session_data_manager: ISessionDataManager
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self.metadata_storage = metadata_storage
@@ -17,6 +18,12 @@ class QueryFlow(IQueryFlow):
 
     def set_llm(self, llm: ILLM) -> QueryFlow:
         self.llm = llm
+        return self
+
+    def set_session_data_manager(
+        self, session_data_manager: ISessionDataManager
+    ) -> QueryFlow:
+        self.session_data_manager = session_data_manager
         return self
 
     async def query(self, dbId: str, question: str) -> Response[str]:
