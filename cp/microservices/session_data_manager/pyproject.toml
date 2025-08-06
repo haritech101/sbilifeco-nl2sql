@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-microservice-session_data_manager"
+version = "0.1.0"
+description = "Microservice over session data manager gateway"
+dependencies = [
+    "sbilifeco-boundary-session-data-manager>=0.1.0",
+    "sbilifeco-microservice-session-data-manager>=0.1.0",
+    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-paths-session-data-manager>=0.1.0",
+]
