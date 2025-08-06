@@ -6,11 +6,11 @@ class IQueryFlow(Protocol):
     async def start_session(self) -> Response[str]:
         raise NotImplementedError()
 
-    async def stop_session(self) -> Response[None]:
+    async def stop_session(self, session_id: str) -> Response[None]:
         raise NotImplementedError()
 
-    async def reset_session(self) -> Response[None]:
+    async def reset_session(self, session_id: str) -> Response[None]:
         raise NotImplementedError()
 
-    async def query(self, dbId: str, question: str) -> Response[str]:
+    async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
         raise NotImplementedError()
