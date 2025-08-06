@@ -14,6 +14,3 @@ class IQueryFlow(Protocol):
 
     async def query(self, dbId: str, question: str) -> Response[str]:
         raise NotImplementedError()
-
-    async def reset(self) -> Response[None]:
-        raise NotImplementedError()
