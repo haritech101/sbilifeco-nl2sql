@@ -8,8 +8,10 @@ from datetime import datetime
 
 
 class Gemini(ILLM):
+    DEFAULT_MODEL = "gemini-1.5-flash"
+
     def __init__(self):
-        self.model: str = "gemini-1.5-flash"
+        self.model: str = self.DEFAULT_MODEL
         self.api_key: str
         self.client: Client
         self.context: list[str] = []
