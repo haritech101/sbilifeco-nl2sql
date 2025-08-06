@@ -13,5 +13,5 @@ dependencies = [
     "sbilifeco-models-base>=0.1.1",
     "sbilifeco-paths-query-flow>=0.1.2",
     "sbilifeco-cp-http-server>=0.1.1",
-    "sbilifeco-user-flow-generate-query>=0.1.5",
+    "sbilifeco-user-flow-generate-query>=0.1.6",
 ]
