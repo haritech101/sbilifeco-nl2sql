@@ -9,25 +9,44 @@ class QueryFlowHttpClient(HttpClient, IQueryFlow):
     def __init__(self) -> None:
         HttpClient.__init__(self)
 
-    async def query(self, dbId: str, question: str) -> Response[str]:
+    async def start_session(self) -> Response[str]:
+        try:
+            return await self.request_as_model(
+                Request(method="POST", url=f"{self.url_base}{Paths.SESSIONS}", json={})
+            )
+        except Exception as e:
+            return Response.error(e)
+
+    async def stop_session(self, session_id: str) -> Response[None]:
         try:
             return await self.request_as_model(
                 Request(
-                    method="POST",
-                    url=f"{self.url_base}{Paths.QUERIES}",
-                    json=QueryRequest(db_id=dbId, question=question).model_dump(),
+                    method="DELETE",
+                    url=f"{self.url_base}{Paths.SESSION_BY_ID.format(session_id=session_id)}",
                 )
             )
         except Exception as e:
             return Response.error(e)
 
-    async def reset(self) -> Response[None]:
+    async def reset_session(self, session_id: str) -> Response[None]:
         try:
             return await self.request_as_model(
                 Request(
                     method="POST",
-                    url=f"{self.url_base}{Paths.RESET}",
+                    url=f"{self.url_base}{Paths.SESSION_RESET.format(session_id=session_id)}",
                     json={},
+                )
+            )
+        except Exception as e:
+            return Response.error(e)
+
+    async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
+        try:
+            return await self.request_as_model(
+                Request(
+                    method="POST",
+                    url=f"{self.url_base}{Paths.QUERIES.format(session_id=session_id)}",
+                    json=QueryRequest(db_id=dbId, question=question).model_dump(),
                 )
             )
         except Exception as e:

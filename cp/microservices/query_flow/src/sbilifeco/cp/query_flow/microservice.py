@@ -22,16 +22,30 @@ class QueryFlowMicroservice(HttpServer):
     def build_routes(self) -> None:
         HttpServer.build_routes(self)
 
-        @self.post(Paths.QUERIES)
-        async def query(req: QueryRequest) -> Response[str]:
+        @self.post(Paths.SESSIONS)
+        async def create_session() -> Response[str]:
             try:
-                return await self.query_flow.query(req.db_id, req.question)
+                return await self.query_flow.start_session()
             except Exception as e:
                 return Response.error(e)
 
-        @self.post(Paths.RESET)
-        async def reset() -> Response[None]:
+        @self.delete(Paths.SESSION_BY_ID)
+        async def delete_session(session_id: str) -> Response[None]:
             try:
-                return await self.query_flow.reset()
+                return await self.query_flow.stop_session(session_id)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.post(Paths.SESSION_RESET)
+        async def reset_session(session_id: str) -> Response[None]:
+            try:
+                return await self.query_flow.reset_session(session_id)
+            except Exception as e:
+                return Response.error(e)
+
+        @self.post(Paths.QUERIES)
+        async def query(session_id: str, req: QueryRequest) -> Response[str]:
+            try:
+                return await self.query_flow.query(req.db_id, session_id, req.question)
             except Exception as e:
                 return Response.error(e)
