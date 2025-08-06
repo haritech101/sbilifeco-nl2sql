@@ -11,6 +11,8 @@ class QueryFlow(IQueryFlow):
         self.metadata_storage: IMetadataStorage
         self.llm: ILLM
         self.session_data_manager: ISessionDataManager
+        self.preamble = ""
+        self.postamble = ""
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self.metadata_storage = metadata_storage
@@ -26,7 +28,14 @@ class QueryFlow(IQueryFlow):
         self.session_data_manager = session_data_manager
         return self
 
-    async def query(self, dbId: str, question: str) -> Response[str]:
+    def set_preamble(self, preamble: str) -> QueryFlow:
+        self.preamble = preamble
+        return self
+
+    def set_postamble(self, postamble: str) -> QueryFlow:
+        self.postamble = postamble
+        return self
+
         try:
             if not self.is_metadata_sent:
                 db_response = await self.metadata_storage.get_db(
