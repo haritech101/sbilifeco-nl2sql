@@ -132,7 +132,7 @@ class QueryFlow(IQueryFlow):
 
             session_data += f"\n{question}\n"
 
-            query_response = await self.llm.generate_sql(session_data)
+            query_response = await self.llm.generate_reply(session_data)
             if not query_response.is_success:
                 return Response.fail(query_response.message, query_response.code)
             sql = query_response.payload

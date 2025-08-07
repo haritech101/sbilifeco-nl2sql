@@ -3,7 +3,6 @@ import sys
 
 sys.path.append("./src")
 
-from turtle import up, update
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 from sbilifeco.user_flows.query_flow import QueryFlow
@@ -13,7 +12,7 @@ from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.models.base import Response
 from faker import Faker
 from uuid import uuid4
-from sbilifeco.models.db_metadata import DB, Table, Field, KPI
+from sbilifeco.models.db_metadata import DB
 
 
 class FlowTest(IsolatedAsyncioTestCase):
@@ -97,7 +96,7 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         patched_llm_query = patch.object(
             self.llm,
-            "generate_sql",
+            "generate_reply",
             AsyncMock(return_value=Response.ok(self.answer)),
         ).start()
 
