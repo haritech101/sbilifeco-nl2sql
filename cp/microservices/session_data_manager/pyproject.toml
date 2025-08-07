@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-microservice-session_data_manager"
-version = "0.1.0"
+name = "sbilifeco-microservice-session-data-manager"
+version = "0.1.1"
 description = "Microservice over session data manager gateway"
 dependencies = [
     "sbilifeco-boundary-session-data-manager>=0.1.0",
-    "sbilifeco-microservice-session-data-manager>=0.1.0",
     "sbilifeco-models-base>=0.1.1",
     "sbilifeco-paths-session-data-manager>=0.1.0",
+    "sbilifeco-cp-http-server>=0.1.1"
 ]
