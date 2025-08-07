@@ -8,8 +8,8 @@ RUN pip install \
     sbilifeco-http-client-llm==0.1.4 \
     sbilifeco-cp-http-client-metadata-storage==0.1.4 \
     sbilifeco-http-client-session-data-manager==0.1.0 \
-    sbilifeco-user-flow-generate-query==0.1.7 \
-    sbilifeco-microservice-query-flow==0.1.5 \
+    sbilifeco-user-flow-generate-query==0.1.8 \
+    sbilifeco-microservice-query-flow==0.1.6 \
     python-dotenv==1.1.0
 
 EXPOSE 80
@@ -24,6 +24,8 @@ ENV METADATA_STORAGE_PORT=80
 ENV SESSION_DATA_PROTO=http
 ENV SESSION_DATA_HOST=localhost
 ENV SESSION_DATA_PORT=80
+ENV PREAMBLE_FILE=
+ENV POSTAMBLE_FILE=
 
 COPY envvars.py service.py ./
 
