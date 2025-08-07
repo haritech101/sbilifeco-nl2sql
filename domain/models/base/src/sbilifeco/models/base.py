@@ -21,4 +21,10 @@ class Response[T](BaseModel):
 
     @classmethod
     def error(cls, e: BaseException) -> Response[T]:
-        return cls.fail(message=str(e), code=500)
+        description = e.__class__.__name__ + "\n"
+        description += "\n".join(e.args) if e.args else ""
+        description += "\n".join(e.__notes__) if hasattr(e, "__notes__") else ""
+        tb = e.__traceback__
+        if tb:
+            description += f"\n{tb.tb_frame.f_code.co_filename}:{tb.tb_lineno}"
+        return cls.fail(message=description, code=500)
