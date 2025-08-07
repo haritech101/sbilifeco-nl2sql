@@ -5,6 +5,7 @@ from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
+from datetime import datetime
 
 
 class QueryFlow(IQueryFlow):
@@ -65,6 +66,11 @@ class QueryFlow(IQueryFlow):
         except Exception as e:
             return Response.error(e)
 
+    def __fill_in(self, template: str) -> str:
+        now = datetime.now()
+        filled_in = template.format(this_month=now.strftime("%b %Y"))
+        return filled_in
+
     async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
         try:
             session_data_response = await self.session_data_manager.get_session_data(
@@ -93,7 +99,7 @@ class QueryFlow(IQueryFlow):
                     return Response.fail("Metadata is inexplicably blank", 500)
 
                 if self.preamble:
-                    session_data += self.preamble + "\n\n"
+                    session_data += self.__fill_in(self.preamble) + "\n\n"
 
                 session_data += (
                     "The query will be based on the following database metadata:\n"
@@ -128,7 +134,7 @@ class QueryFlow(IQueryFlow):
                     )
 
                 if self.postamble:
-                    session_data += self.postamble + "\n\n"
+                    session_data += self.__fill_in(self.postamble) + "\n\n"
 
             session_data += f"\n{question}\n"
 
