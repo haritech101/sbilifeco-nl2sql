@@ -31,22 +31,33 @@ services:
         environment:
             - LLM_MODEL=gemini-1.5-flash
             - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
-            - PREAMBLE_FILE=/app/preamble.txt
-            - POSTAMBLE_FILE=/app/postamble.txt
-        volumes:
-            - ./.local/preamble.txt:/app/preamble.txt
-            - ./.local/postamble.txt:/app/postamble.txt
         ports:
             - 11203:80
         labels:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
             - traefik.http.services.llm.loadbalancer.server.url=http://llm
+    session-data-manager:
+        image: sbilife/session-data-manager:202508.07.0959
+        restart: always
+        environment:
+            - REDIS_HOST=redis-for-sessions
+        ports:
+            - 11212:80
+        labels:
+            - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
+            - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202507.31.1044
+        image: sbilife/query-flow:202508.07.1325
         restart: always
         environment:
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
+            - SESSION_DATA_HOST=session-data-manager
+            - PREAMBLE_FILE=/app/preamble.txt
+            - POSTAMBLE_FILE=/app/postamble.txt
+        volumes:
+            - ./.local/preamble.txt:/app/preamble.txt
+            - ./.local/postamble.txt:/app/postamble.txt
         ports:
             - 11204:80
         labels:
