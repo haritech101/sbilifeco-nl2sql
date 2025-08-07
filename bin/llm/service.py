@@ -13,22 +13,12 @@ class LLMExecutable:
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
         llm_model = getenv(EnvVars.llm_model, Defaults.llm_model)
         api_key = getenv(EnvVars.api_key, None)
-        preamble_file = getenv(EnvVars.preamble_file, None)
-        postamble_file = getenv(EnvVars.postamble_file, None)
 
         if not api_key:
             raise ValueError("API_KEY environment variable is required.")
 
         gemini = Gemini()
         gemini.set_api_key(api_key).set_model(llm_model)
-
-        if preamble_file:
-            with open(preamble_file, "r") as file:
-                await gemini.set_preamble(file.read())
-
-        if postamble_file:
-            with open(postamble_file, "r") as file:
-                await gemini.set_postamble(file.read())
 
         await gemini.async_init()
 

@@ -29,7 +29,7 @@ class ServiceTest(IsolatedAsyncioTestCase):
         question = "Which letter comes after 'iks' in the German alphabet?"
 
         # Act
-        llm_response = await self.client.generate_sql(question)
+        llm_response = await self.client.generate_reply(question)
 
         # Assert
         self.assertTrue(llm_response.is_success, llm_response.message)
