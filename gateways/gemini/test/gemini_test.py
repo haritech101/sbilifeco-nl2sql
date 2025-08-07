@@ -16,85 +16,22 @@ class GeminiTest(IsolatedAsyncioTestCase):
         api_key = getenv("API_KEY", "")
         model = getenv("MODEL", "gemini-1.5-flash")
 
-        preamble = open(getenv("PREAMBLE_FILE", ".local/preamble.txt")).read()
-        postamble = open(getenv("POSTAMBLE_FILE", ".local/postamble.txt")).read()
-
         self.gemini = Gemini().set_api_key(api_key).set_model(model)
-        await self.gemini.set_preamble(preamble)
-        await self.gemini.set_postamble(postamble)
         await self.gemini.async_init()
 
     async def asyncTearDown(self) -> None:
         return await super().asyncTearDown()
 
-    async def test_reset_context(self):
-        # Act
-        reset_response = await self.gemini.reset_context()
-
-        # Assert
-        self.assertTrue(reset_response.is_success, reset_response.message)
-
-    async def test_generate_sql(self):
+    async def test_generate_reply(self):
         # Arrange
-        db = DB(
-            name="payroll",
-            description="Payroll database for company employees",
-            tables=[
-                Table(
-                    name="employees",
-                    description="Table containing employee information",
-                    fields=[
-                        Field(
-                            name="id",
-                            type="integer",
-                            description="Unique identifier for each employee",
-                            aka="employee_id, emp_id",
-                        ),
-                        Field(
-                            name="name",
-                            type="text",
-                            description="Name of the employee",
-                            aka="full_name",
-                        ),
-                        Field(
-                            name="department",
-                            type="text",
-                            description="Department where the employee works",
-                            aka="dept",
-                        ),
-                    ],
-                ),
-                Table(
-                    name="salaries",
-                    description="Table containing employee salary information",
-                    fields=[
-                        Field(
-                            name="employee_id",
-                            type="integer",
-                            description="Unique identifier for each employee",
-                            aka="id, emp_id",
-                        ),
-                        Field(
-                            name="salary",
-                            type="decimal",
-                            description="Salary of the employee",
-                            aka="pay, compensation",
-                        ),
-                    ],
-                ),
-            ],
-        )
-        await self.gemini.set_metadata(db)
-
-        question = "Which department has the highest average salary?"
+        context = "How are United Kingdom and England different?"
 
         # Act
-        response = await self.gemini.generate_sql(question)
+        response = await self.gemini.generate_reply(context)
 
         # Assert
         self.assertTrue(response.is_success, response.message)
         assert response.payload is not None, "Response payload should not be None"
-        print(response.payload)
-        # self.assertIn(
-        #     "select", response.payload.lower(), "Response should contain 'blue'"
-        # )
+        self.assertGreater(
+            len(response.payload), 0, "Response payload should not be empty"
+        )
