@@ -7,6 +7,8 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-paths-llm"
-version = "0.1.2"
+version = "0.1.3"
 description = "Paths for LLM microservice"
-dependencies = []
+dependencies = [
+    "pydantic>=2.11.5"
+]

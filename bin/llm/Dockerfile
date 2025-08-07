@@ -6,7 +6,7 @@ WORKDIR /usr/local/llm
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.0 \
-    sbilifeco-microservice-llm==0.1.4 \
+    sbilifeco-microservice-llm==0.1.5 \
     sbilifeco-gateway-gemini==0.1.9
 
 EXPOSE 80
