@@ -53,11 +53,12 @@ services:
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
 
     query-flow:
-        image: sbilife/query-flow:202507.31.1044
+        image: sbilife/query-flow:202508.07.1127
         restart: always
         environment:
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
+            - SESSION_DATA_HOST=session-data-manager
         ports:
             - 11204:80
         labels:
