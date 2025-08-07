@@ -9,7 +9,7 @@ RUN pip install \
     sbilifeco-cp-http-client-metadata-storage==0.1.4 \
     sbilifeco-http-client-session-data-manager==0.1.0 \
     sbilifeco-user-flow-generate-query==0.1.10 \
-    sbilifeco-microservice-query-flow==0.1.6 \
+    sbilifeco-microservice-query-flow==0.1.7 \
     python-dotenv==1.1.0
 
 EXPOSE 80
