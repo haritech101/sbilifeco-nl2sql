@@ -7,10 +7,10 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-user-flow-generate-query"
-version = "0.1.8"
+version = "0.1.9"
 description = "User flow for query and reply"
 dependencies = [
-    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-models-base>=0.1.2",
     "sbilifeco-boundaries-metadata-storage>=0.1.4",
     "sbilifeco-boundaries-llm>=0.1.5",
     "sbilifeco-boundary-session-data-manager>=0.1.0",
