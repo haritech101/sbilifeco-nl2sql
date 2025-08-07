@@ -18,8 +18,10 @@ export type Schema = {
 
 export interface Api {
     getSchemas: () => Promise<ApiResponse<Schema[]>>;
-    query: (schemaId: string, question: string) => Promise<ApiResponse<string>>;
-    reset: () => Promise<ApiResponse<null>>;
+    query: (schemaId: string, sessionId: string, question: string) => Promise<ApiResponse<string>>;
+    startSession: () => Promise<ApiResponse<string>>;
+    stopSession: (sessionId: string) => Promise<ApiResponse<null>>;
+    reset: (sessionId: string) => Promise<ApiResponse<null>>;
 }
 
 export const ApiContext = React.createContext<Api>({
@@ -31,7 +33,7 @@ export const ApiContext = React.createContext<Api>({
             payload: []
         };
     },
-    query: async (schemaId: string, question: string) => {
+    query: async (schemaId: string, sessionId: string, question: string) => {
         return {
             is_success: false,
             code: 501,
@@ -39,7 +41,23 @@ export const ApiContext = React.createContext<Api>({
             payload: ""
         };
     },
-    reset: async () => {
+    startSession: async (): Promise<ApiResponse<string>> => {
+        return {
+            is_success: false,
+            code: 501,
+            message: "Not implemented",
+            payload: ""
+        };
+    },
+    stopSession: async (sessionId: string): Promise<ApiResponse<null>> => {
+        return {
+            is_success: false,
+            code: 501,
+            message: "Not implemented",
+            payload: ""
+        };
+    },
+    reset: async (sessionId: string) => {
         return {
             is_success: false,
             code: 501,
@@ -78,11 +96,9 @@ const api: Api = {
             await fetch(`${metadataUrl}/api/v1/db-metadata/dbs`)
         );
     },
-    query: async (schemaId: string, question: string) => {
-        console.log(`Sending HTTP request with schema ID: ${schemaId} and question: ${question}`);
-
+    query: async (schemaId: string, sessionId: string, question: string) => {
         return processHttpResponse(
-            await fetch(`${queryFlowUrl}/api/v1/query-flow/queries`, {
+            await fetch(`${queryFlowUrl}/api/v1/query-flow/sessions/${sessionId}/queries`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -94,9 +110,27 @@ const api: Api = {
             })
         )
     },
-    reset: async () => {
+    startSession: async (): Promise<ApiResponse<string>> => {
         return processHttpResponse(
-            await fetch(`${queryFlowUrl}/api/v1/query-flow/reset-requests`, {
+            await fetch(`${queryFlowUrl}/api/v1/query-flow/sessions`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({})
+            })
+        );
+    },
+    stopSession: async (sessionId: string): Promise<ApiResponse<null>> => {
+        return processHttpResponse(
+            await fetch(`${queryFlowUrl}/api/v1/query-flow/sessions/${sessionId}`, {
+                method: "DELETE",
+            })
+        );
+    },
+    reset: async (sessionId: string): Promise<ApiResponse<null>> => {
+        return processHttpResponse(
+            await fetch(`${queryFlowUrl}/api/v1/query-flow/sessions/${sessionId}/reset`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

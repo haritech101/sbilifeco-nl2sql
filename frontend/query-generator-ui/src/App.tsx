@@ -10,6 +10,7 @@ type ChatMessage = {
 function App() {
     const api = useApi();
 
+    const [sessionId, setSessionId] = useState<string>("");
     const [schemas, setSchemas] = useState<Schema[]>([]);
     const [chosenSchemaId, setChosenSchemaId] = useState<string>("");
     const [chat, setChat] = useState<ChatMessage[]>([]);
@@ -19,6 +20,8 @@ function App() {
     useEffect(() => {
         (async () => {
             await loadSchemas();
+            await startASession();
+
         })();
     }, []);
 
@@ -30,6 +33,15 @@ function App() {
         }
 
         setSchemas(response.payload);
+    }
+
+    const startASession = async () => {
+        const sessionResponse = await api.startSession();
+        if (!sessionResponse.is_success) {
+            console.error("Failed to start session:", sessionResponse.message);
+            return;
+        }
+        setSessionId(sessionResponse.payload);
     }
 
     const handleSubmitMessage = async () => {
@@ -44,7 +56,7 @@ function App() {
 
         console.log(`Handling query request with schema ID: ${chosenSchemaId} and question: ${currentQuestion}`);
 
-        const response = await api.query(chosenSchemaId, currentQuestion);
+        const response = await api.query(chosenSchemaId, sessionId, currentQuestion);
         if (!response.is_success) {
             updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
             updatedChat = [
@@ -64,10 +76,9 @@ function App() {
         setChat([]); // Clear chat when a new schema is selected
         setCurrentQuestion(""); // Clear the current question input
 
-        const resetResponse = await api.reset();
+        const resetResponse = await api.reset(sessionId);
         if (!resetResponse.is_success) {
             console.error("Failed to reset state:", resetResponse.message);
-            return;
         }
     }
 
