@@ -35,6 +35,18 @@ class QueryFlowExecutable:
             getenv(EnvVars.session_data_port, Defaults.session_data_port)
         )
 
+        preamble = ""
+        preamble_file = getenv(EnvVars.preamble_file)
+        if preamble_file:
+            with open(preamble_file) as preamble_stream:
+                preamble = preamble_stream.read()
+
+        postamble = ""
+        postamble_file = getenv(EnvVars.postamble_file)
+        if postamble_file:
+            with open(postamble_file) as postamble_stream:
+                postamble = postamble_stream.read()
+
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
         llm = LLMHttpClient()
@@ -51,7 +63,7 @@ class QueryFlowExecutable:
         flow = QueryFlow()
         flow.set_llm(llm).set_metadata_storage(storage).set_session_data_manager(
             session_data_manager
-        )
+        ).set_preamble(preamble).set_postamble(postamble)
 
         microservice = QueryFlowMicroservice()
         microservice.set_query_flow(flow).set_http_port(flow_port)

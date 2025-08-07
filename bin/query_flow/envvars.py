@@ -9,6 +9,8 @@ class EnvVars:
     session_data_proto = "SESSION_DATA_PROTO"
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
+    preamble_file = "PREAMBLE_FILE"
+    postamble_file = "POSTAMBLE_FILE"
 
 
 class Defaults:
