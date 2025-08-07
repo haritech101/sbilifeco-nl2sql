@@ -113,7 +113,7 @@ class QueryFlow(IQueryFlow):
                                 )
                                 session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
 
-                if db.kpis is not None:
+                if db.kpis:
                     session_data += "KPIs:\n"
                     for kpi in db.kpis:
                         session_data += f"\tKPI name: {kpi.name}\n"
