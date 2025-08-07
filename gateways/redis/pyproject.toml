@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-gateway-redis"
+version = "0.1.0"
+description = "Redis Gateway for Sbilifeco apps"
+dependencies = [
+    "redis>=6.3.0",
+    "sbilifeco-boundary-session-data-manager>=0.1.0",
+    "sbilifeco-models-base>=0.1.1",
+]
