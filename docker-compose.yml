@@ -41,6 +41,17 @@ services:
         labels:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
             - traefik.http.services.llm.loadbalancer.server.url=http://llm
+    session-data-manager:
+        image: sbilife/session-data-manager:202508.07.0959
+        restart: always
+        environment:
+            - REDIS_HOST=redis-for-sessions
+        ports:
+            - 11212:80
+        labels:
+            - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
+            - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
+
     query-flow:
         image: sbilife/query-flow:202507.31.1044
         restart: always
