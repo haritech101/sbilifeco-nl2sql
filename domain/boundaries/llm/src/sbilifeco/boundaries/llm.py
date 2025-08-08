@@ -1,7 +1,6 @@
 from typing import Protocol
 from pydantic import BaseModel
 from sbilifeco.models.base import Response
-from sbilifeco.models.db_metadata import DB
 
 
 class ChatMessage(BaseModel):

@@ -4,8 +4,6 @@ from sbilifeco.models.base import Response
 from sbilifeco.cp.common.http.server import HttpServer
 from sbilifeco.cp.llm.paths import Paths, LLMQuery
 from sbilifeco.boundaries.llm import ChatMessage
-from sbilifeco.models.db_metadata import DB, Table, Field
-from sbilifeco.models.base import Response
 
 
 class LLMMicroservice(HttpServer):
