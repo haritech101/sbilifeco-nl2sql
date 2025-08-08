@@ -6,10 +6,10 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-boundaries-metadata-storage"
-version = "0.1.4"
+name = "sbilifeco-boundary-metadata-storage"
+version = "0.1.5"
 description = "Contract for metadata storage"
 dependencies = [
-    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-models-base>=0.1.2",
     "sbilifeco-models-db-metadata>=0.1.4"
 ]
