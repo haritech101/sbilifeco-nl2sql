@@ -1,12 +1,12 @@
 from asyncio import run, sleep
 from sbilifeco.gateways.gemini import Gemini
-from sbilifeco.cp.llm.microservice import LLMMicroservice
+from sbilifeco.cp.llm.http_server import LLMHttpServer
 from dotenv import load_dotenv
 from os import getenv
 from envvars import EnvVars, Defaults
 
 
-class LLMExecutable:
+class LLMMicroservice:
     async def start(self) -> None:
         load_dotenv()
 
@@ -22,7 +22,7 @@ class LLMExecutable:
 
         await gemini.async_init()
 
-        microservice = LLMMicroservice()
+        microservice = LLMHttpServer()
         microservice.set_llm(gemini).set_http_port(http_port)
 
         await microservice.listen()
@@ -35,4 +35,4 @@ class LLMExecutable:
 
 
 if __name__ == "__main__":
-    run(LLMExecutable().run_forever())
+    run(LLMMicroservice().run_forever())
