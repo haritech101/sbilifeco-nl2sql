@@ -13,5 +13,5 @@ dependencies = [
     "uuid>=1.30",
     "sbilifeco-models-base>=0.1.1",
     "sbilifeco-models-db-metadata>=0.1.4",
-    "sbilifeco-boundaries-metadata-storage>=0.1.4"
+    "sbilifeco-boundary-metadata-storage>=0.1.5"
 ]

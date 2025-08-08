@@ -12,7 +12,7 @@ description = "HTTP service on top of metadata storage"
 dependencies = [
     "sbilifeco-models-base>=0.1.2",
     "sbilifeco-models-db-metadata>=0.1.4",
-    "sbilifeco-boundaries-metadata-storage>=0.1.4",
-    "sbilifeco-cp-paths-metadata-storage>=0.1.4",
+    "sbilifeco-boundary-metadata-storage>=0.1.5",
+    "sbilifeco-paths-metadata-storage>=0.1.5",
     "sbilifeco-cp-http-server>=0.1.1",
 ]

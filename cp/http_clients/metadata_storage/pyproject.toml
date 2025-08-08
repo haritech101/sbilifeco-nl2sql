@@ -13,7 +13,7 @@ dependencies = [
     "requests>=2.32.3",
     "sbilifeco-models-base>=0.1.1",
     "sbilifeco-models-db-metadata>=0.1.4",
-    "sbilifeco-boundaries-metadata-storage>=0.1.4",
+    "sbilifeco-boundary-metadata-storage>=0.1.5",
     "sbilifeco-cp-http-client>=0.1.1",
-    "sbilifeco-cp-paths-metadata-storage>=0.1.4",
+    "sbilifeco-paths-metadata-storage>=0.1.5",
 ]
