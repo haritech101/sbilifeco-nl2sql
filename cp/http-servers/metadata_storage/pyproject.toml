@@ -6,11 +6,11 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-cp-microservice-metadata-storage"
-version = "0.1.4"
-description = "Microservice over metadata storage"
+name = "sbilifeco-http-server-metadata-storage"
+version = "0.1.5"
+description = "HTTP service on top of metadata storage"
 dependencies = [
-    "sbilifeco-models-base>=0.1.1",
+    "sbilifeco-models-base>=0.1.2",
     "sbilifeco-models-db-metadata>=0.1.4",
     "sbilifeco-boundaries-metadata-storage>=0.1.4",
     "sbilifeco-cp-paths-metadata-storage>=0.1.4",
