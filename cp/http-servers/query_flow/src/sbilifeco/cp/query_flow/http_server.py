@@ -5,11 +5,11 @@ from sbilifeco.cp.query_flow.paths import Paths, QueryRequest
 from sbilifeco.models.base import Response
 
 
-class QueryFlowMicroservice(HttpServer):
+class QueryFlowHttpService(HttpServer):
     def __init__(self):
         HttpServer.__init__(self)
 
-    def set_query_flow(self, query_flow: IQueryFlow) -> QueryFlowMicroservice:
+    def set_query_flow(self, query_flow: IQueryFlow) -> QueryFlowHttpService:
         self.query_flow = query_flow
         return self
 

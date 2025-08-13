@@ -6,12 +6,13 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-gateways-fs-metadata-storage"
+name = "sbilifeco-http-server-metadata-storage"
 version = "0.1.5"
-description = "Metadata storage using file system"
+description = "HTTP service on top of metadata storage"
 dependencies = [
-    "uuid>=1.30",
     "sbilifeco-models-base>=0.1.2",
     "sbilifeco-models-db-metadata>=0.1.5",
-    "sbilifeco-boundary-metadata-storage>=0.1.5"
+    "sbilifeco-boundary-metadata-storage>=0.1.5",
+    "sbilifeco-paths-metadata-storage>=0.1.5",
+    "sbilifeco-cp-http-server>=0.1.1",
 ]

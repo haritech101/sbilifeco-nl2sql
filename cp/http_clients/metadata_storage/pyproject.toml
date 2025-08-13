@@ -6,14 +6,14 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-cp-http-client-metadata-storage"
-version = "0.1.4"
+name = "sbilifeco-http-client-metadata-storage"
+version = "0.1.5"
 description = "HTTP client to access metadata storage microservice"
 dependencies = [
     "requests>=2.32.3",
-    "sbilifeco-models-base>=0.1.1",
-    "sbilifeco-models-db-metadata>=0.1.4",
-    "sbilifeco-boundaries-metadata-storage>=0.1.4",
-    "sbilifeco-cp-http-client>=0.1.1",
-    "sbilifeco-cp-paths-metadata-storage>=0.1.4",
+    "sbilifeco-models-base>=0.1.2",
+    "sbilifeco-models-db-metadata>=0.1.5",
+    "sbilifeco-boundary-metadata-storage>=0.1.5",
+    "sbilifeco-cp-http-client>=0.1.2",
+    "sbilifeco-paths-metadata-storage>=0.1.5",
 ]

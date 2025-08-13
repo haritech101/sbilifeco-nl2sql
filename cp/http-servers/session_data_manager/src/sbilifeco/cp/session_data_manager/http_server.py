@@ -5,14 +5,14 @@ from sbilifeco.models.base import Response
 from sbilifeco.cp.session_data_manager.paths import Paths, SessionData
 
 
-class SessionDataManagerMicroservice(HttpServer):
+class SessionDataManagerHttpServer(HttpServer):
     def __init__(self):
         HttpServer.__init__(self)
         self.session_data_manager: ISessionDataManager
 
     def set_session_data_manager(
         self, session_data_manager: ISessionDataManager
-    ) -> SessionDataManagerMicroservice:
+    ) -> SessionDataManagerHttpServer:
         self.session_data_manager = session_data_manager
         return self
 
