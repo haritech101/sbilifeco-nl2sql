@@ -10,5 +10,5 @@ name = "sbilifeco-boundary-session-data-manager"
 version = "0.1.1"
 description = "Data manager to store and retrieve data for a specific chat session"
 dependencies = [
-    "sbilifeco-models-base>=0.1.2"
+    "sbilifeco-models-base>=0.1.3"
 ]
