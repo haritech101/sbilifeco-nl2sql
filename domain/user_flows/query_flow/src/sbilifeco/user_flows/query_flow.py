@@ -106,7 +106,8 @@ class QueryFlow(IQueryFlow):
                 )
 
                 session_data += f"Database name: {db.name}\n"
-                session_data += f"Database description: {db.description}\n"
+                if db.description:
+                    session_data += f"Database description: {db.description}\n"
                 if db.tables is not None:
                     for table in db.tables:
                         session_data += f"\tTable name: {table.name}\n"
@@ -114,10 +115,12 @@ class QueryFlow(IQueryFlow):
                         if table.fields is not None:
                             for field in table.fields:
                                 session_data += f"\t\tField name: {field.name}, type: {field.type}\n"
-                                session_data += (
-                                    f"\t\tField description: {field.description}\n"
-                                )
-                                session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+                                if field.description:
+                                    session_data += (
+                                        f"\t\tField description: {field.description}\n"
+                                    )
+                                if field.aka:
+                                    session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
 
                 if db.kpis:
                     session_data += "KPIs:\n"

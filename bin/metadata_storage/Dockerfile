@@ -7,7 +7,7 @@ RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.0 \
     sbilifeco-models-base==0.1.3 \
-    sbilifeco-gateway-synmetrix==0.1.3 \
+    sbilifeco-gateway-synmetrix==0.1.4 \
     sbilifeco-http-server-metadata-storage==0.1.5
 
 EXPOSE 80
