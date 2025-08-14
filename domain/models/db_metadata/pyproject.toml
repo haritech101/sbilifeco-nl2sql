@@ -11,5 +11,5 @@ version = "0.1.5"
 description = "description"
 dependencies = [
     "pydantic==2.11.5",
-    "sbilifeco-models-base>=0.1.2"
+    "sbilifeco-models-base>=0.1.3"
 ]

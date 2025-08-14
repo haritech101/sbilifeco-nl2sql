@@ -11,7 +11,7 @@ version = "0.1.2"
 description = "HTTP service on top of session data manager gateway"
 dependencies = [
     "sbilifeco-boundary-session-data-manager>=0.1.1",
-    "sbilifeco-models-base>=0.1.2",
+    "sbilifeco-models-base>=0.1.3",
     "sbilifeco-paths-session-data-manager>=0.1.0",
     "sbilifeco-cp-http-server>=0.1.1"
 ]
