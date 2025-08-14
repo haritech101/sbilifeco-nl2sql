@@ -117,7 +117,8 @@ class QueryFlow(IQueryFlow):
                                 session_data += (
                                     f"\t\tField description: {field.description}\n"
                                 )
-                                session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+                                if field.aka:
+                                    session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
 
                 if db.kpis:
                     session_data += "KPIs:\n"
