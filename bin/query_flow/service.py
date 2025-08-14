@@ -3,13 +3,13 @@ from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
 from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.cp.query_flow.microservice import QueryFlowMicroservice
+from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from os import getenv
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
 
-class QueryFlowExecutable:
+class QueryFlowMicroservice:
     async def run(self) -> None:
         llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
         llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
@@ -65,7 +65,7 @@ class QueryFlowExecutable:
             session_data_manager
         ).set_preamble(preamble).set_postamble(postamble)
 
-        microservice = QueryFlowMicroservice()
+        microservice = QueryFlowHttpService()
         microservice.set_query_flow(flow).set_http_port(flow_port)
         await microservice.listen()
 
@@ -78,4 +78,4 @@ class QueryFlowExecutable:
 
 if __name__ == "__main__":
     load_dotenv()
-    run(QueryFlowExecutable().run_forever())
+    run(QueryFlowMicroservice().run_forever())

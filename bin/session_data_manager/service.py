@@ -2,13 +2,11 @@ from asyncio import run, sleep
 from os import getenv
 from dotenv import load_dotenv
 from sbilifeco.gateways.redis import Redis
-from sbilifeco.cp.session_data_manager.microservice import (
-    SessionDataManagerMicroservice,
-)
+from sbilifeco.cp.session_data_manager.http_server import SessionDataManagerHttpServer
 from envvars import EnvVars, Defaults
 
 
-class ServiceDataManagerExecutable:
+class SessionDataManagerMicroservice:
     async def run(self):
         redis_host = getenv(EnvVars.redis_host, Defaults.redis_host)
         redis_port = int(getenv(EnvVars.redis_port, Defaults.redis_port))
@@ -23,7 +21,7 @@ class ServiceDataManagerExecutable:
         )
         await self.session_data_manager.async_init()
 
-        self.http_server = SessionDataManagerMicroservice()
+        self.http_server = SessionDataManagerHttpServer()
         (
             self.http_server.set_session_data_manager(
                 self.session_data_manager
@@ -40,4 +38,4 @@ class ServiceDataManagerExecutable:
 
 if __name__ == "__main__":
     load_dotenv()
-    run(ServiceDataManagerExecutable().run_forever())
+    run(SessionDataManagerMicroservice().run_forever())

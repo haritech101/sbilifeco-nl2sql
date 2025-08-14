@@ -1,6 +1,6 @@
 from json import load
 from unittest import IsolatedAsyncioTestCase
-from service import MetadataStorageExecutable
+from service import MetadataStorageMicroservice
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from os import getenv
 from envvars import EnvVars, Defaults
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 class ServiceTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.service = MetadataStorageExecutable()
+        self.service = MetadataStorageMicroservice()
 
         self.client = MetadataStorageHttpClient()
         (

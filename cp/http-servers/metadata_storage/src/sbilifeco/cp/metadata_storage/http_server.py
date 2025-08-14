@@ -6,14 +6,14 @@ from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB, Table, Field, KPI
 
 
-class MetadataStorageMicroservice(HttpServer):
+class MetadataStorageHttpServer(HttpServer):
     def __init__(self):
         HttpServer.__init__(self)
         self.storage: IMetadataStorage
 
     def set_metadata_storage(
         self, storage: IMetadataStorage
-    ) -> MetadataStorageMicroservice:
+    ) -> MetadataStorageHttpServer:
         self.storage = storage
         return self
 

@@ -1,7 +1,7 @@
 from unittest import IsolatedAsyncioTestCase
 from os import getenv
 from dotenv import load_dotenv
-from service import LLMExecutable
+from service import LLMMicroservice
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from envvars import EnvVars, Defaults
 from requests import Request
@@ -13,7 +13,7 @@ class ServiceTest(IsolatedAsyncioTestCase):
 
         service_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
-        self.service = LLMExecutable()
+        self.service = LLMMicroservice()
         await self.service.start()
 
         self.client = LLMHttpClient()

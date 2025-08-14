@@ -1,5 +1,4 @@
 from __future__ import annotations
-from json import dumps
 from sbilifeco.boundaries.llm import ILLM
 from google.genai import Client
 from sbilifeco.models.base import Response

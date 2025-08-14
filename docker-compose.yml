@@ -1,6 +1,6 @@
 services:
     metadata-storage:
-        image: sbilife/metadata-storage:202507.24.0828
+        image: sbilife/metadata-storage:202508.14.0935
         restart: always
         volumes:
             - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
@@ -26,7 +26,7 @@ services:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
     llm:
-        image: sbilife/llm:202508.07.1234
+        image: sbilife/llm:202508.14.0934
         restart: always
         environment:
             - LLM_MODEL=gemini-1.5-flash
@@ -37,7 +37,7 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
             - traefik.http.services.llm.loadbalancer.server.url=http://llm
     session-data-manager:
-        image: sbilife/session-data-manager:202508.07.0959
+        image: sbilife/session-data-manager:202508.14.0946
         restart: always
         environment:
             - REDIS_HOST=redis-for-sessions
@@ -47,7 +47,7 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202508.07.1613
+        image: sbilife/query-flow:202508.14.0952
         restart: always
         environment:
             - LLM_HOST=llm
