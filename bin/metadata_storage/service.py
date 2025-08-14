@@ -1,12 +1,12 @@
 from asyncio import run, sleep
 from dotenv import load_dotenv
 from sbilifeco.gateways.synmetrix import Synmetrix
-from sbilifeco.cp.metadata_storage.microservice import MetadataStorageMicroservice
+from sbilifeco.cp.metadata_storage.http_server import MetadataStorageHttpServer
 from envvars import EnvVars, Defaults
 from os import getenv
 
 
-class MetadataStorageExecutable:
+class MetadataStorageMicroservice:
     async def start(self):
         load_dotenv()
 
@@ -52,7 +52,7 @@ class MetadataStorageExecutable:
             getenv(EnvVars.microservice_port, Defaults.microservice_port)
         )
 
-        microservice = MetadataStorageMicroservice()
+        microservice = MetadataStorageHttpServer()
         microservice.set_metadata_storage(gateway).set_http_port(microservice_port)
 
         await microservice.start()
@@ -64,4 +64,4 @@ class MetadataStorageExecutable:
 
 
 if __name__ == "__main__":
-    run(MetadataStorageExecutable().run_forever())
+    run(MetadataStorageMicroservice().run_forever())

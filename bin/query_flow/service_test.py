@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
 # Import the necessary service(s) here
-from service import QueryFlowExecutable
+from service import QueryFlowMicroservice
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
 
@@ -18,7 +18,7 @@ class Test(IsolatedAsyncioTestCase):
         load_dotenv()
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
-        self.service = QueryFlowExecutable()
+        self.service = QueryFlowMicroservice()
         await self.service.run()
 
         self.client = QueryFlowHttpClient()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from asyncio import get_event_loop
-from re import S
 from typing import Any
 from requests import Request, Session
 from sbilifeco.models.base import Response
