@@ -5,6 +5,7 @@ WORKDIR /usr/local/query-flow
 
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
+    sbilifeco-models-base==0.1.3 \
     sbilifeco-http-client-llm==0.1.6 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \

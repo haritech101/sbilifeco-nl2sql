@@ -7,6 +7,7 @@ RUN pip install \
     --no-cache-dir \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
+    sbilifeco-models-base==0.1.3 \
     sbilifeco-gateway-redis==0.1.1 \
     sbilifeco-http-server-session-data-manager==0.1.2
 
