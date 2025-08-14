@@ -1,6 +1,6 @@
 services:
     metadata-storage:
-        image: sbilife/metadata-storage:202508.14.0935
+        image: sbilife/metadata-storage:202508.14.1200
         restart: always
         volumes:
             - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
