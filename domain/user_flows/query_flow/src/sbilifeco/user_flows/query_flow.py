@@ -46,11 +46,12 @@ class QueryFlow(IQueryFlow):
 
     async def stop_session(self, session_id: str) -> Response[None]:
         try:
-            delete_response = await self.session_data_manager.delete_session_data(
-                session_id
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            if not delete_response.is_success:
-                return Response.fail(delete_response.message, delete_response.code)
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}"
+            )
 
             # All good
             return Response.ok(None)
@@ -59,11 +60,12 @@ class QueryFlow(IQueryFlow):
 
     async def reset_session(self, session_id: str) -> Response[None]:
         try:
-            delete_response = await self.session_data_manager.delete_session_data(
-                session_id
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            if not delete_response.is_success:
-                return Response.fail(delete_response.message, delete_response.code)
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}"
+            )
 
             return Response.ok(None)
         except Exception as e:

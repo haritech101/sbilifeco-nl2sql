@@ -77,7 +77,12 @@ class FlowTest(IsolatedAsyncioTestCase):
 
             # Assert
             self.assertTrue(response.is_success, response.message)
-            patched_delete_session_data.assert_called_once_with(self.session_id)
+            patched_delete_session_data.assert_any_call(
+                f"{self.session_id}{QueryFlow.SUFFIX_METADATA}"
+            )
+            patched_delete_session_data.assert_any_call(
+                f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
+            )
 
     async def __test_query(self, initial_session_data: str = "") -> None:
         # Arrange
@@ -178,4 +183,9 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         # Assert
         self.assertTrue(response.is_success, response.message)
-        patched_delete_session_data.assert_called_once_with(self.session_id)
+        patched_delete_session_data.assert_any_call(
+            f"{self.session_id}{QueryFlow.SUFFIX_METADATA}"
+        )
+        patched_delete_session_data.assert_any_call(
+            f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
+        )
