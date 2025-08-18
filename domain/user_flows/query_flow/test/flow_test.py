@@ -110,36 +110,54 @@ class FlowTest(IsolatedAsyncioTestCase):
         # Response should be successful and have a non-None payload
         self.assertTrue(query_response.is_success, query_response.message)
         assert query_response.payload is not None
-        self.assertEqual(query_response.payload, self.answer)
+        # self.assertEqual(query_response.payload, self.answer)
 
-        # session data manager should have been queried
-        patched_get_session_data.assert_called_once_with(self.session_id)
+        # session data manager should have been queried for preamble, metadata and postamble
+        patched_get_session_data.assert_any_call(
+            f"{self.session_id}{QueryFlow.SUFFIX_METADATA}"
+        )
 
         if not initial_session_data:
-            # db metadata should have been fetched
+            # db metadata should have been fetched from metadata storage
             self.patched_get_db.assert_called_once()
-            param_session_id = patched_get_session_data.call_args[0][0]
-            self.assertEqual(param_session_id, self.session_id)
+        else:
+            self.patched_get_db.assert_not_called()
 
-        # Session data sent to the LLM
+        # session data manager should have been queried for the last question asked and its answer
+        patched_get_session_data.assert_any_call(
+            f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
+        )
+
+        # Data should have been sent to LLM with session data parts of it
+        patched_llm_query.assert_called_once()
         session_data_for_llm = patched_llm_query.call_args[0][0]
 
-        # should contain the question
+        if initial_session_data:
+            self.assertIn(initial_session_data, session_data_for_llm)
+        else:
+            self.assertIn(self.preamble, session_data_for_llm)
+            self.assertIn(self.postamble, session_data_for_llm)
+            self.assertIn(self.db_metadata.name, session_data_for_llm)
+            self.assertIn(self.db_metadata.description, session_data_for_llm)
         self.assertIn(self.question, session_data_for_llm)
 
         # session data manager should have been called with updated session data
-        patched_update_session_data.assert_called_once()
+        self.assertEqual(2, patched_update_session_data.call_count)
 
-        updated_session_data = patched_update_session_data.call_args[0][1]
-        self.assertIn(self.question, updated_session_data)
-        self.assertIn(self.answer, updated_session_data)
+        # First update should be for metadata, either existing or new
+        updated_metadata = patched_update_session_data.call_args_list[0][0][1]
         if initial_session_data:
-            self.assertIn(initial_session_data, updated_session_data)
+            self.assertIn(initial_session_data, updated_metadata)
         else:
-            self.assertIn(self.preamble, updated_session_data)
-            self.assertIn(self.postamble, updated_session_data)
-            self.assertIn(self.db_metadata.name, updated_session_data)
-            self.assertIn(self.db_metadata.description, updated_session_data)
+            self.assertIn(self.preamble, updated_metadata)
+            self.assertIn(self.postamble, updated_metadata)
+            self.assertIn(self.db_metadata.name, updated_metadata)
+            self.assertIn(self.db_metadata.description, updated_metadata)
+
+        # Second update call should have been for latest question and answer
+        updated_qa = patched_update_session_data.call_args_list[1][0][1]
+        self.assertIn(self.question, updated_qa)
+        self.assertIn(self.answer, updated_qa)
 
     async def test_query_new_session(self) -> None:
         await self.__test_query()

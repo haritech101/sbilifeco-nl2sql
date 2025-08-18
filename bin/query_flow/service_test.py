@@ -1,3 +1,4 @@
+from ctypes.util import test
 import sys
 
 sys.path.append("./src")
@@ -16,10 +17,18 @@ from uuid import uuid4
 class Test(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         load_dotenv()
-        http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        test_type = getenv(EnvVars.test_type, Defaults.test_type)
+        if test_type == "unit":
+            http_port = int(
+                getenv(EnvVars.http_port_unittest, Defaults.http_port_unittest)
+            )
+        else:
+            http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
         self.service = QueryFlowMicroservice()
-        await self.service.run()
+
+        if test_type == "unit":
+            await self.service.run()
 
         self.client = QueryFlowHttpClient()
         self.client.set_proto("http").set_host("localhost").set_port(http_port)
