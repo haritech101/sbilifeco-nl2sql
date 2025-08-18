@@ -132,7 +132,13 @@ class FlowTest(IsolatedAsyncioTestCase):
         patched_llm_query.assert_called_once()
         session_data_for_llm = patched_llm_query.call_args[0][0]
 
-        self.assertIn(initial_session_data, session_data_for_llm)
+        if initial_session_data:
+            self.assertIn(initial_session_data, session_data_for_llm)
+        else:
+            self.assertIn(self.preamble, session_data_for_llm)
+            self.assertIn(self.postamble, session_data_for_llm)
+            self.assertIn(self.db_metadata.name, session_data_for_llm)
+            self.assertIn(self.db_metadata.description, session_data_for_llm)
         self.assertIn(self.question, session_data_for_llm)
 
         # session data manager should have been called with updated session data

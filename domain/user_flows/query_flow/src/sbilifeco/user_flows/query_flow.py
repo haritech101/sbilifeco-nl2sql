@@ -147,7 +147,7 @@ class QueryFlow(IQueryFlow):
                 return Response.fail(last_qa_response.message, last_qa_response.code)
             last_qa = last_qa_response.payload or ""
 
-            session_data = "{metadata}\n\n"
+            session_data = f"{metadata}\n\n"
             session_data += (
                 f"{last_qa}\n\nKeeping the last query as it is,\n" if last_qa else ""
             )
