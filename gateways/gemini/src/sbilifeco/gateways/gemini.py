@@ -7,6 +7,7 @@ from sbilifeco.models.base import Response
 
 class Gemini(ILLM):
     DEFAULT_MODEL = "gemini-1.5-flash"
+    RIGID = 0
 
     def __init__(self):
         self.model: str = self.DEFAULT_MODEL
@@ -30,7 +31,11 @@ class Gemini(ILLM):
             print(f"{len(context)} characters consumed\n")
 
             gemini_response = self.client.models.generate_content(
-                model=self.model, contents=context
+                model=self.model,
+                contents=context,
+                config={
+                    "temperature": self.RIGID,
+                },
             )
             answer = (gemini_response.text or "").strip()
 
