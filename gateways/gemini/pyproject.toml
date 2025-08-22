@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-gateway-gemini"
-version = "0.1.10"
+version = "0.1.11"
 description = "LLM using Gemini"
 dependencies = [
     "google-genai>=1.18.0",

@@ -9,7 +9,7 @@ RUN pip install \
     sbilifeco-microservice-llm==0.1.5 \
     sbilifeco-models-base==0.1.3 \
     sbilifeco-http-server-llm==0.1.6 \
-    sbilifeco-gateway-gemini==0.1.10
+    sbilifeco-gateway-gemini==0.1.11
 
 EXPOSE 80
 
