@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
 # Import the necessary service(s) here
-from session_data_manager import ServiceDataManagerExecutable
+from bin.session_data_manager.service import SessionDataManagerMicroservice
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
 from faker import Faker
 from uuid import uuid4
@@ -19,7 +19,7 @@ class Test(IsolatedAsyncioTestCase):
         load_dotenv(".local/.env")
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
-        self.service = ServiceDataManagerExecutable()
+        self.service = SessionDataManagerMicroservice()
         await self.service.run()
 
         self.http_client = SessionDataManagerHttpClient()

@@ -9,6 +9,9 @@ from datetime import datetime
 
 
 class QueryFlow(IQueryFlow):
+    SUFFIX_METADATA = "-metadata"
+    SUFFIX_LAST_QA = "-last-qa"
+
     def __init__(self):
         self.metadata_storage: IMetadataStorage
         self.llm: ILLM
@@ -43,11 +46,12 @@ class QueryFlow(IQueryFlow):
 
     async def stop_session(self, session_id: str) -> Response[None]:
         try:
-            delete_response = await self.session_data_manager.delete_session_data(
-                session_id
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            if not delete_response.is_success:
-                return Response.fail(delete_response.message, delete_response.code)
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}"
+            )
 
             # All good
             return Response.ok(None)
@@ -56,11 +60,12 @@ class QueryFlow(IQueryFlow):
 
     async def reset_session(self, session_id: str) -> Response[None]:
         try:
-            delete_response = await self.session_data_manager.delete_session_data(
-                session_id
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            if not delete_response.is_success:
-                return Response.fail(delete_response.message, delete_response.code)
+            await self.session_data_manager.delete_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}"
+            )
 
             return Response.ok(None)
         except Exception as e:
@@ -73,18 +78,16 @@ class QueryFlow(IQueryFlow):
 
     async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
         try:
-            session_data_response = await self.session_data_manager.get_session_data(
-                session_id
+            metadata_response = await self.session_data_manager.get_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}"
             )
-            if not session_data_response.is_success:
-                return Response.fail(
-                    session_data_response.message, session_data_response.code
-                )
-            if session_data_response.payload is None:
-                return Response.fail("Session data is inexplicably None", 500)
-            session_data = session_data_response.payload
+            if not metadata_response.is_success:
+                return Response.fail(metadata_response.message, metadata_response.code)
+            if metadata_response.payload is None:
+                return Response.fail("Metadata is inexplicably None", 500)
+            metadata = metadata_response.payload
 
-            if session_data == "":
+            if metadata == "":
                 db_response = await self.metadata_storage.get_db(
                     dbId,
                     with_tables=True,
@@ -99,59 +102,75 @@ class QueryFlow(IQueryFlow):
                     return Response.fail("Metadata is inexplicably blank", 500)
 
                 if self.preamble:
-                    session_data += self.__fill_in(self.preamble) + "\n\n"
+                    metadata += self.__fill_in(self.preamble) + "\n\n"
 
-                session_data += (
+                metadata += (
                     "The query will be based on the following database metadata:\n"
                 )
 
-                session_data += f"Database name: {db.name}\n"
-                session_data += f"Database description: {db.description}\n"
+                metadata += f"Database name: {db.name}\n"
+                if db.description:
+                    metadata += f"Database description: {db.description}\n"
                 if db.tables is not None:
                     for table in db.tables:
-                        session_data += f"\tTable name: {table.name}\n"
-                        session_data += f"\tTable description: {table.description}\n"
+                        metadata += f"\tTable name: {table.name}\n"
+                        metadata += f"\tTable description: {table.description}\n"
                         if table.fields is not None:
                             for field in table.fields:
-                                session_data += f"\t\tField name: {field.name}, type: {field.type}\n"
-                                session_data += (
-                                    f"\t\tField description: {field.description}\n"
-                                )
-                                session_data += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+                                metadata += f"\t\tField name: {field.name}, type: {field.type}\n"
+                                if field.description:
+                                    metadata += (
+                                        f"\t\tField description: {field.description}\n"
+                                    )
+                                if field.aka:
+                                    metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
 
                 if db.kpis:
-                    session_data += "KPIs:\n"
+                    metadata += "KPIs:\n"
                     for kpi in db.kpis:
-                        session_data += f"\tKPI name: {kpi.name}\n"
-                        session_data += f"\tKPI other names: {kpi.aka}\n"
-                        session_data += f"\tKPI description: {kpi.description}\n"
-                        session_data += f"\tKPI formula: {kpi.formula}\n"
+                        metadata += f"\tKPI name: {kpi.name}\n"
+                        metadata += f"\tKPI other names: {kpi.aka}\n"
+                        metadata += f"\tKPI description: {kpi.description}\n"
+                        metadata += f"\tKPI formula: {kpi.formula}\n"
 
                 if db.additional_info:
-                    session_data += (
+                    metadata += (
                         "Also keep in mind the following additional points.\n"
                         f"{db.additional_info}\n"
                     )
 
                 if self.postamble:
-                    session_data += self.__fill_in(self.postamble) + "\n\n"
+                    metadata += self.__fill_in(self.postamble) + "\n\n"
+
+            last_qa_response = await self.session_data_manager.get_session_data(
+                f"{session_id}{QueryFlow.SUFFIX_LAST_QA}"
+            )
+            if not last_qa_response.is_success:
+                return Response.fail(last_qa_response.message, last_qa_response.code)
+            last_qa = last_qa_response.payload or ""
+
+            session_data = f"{metadata}\n\n"
+            session_data += (
+                f"{last_qa}\n\nKeeping the last query as it is,\n" if last_qa else ""
+            )
 
             session_data += f"\n{question}\n"
 
             query_response = await self.llm.generate_reply(session_data)
             if not query_response.is_success:
                 return Response.fail(query_response.message, query_response.code)
-            sql = query_response.payload
-            if sql is None:
+            answer = query_response.payload
+            if answer is None:
                 return Response.fail("LLM did not return a valid SQL query", 500)
 
-            updated_session_data = session_data + f"\n{sql}\n"
-            update_response = await self.session_data_manager.update_session_data(
-                session_id, updated_session_data
+            await self.session_data_manager.update_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}", metadata
             )
-            if not update_response.is_success:
-                return Response.fail(update_response.message, update_response.code)
 
-            return Response.ok(sql)
+            await self.session_data_manager.update_session_data(
+                f"{session_id}{self.SUFFIX_LAST_QA}", f"{question}\n\n{answer}\n\n"
+            )
+
+            return Response.ok(answer)
         except Exception as e:
             return Response.error(e)

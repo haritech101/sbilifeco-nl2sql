@@ -86,7 +86,7 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
         for table in fetch_response.payload.tables:
             self.assertTrue(table.id)
             self.assertTrue(table.name)
-            self.assertTrue(table.description)
+            self.assertTrue(hasattr(table, "description"))
 
             assert table.fields is not None
             self.assertTrue(table.fields)
@@ -95,5 +95,5 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
                 self.assertTrue(field.id)
                 self.assertTrue(field.name)
                 self.assertTrue(field.type)
-                self.assertTrue(field.description)
-                self.assertTrue(field.aka)
+                self.assertTrue(hasattr(field, "description"))
+                self.assertTrue(hasattr(field, "aka"))

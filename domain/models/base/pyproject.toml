@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-models-base"
-version = "0.1.2"
+version = "0.1.3"
 description = "The most fundamental model classes for SbiLifeCo."
 dependencies = [
     "pydantic>=2.11.5"
