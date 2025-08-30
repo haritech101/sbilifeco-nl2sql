@@ -1,0 +1,1 @@
+If there are master tables, then you will need to fetch the values from those tables.
