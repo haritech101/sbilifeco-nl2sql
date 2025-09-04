@@ -1,4 +1,6 @@
 from asyncio import run, sleep
+from typing import AsyncGenerator, TextIO
+from webbrowser import get
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
@@ -35,17 +37,11 @@ class QueryFlowMicroservice:
             getenv(EnvVars.session_data_port, Defaults.session_data_port)
         )
 
-        preamble = ""
-        preamble_file = getenv(EnvVars.preamble_file)
-        if preamble_file:
-            with open(preamble_file) as preamble_stream:
-                preamble = preamble_stream.read()
-
-        postamble = ""
-        postamble_file = getenv(EnvVars.postamble_file)
-        if postamble_file:
-            with open(postamble_file) as postamble_stream:
-                postamble = postamble_stream.read()
+        prompts_file = getenv(EnvVars.prompts_file)
+        prompts: list[str] = []
+        if prompts_file:
+            with open(prompts_file) as prompts_stream:
+                prompts = prompts_stream.read().split("=====")
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
@@ -63,7 +59,7 @@ class QueryFlowMicroservice:
         flow = QueryFlow()
         flow.set_llm(llm).set_metadata_storage(storage).set_session_data_manager(
             session_data_manager
-        ).set_preamble(preamble).set_postamble(postamble)
+        ).set_prompts(prompts)
 
         microservice = QueryFlowHttpService()
         microservice.set_query_flow(flow).set_http_port(flow_port)

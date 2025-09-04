@@ -1,7 +1,9 @@
+from random import randint
 import sys
 
 sys.path.append("./src")
 
+from typing import AsyncGenerator
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 from sbilifeco.user_flows.query_flow import QueryFlow
@@ -15,11 +17,12 @@ from sbilifeco.models.db_metadata import DB
 
 
 class FlowTest(IsolatedAsyncioTestCase):
+    num_prompts = randint(2, 4)
+
     async def asyncSetUp(self) -> None:
         self.faker = Faker()
         self.session_id = uuid4().hex
-        self.preamble = self.faker.paragraph()
-        self.postamble = self.faker.paragraph()
+        self.prompts = [self.faker.paragraph() for _ in range(self.num_prompts)]
         self.random_session_data = self.faker.paragraph()
         self.question = self.faker.sentence() + "?"
         self.answer = self.faker.paragraph()
@@ -46,8 +49,7 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
-            .set_preamble(self.preamble)
-            .set_postamble(self.postamble)
+            .set_prompts(self.prompts)
         )
 
         return await super().asyncSetUp()
@@ -134,17 +136,27 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
 
         # Data should have been sent to LLM with session data parts of it
-        patched_llm_query.assert_called_once()
-        session_data_for_llm = patched_llm_query.call_args[0][0]
+        patched_llm_query.assert_called()
 
+        llm_call_count = patched_llm_query.call_count
+
+        # The first call should either build on initial session data or just use prompts and metadata
+        session_data_for_llm = patched_llm_query.call_args[0][0]
         if initial_session_data:
             self.assertIn(initial_session_data, session_data_for_llm)
         else:
-            self.assertIn(self.preamble, session_data_for_llm)
-            self.assertIn(self.postamble, session_data_for_llm)
+            self.assertIn(self.prompts[0], session_data_for_llm)
             self.assertIn(self.db_metadata.name, session_data_for_llm)
             self.assertIn(self.db_metadata.description, session_data_for_llm)
         self.assertIn(self.question, session_data_for_llm)
+
+        self.assertEqual(llm_call_count, self.num_prompts)
+
+        # Subsequent calls (if any) should have successive prompts
+        if llm_call_count > 1:
+            for i in range(1, llm_call_count):
+                session_data_for_llm = patched_llm_query.call_args_list[i][0][0]
+                self.assertIn(self.prompts[i], session_data_for_llm)
 
         # session data manager should have been called with updated session data
         self.assertEqual(2, patched_update_session_data.call_count)
@@ -154,8 +166,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         if initial_session_data:
             self.assertIn(initial_session_data, updated_metadata)
         else:
-            self.assertIn(self.preamble, updated_metadata)
-            self.assertIn(self.postamble, updated_metadata)
+            self.assertIn(self.prompts[0], updated_metadata)
             self.assertIn(self.db_metadata.name, updated_metadata)
             self.assertIn(self.db_metadata.description, updated_metadata)
 

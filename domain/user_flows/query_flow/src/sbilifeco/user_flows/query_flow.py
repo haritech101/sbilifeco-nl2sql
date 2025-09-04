@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import AsyncIterable, AsyncIterator
 from uuid import uuid4
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
@@ -13,43 +14,42 @@ class QueryFlow(IQueryFlow):
     SUFFIX_LAST_QA = "-last-qa"
 
     def __init__(self):
-        self.metadata_storage: IMetadataStorage
-        self.llm: ILLM
-        self.session_data_manager: ISessionDataManager
-        self.preamble = ""
-        self.postamble = ""
+        self._metadata_storage: IMetadataStorage
+        self._llm: ILLM
+        self._session_data_manager: ISessionDataManager
+        self._prompts: list[str]
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
-        self.metadata_storage = metadata_storage
+        self._metadata_storage = metadata_storage
         return self
 
     def set_llm(self, llm: ILLM) -> QueryFlow:
-        self.llm = llm
+        self._llm = llm
         return self
 
     def set_session_data_manager(
         self, session_data_manager: ISessionDataManager
     ) -> QueryFlow:
-        self.session_data_manager = session_data_manager
+        self._session_data_manager = session_data_manager
         return self
 
-    def set_preamble(self, preamble: str) -> QueryFlow:
-        self.preamble = preamble
+    def set_prompts(self, prompts: list[str]) -> QueryFlow:
+        self._prompts = prompts
         return self
 
-    def set_postamble(self, postamble: str) -> QueryFlow:
-        self.postamble = postamble
-        return self
+    async def _generate_prompts(self) -> AsyncIterator[str]:
+        for prompt in self._prompts:
+            yield prompt
 
     async def start_session(self) -> Response[str]:
         return Response.ok(uuid4().hex)
 
     async def stop_session(self, session_id: str) -> Response[None]:
         try:
-            await self.session_data_manager.delete_session_data(
+            await self._session_data_manager.delete_session_data(
                 f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            await self.session_data_manager.delete_session_data(
+            await self._session_data_manager.delete_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}"
             )
 
@@ -60,10 +60,10 @@ class QueryFlow(IQueryFlow):
 
     async def reset_session(self, session_id: str) -> Response[None]:
         try:
-            await self.session_data_manager.delete_session_data(
+            await self._session_data_manager.delete_session_data(
                 f"{session_id}{self.SUFFIX_LAST_QA}"
             )
-            await self.session_data_manager.delete_session_data(
+            await self._session_data_manager.delete_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}"
             )
 
@@ -78,17 +78,19 @@ class QueryFlow(IQueryFlow):
 
     async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
         try:
-            metadata_response = await self.session_data_manager.get_session_data(
+            prompts_iterator = self._generate_prompts()
+
+            context_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}"
             )
-            if not metadata_response.is_success:
-                return Response.fail(metadata_response.message, metadata_response.code)
-            if metadata_response.payload is None:
+            if not context_response.is_success:
+                return Response.fail(context_response.message, context_response.code)
+            if context_response.payload is None:
                 return Response.fail("Metadata is inexplicably None", 500)
-            metadata = metadata_response.payload
+            context = context_response.payload
 
-            if metadata == "":
-                db_response = await self.metadata_storage.get_db(
+            if context == "":
+                db_response = await self._metadata_storage.get_db(
                     dbId,
                     with_tables=True,
                     with_fields=True,
@@ -101,76 +103,97 @@ class QueryFlow(IQueryFlow):
                 if db is None:
                     return Response.fail("Metadata is inexplicably blank", 500)
 
-                if self.preamble:
-                    metadata += self.__fill_in(self.preamble) + "\n\n"
+                preamble = await anext(prompts_iterator, "")
+                if preamble:
+                    context += self.__fill_in(preamble) + "\n\n"
 
-                metadata += (
-                    "The query will be based on the following database metadata:\n"
+                context += (
+                    "Here are the details of the database you will be querying.\n\n"
                 )
-
-                metadata += f"Database name: {db.name}\n"
+                context += f"Database name: {db.name}\n"
                 if db.description:
-                    metadata += f"Database description: {db.description}\n"
+                    context += f"Database description: {db.description}\n"
                 if db.tables is not None:
                     for table in db.tables:
-                        metadata += f"\tTable name: {table.name}\n"
-                        metadata += f"\tTable description: {table.description}\n"
+                        context += f"\tTable name: {table.name}\n"
+                        context += f"\tTable description: {table.description}\n"
                         if table.fields is not None:
                             for field in table.fields:
-                                metadata += f"\t\tField name: {field.name}, type: {field.type}\n"
+                                context += f"\t\tField name: {field.name}, type: {field.type}\n"
                                 if field.description:
-                                    metadata += (
+                                    context += (
                                         f"\t\tField description: {field.description}\n"
                                     )
                                 if field.aka:
-                                    metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+                                    context += f"\t\tOther names for field '{field.name}': {field.aka}\n"
 
                 if db.kpis:
-                    metadata += "KPIs:\n"
+                    context += "KPIs:\n"
                     for kpi in db.kpis:
-                        metadata += f"\tKPI name: {kpi.name}\n"
-                        metadata += f"\tKPI other names: {kpi.aka}\n"
-                        metadata += f"\tKPI description: {kpi.description}\n"
-                        metadata += f"\tKPI formula: {kpi.formula}\n"
+                        context += f"\tKPI name: {kpi.name}\n"
+                        context += f"\tKPI other names: {kpi.aka}\n"
+                        context += f"\tKPI description: {kpi.description}\n"
+                        context += f"\tKPI formula: {kpi.formula}\n"
 
                 if db.additional_info:
-                    metadata += (
+                    context += (
                         "Also keep in mind the following additional points.\n"
                         f"{db.additional_info}\n"
                     )
+            else:
+                _ = await anext(prompts_iterator, "")
 
-                if self.postamble:
-                    metadata += self.__fill_in(self.postamble) + "\n\n"
-
-            last_qa_response = await self.session_data_manager.get_session_data(
+            last_qa_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{QueryFlow.SUFFIX_LAST_QA}"
             )
             if not last_qa_response.is_success:
                 return Response.fail(last_qa_response.message, last_qa_response.code)
             last_qa = last_qa_response.payload or ""
 
-            session_data = f"{metadata}\n\n"
+            if last_qa:
+                context += f"Here is the last question and its answer:\n\n{last_qa}\n\n"
+
+            session_data = f"{context}\n\n"
+
             session_data += (
-                f"{last_qa}\n\nKeeping the last query as it is,\n" if last_qa else ""
+                f"We are now trying to answer the following question:\n{question}\n\n"
+            )
+            session_data += (
+                "If you have understood so far, please reply with 'Understood'.\n\n"
             )
 
-            session_data += f"\n{question}\n"
-
-            query_response = await self.llm.generate_reply(session_data)
+            query_response = await self._llm.generate_reply(session_data)
             if not query_response.is_success:
                 return Response.fail(query_response.message, query_response.code)
-            answer = query_response.payload
-            if answer is None:
+            if query_response.payload is None:
                 return Response.fail("LLM did not return a valid SQL query", 500)
 
-            await self.session_data_manager.update_session_data(
-                f"{session_id}{self.SUFFIX_METADATA}", metadata
+            answer = query_response.payload
+            session_data += answer + "\n\n"
+
+            full_answer = ""
+            async for prompt in prompts_iterator:
+                session_data += f"{prompt}\n\n"
+                full_answer += f"{prompt}\n\n"
+                query_response = await self._llm.generate_reply(session_data)
+
+                if not query_response.is_success:
+                    return Response.fail(query_response.message, query_response.code)
+                answer = query_response.payload
+                if answer is None:
+                    return Response.fail("LLM did not return a valid SQL query", 500)
+
+                session_data += answer + "\n\n"
+                full_answer += answer + "\n\n"
+
+            await self._session_data_manager.update_session_data(
+                f"{session_id}{self.SUFFIX_METADATA}", context
             )
 
-            await self.session_data_manager.update_session_data(
+            await self._session_data_manager.update_session_data(
                 f"{session_id}{self.SUFFIX_LAST_QA}", f"{question}\n\n{answer}\n\n"
             )
 
-            return Response.ok(answer)
+            return Response.ok(full_answer.strip())
         except Exception as e:
             return Response.error(e)
