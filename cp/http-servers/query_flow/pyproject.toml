@@ -7,11 +7,11 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-http-server-query-flow"
-version = "0.1.8"
+version = "0.1.9"
 description = "HTTP service on top of query flow"
 dependencies = [
     "sbilifeco-models-base>=0.1.3",
     "sbilifeco-paths-query-flow>=0.1.3",
     "sbilifeco-cp-http-server>=0.1.1",
-    "sbilifeco-user-flow-generate-query>=0.1.17",
+    "sbilifeco-user-flow-generate-query>=0.1.18",
 ]
