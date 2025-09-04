@@ -159,14 +159,15 @@ class QueryFlow(IQueryFlow):
                 f"We are now trying to answer the following question:\n{question}\n\n"
             )
             session_data += (
-                "If you have understood so far, please reply with 'Understood'.\n\n"
+                "Don't write any query yet. "
+                "If you have understood so far, please reply with the single word 'Understood'.\n\n"
             )
 
             query_response = await self._llm.generate_reply(session_data)
             if not query_response.is_success:
                 return Response.fail(query_response.message, query_response.code)
             if query_response.payload is None:
-                return Response.fail("LLM did not return a valid SQL query", 500)
+                return Response.fail("LLM did not return a valid answer", 500)
 
             answer = query_response.payload
             session_data += answer + "\n\n"
@@ -181,7 +182,7 @@ class QueryFlow(IQueryFlow):
                     return Response.fail(query_response.message, query_response.code)
                 answer = query_response.payload
                 if answer is None:
-                    return Response.fail("LLM did not return a valid SQL query", 500)
+                    return Response.fail("LLM did not return a valid answer", 500)
 
                 session_data += answer + "\n\n"
                 full_answer += answer + "\n\n"
