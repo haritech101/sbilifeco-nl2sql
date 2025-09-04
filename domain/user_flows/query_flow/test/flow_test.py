@@ -19,10 +19,6 @@ from sbilifeco.models.db_metadata import DB
 class FlowTest(IsolatedAsyncioTestCase):
     num_prompts = randint(2, 4)
 
-    async def _generate_prompts(self) -> AsyncGenerator[str, None]:
-        for prompt in self.prompts:
-            yield prompt
-
     async def asyncSetUp(self) -> None:
         self.faker = Faker()
         self.session_id = uuid4().hex
@@ -53,7 +49,7 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
-            .set_prompts(self._generate_prompts())
+            .set_prompts(self.prompts)
         )
 
         return await super().asyncSetUp()

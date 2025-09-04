@@ -54,14 +54,14 @@ class Test(IsolatedAsyncioTestCase):
 
     async def test_non_join_query(self) -> None:
         # Arrange
-        question = "How many regions are being served?"
+        question = "Total Actual NBP from Retal Ageny in bengalor"
 
         # Act and assert
         await self._test_with(question)
 
     async def test_join_query(self) -> None:
         # Arrange
-        question = "What is Mumbai's budget achievement?"
+        question = "NBP Budget achievement YTD for PMJJBY segment"
 
         # Act and assert
         await self._test_with(question)

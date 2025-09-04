@@ -12,12 +12,6 @@ from envvars import EnvVars, Defaults
 
 
 class QueryFlowMicroservice:
-    prompts = []
-
-    async def _prompts(self) -> AsyncGenerator[str, None]:
-        for prompt in self.prompts:
-            yield prompt
-
     async def run(self) -> None:
         llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
         llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
@@ -44,9 +38,10 @@ class QueryFlowMicroservice:
         )
 
         prompts_file = getenv(EnvVars.prompts_file)
+        prompts: list[str] = []
         if prompts_file:
-            prompts_stream = open(prompts_file)
-            self.prompts = prompts_stream.read().split("=====")
+            with open(prompts_file) as prompts_stream:
+                prompts = prompts_stream.read().split("=====")
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
@@ -64,7 +59,7 @@ class QueryFlowMicroservice:
         flow = QueryFlow()
         flow.set_llm(llm).set_metadata_storage(storage).set_session_data_manager(
             session_data_manager
-        ).set_prompts(self._prompts())
+        ).set_prompts(prompts)
 
         microservice = QueryFlowHttpService()
         microservice.set_query_flow(flow).set_http_port(flow_port)
