@@ -35,3 +35,4 @@ class GeminiTest(IsolatedAsyncioTestCase):
         self.assertGreater(
             len(response.payload), 0, "Response payload should not be empty"
         )
+        print(response.payload)
