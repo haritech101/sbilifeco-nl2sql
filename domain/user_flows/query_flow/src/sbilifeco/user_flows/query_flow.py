@@ -17,7 +17,7 @@ class QueryFlow(IQueryFlow):
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
-        self._prompts: AsyncIterator[str]
+        self._prompts: list[str]
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -33,9 +33,13 @@ class QueryFlow(IQueryFlow):
         self._session_data_manager = session_data_manager
         return self
 
-    def set_prompts(self, prompts: AsyncIterator[str]) -> QueryFlow:
+    def set_prompts(self, prompts: list[str]) -> QueryFlow:
         self._prompts = prompts
         return self
+
+    async def _generate_prompts(self) -> AsyncIterator[str]:
+        for prompt in self._prompts:
+            yield prompt
 
     async def start_session(self) -> Response[str]:
         return Response.ok(uuid4().hex)
@@ -74,6 +78,8 @@ class QueryFlow(IQueryFlow):
 
     async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
         try:
+            prompts_iterator = self._generate_prompts()
+
             context_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}"
             )
@@ -97,7 +103,7 @@ class QueryFlow(IQueryFlow):
                 if db is None:
                     return Response.fail("Metadata is inexplicably blank", 500)
 
-                preamble = await anext(self._prompts, "")
+                preamble = await anext(prompts_iterator, "")
                 if preamble:
                     context += self.__fill_in(preamble) + "\n\n"
 
@@ -135,7 +141,7 @@ class QueryFlow(IQueryFlow):
                         f"{db.additional_info}\n"
                     )
             else:
-                _ = await anext(self._prompts, "")
+                _ = await anext(prompts_iterator, "")
 
             last_qa_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{QueryFlow.SUFFIX_LAST_QA}"
@@ -166,7 +172,7 @@ class QueryFlow(IQueryFlow):
             session_data += answer + "\n\n"
 
             full_answer = ""
-            async for prompt in self._prompts:
+            async for prompt in prompts_iterator:
                 session_data += f"{prompt}\n\n"
                 full_answer += f"{prompt}\n\n"
                 query_response = await self._llm.generate_reply(session_data)
