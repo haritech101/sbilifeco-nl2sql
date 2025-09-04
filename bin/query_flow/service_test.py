@@ -27,7 +27,8 @@ class Test(IsolatedAsyncioTestCase):
             await self.service.run()
 
         self.client = QueryFlowHttpClient()
-        self.client.set_proto("http").set_host("localhost").set_port(http_port)
+        host = "tech101.in" if test_type == "staging" else "localhost"
+        self.client.set_proto("http").set_host(host).set_port(http_port)
 
     async def asyncTearDown(self) -> None: ...
 
