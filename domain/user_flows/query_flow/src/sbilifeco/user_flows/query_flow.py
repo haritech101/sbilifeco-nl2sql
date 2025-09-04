@@ -163,6 +163,8 @@ class QueryFlow(IQueryFlow):
                 return Response.fail("LLM did not return a valid SQL query", 500)
 
             answer = query_response.payload
+            session_data += answer + "\n\n"
+
             full_answer = ""
             async for prompt in self._prompts:
                 session_data += f"{prompt}\n\n"
