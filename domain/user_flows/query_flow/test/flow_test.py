@@ -111,6 +111,7 @@ class FlowTest(IsolatedAsyncioTestCase):
             dbId=self.db_metadata.id,
             session_id=self.session_id,
             question=self.question,
+            with_thoughts=False,
         )
 
         # Assert

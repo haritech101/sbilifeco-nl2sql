@@ -46,6 +46,8 @@ class QueryFlowHttpService(HttpServer):
         @self.post(Paths.QUERIES)
         async def query(session_id: str, req: QueryRequest) -> Response[str]:
             try:
-                return await self.query_flow.query(req.db_id, session_id, req.question)
+                return await self.query_flow.query(
+                    req.db_id, session_id, req.question, req.with_thoughts
+                )
             except Exception as e:
                 return Response.error(e)

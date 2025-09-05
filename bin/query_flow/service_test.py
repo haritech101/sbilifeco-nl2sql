@@ -1,4 +1,3 @@
-from ctypes.util import test
 import sys
 
 sys.path.append("./src")
@@ -32,14 +31,16 @@ class Test(IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None: ...
 
-    async def _test_with(self, question: str) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
         # Arrange
         # db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
         db_id = "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38"
         session_id = uuid4().hex
 
         # Act
-        query_response = await self.client.query(db_id, session_id, question)
+        query_response = await self.client.query(
+            db_id, session_id, question, with_thoughts
+        )
 
         # Assert
         self.assertTrue(query_response.is_success, query_response.message)
@@ -65,4 +66,4 @@ class Test(IsolatedAsyncioTestCase):
         question = "NBP Budget achievement YTD for PMJJBY segment"
 
         # Act and assert
-        await self._test_with(question)
+        await self._test_with(question, with_thoughts=False)
