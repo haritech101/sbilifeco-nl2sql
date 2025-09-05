@@ -76,7 +76,9 @@ class QueryFlow(IQueryFlow):
         filled_in = template.format(this_month=now.strftime("%b %Y"))
         return filled_in
 
-    async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
+    async def query(
+        self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
+    ) -> Response[str]:
         try:
             prompts_iterator = self._generate_prompts()
 
@@ -195,6 +197,6 @@ class QueryFlow(IQueryFlow):
                 f"{session_id}{self.SUFFIX_LAST_QA}", f"{question}\n\n{answer}\n\n"
             )
 
-            return Response.ok(full_answer.strip())
+            return Response.ok(with_thoughts and full_answer.strip() or answer.strip())
         except Exception as e:
             return Response.error(e)

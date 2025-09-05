@@ -12,3 +12,4 @@ class Paths:
 class QueryRequest(BaseModel):
     db_id: str
     question: str
+    with_thoughts: bool = False
