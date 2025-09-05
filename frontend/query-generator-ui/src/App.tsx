@@ -15,6 +15,7 @@ function App() {
     const [chosenSchemaId, setChosenSchemaId] = useState<string>("");
     const [chat, setChat] = useState<ChatMessage[]>([]);
     const [currentQuestion, setCurrentQuestion] = useState<string>("");
+    const [withThoughts, setWithThoughts] = useState<boolean>(false);
 
 
     useEffect(() => {
@@ -56,7 +57,7 @@ function App() {
 
         console.log(`Handling query request with schema ID: ${chosenSchemaId} and question: ${currentQuestion}`);
 
-        const response = await api.query(chosenSchemaId, sessionId, currentQuestion);
+        const response = await api.query(chosenSchemaId, sessionId, currentQuestion, withThoughts);
         if (!response.is_success) {
             updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
             updatedChat = [
@@ -98,6 +99,10 @@ function App() {
                             </option>
                         ))}
                     </select>
+                    <div className="d-flex flex-row gap-2">
+                        <span>Thought dump?</span>
+                        <input type="checkbox" checked={withThoughts} onChange={(e) => setWithThoughts(e.target.checked)} />
+                    </div>
                 </div>
                 <div className="flex-grow-1 border overflow-auto chat-window d-flex flex-column gap-2 p-3">
                     {chat.map((message, idx) => (<>
