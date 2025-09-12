@@ -82,7 +82,7 @@ services:
         ports:
             - 11205:80
     query-generator-ui:
-        image: sbilife/query-generator-ui:202508.07.1624
+        image: sbilife/query-generator-ui:202509.05.0942
         restart: always
         environment:
             - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}

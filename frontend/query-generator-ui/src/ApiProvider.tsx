@@ -18,7 +18,7 @@ export type Schema = {
 
 export interface Api {
     getSchemas: () => Promise<ApiResponse<Schema[]>>;
-    query: (schemaId: string, sessionId: string, question: string) => Promise<ApiResponse<string>>;
+    query: (schemaId: string, sessionId: string, question: string, withThoughts: boolean) => Promise<ApiResponse<string>>;
     startSession: () => Promise<ApiResponse<string>>;
     stopSession: (sessionId: string) => Promise<ApiResponse<null>>;
     reset: (sessionId: string) => Promise<ApiResponse<null>>;
@@ -33,7 +33,7 @@ export const ApiContext = React.createContext<Api>({
             payload: []
         };
     },
-    query: async (schemaId: string, sessionId: string, question: string) => {
+    query: async (schemaId: string, sessionId: string, question: string, withThoughts: boolean) => {
         return {
             is_success: false,
             code: 501,
@@ -96,7 +96,7 @@ const api: Api = {
             await fetch(`${metadataUrl}/api/v1/db-metadata/dbs`)
         );
     },
-    query: async (schemaId: string, sessionId: string, question: string) => {
+    query: async (schemaId: string, sessionId: string, question: string, withThoughts: boolean) => {
         return processHttpResponse(
             await fetch(`${queryFlowUrl}/api/v1/query-flow/sessions/${sessionId}/queries`, {
                 method: "POST",
@@ -105,7 +105,8 @@ const api: Api = {
                 },
                 body: JSON.stringify({
                     db_id: schemaId,
-                    question
+                    question,
+                    with_thoughts: withThoughts
                 })
             })
         )
