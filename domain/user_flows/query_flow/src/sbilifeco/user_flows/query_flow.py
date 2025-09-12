@@ -152,10 +152,11 @@ class QueryFlow(IQueryFlow):
                 return Response.fail(last_qa_response.message, last_qa_response.code)
             last_qa = last_qa_response.payload or ""
 
-            if last_qa:
-                context += f"Here is the last question and its answer:\n\n{last_qa}\n\n"
-
             session_data = f"{context}\n\n"
+            if last_qa:
+                session_data += (
+                    f"Here is the last question and its answer:\n\n{last_qa}\n\n"
+                )
 
             session_data += (
                 f"We are now trying to answer the following question:\n{question}\n\n"
