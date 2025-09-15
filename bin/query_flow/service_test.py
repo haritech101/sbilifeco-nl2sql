@@ -54,6 +54,13 @@ class Test(IsolatedAsyncioTestCase):
             "Query response should contain 'select'",
         )
 
+    async def test_non_data_query(self) -> None:
+        # Arrange
+        question = "Which regions are found in the south zone?"
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
     async def test_non_join_query(self) -> None:
         # Arrange
         question = "Total Actual NBP from Retal Ageny in bengalor"
