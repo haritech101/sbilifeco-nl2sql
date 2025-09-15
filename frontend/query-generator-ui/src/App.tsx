@@ -83,6 +83,16 @@ function App() {
         }
     }
 
+    const handleResetSession = async () => {
+        setChat([]);
+        setCurrentQuestion("");
+
+        const resetResponse = await api.reset(sessionId);
+        if (!resetResponse.is_success) {
+            console.error("Failed to reset state:", resetResponse.message);
+        }
+    }
+
     return (
         <div className="d-flex flex-column p-3 gap-3 vh-100">
             <header>
@@ -99,9 +109,14 @@ function App() {
                             </option>
                         ))}
                     </select>
-                    <div className="d-flex flex-row gap-2">
+                    <div className="d-flex flex-row gap-2 align-items-center">
                         <span>Thought dump?</span>
                         <input type="checkbox" checked={withThoughts} onChange={(e) => setWithThoughts(e.target.checked)} />
+                        <span className="flex-grow-1"></span>
+                        <button
+                            className="btn bg-black text-white"
+                            onClick={handleResetSession}
+                        >Reset Session</button>
                     </div>
                 </div>
                 <div className="flex-grow-1 border overflow-auto chat-window d-flex flex-column gap-2 p-3">
