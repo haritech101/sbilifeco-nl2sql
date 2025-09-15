@@ -121,7 +121,12 @@ function App() {
                 </div>
                 <div className="d-flex flex-row gap-2">
                     <textarea value={currentQuestion} className="flex-grow-1 form-control" name="question" onChange={(e) => setCurrentQuestion(e.target.value)}></textarea>
-                    <button className="btn btn-primary" name="generate" onClick={() => { handleSubmitMessage() }}>Generate Query</button>
+                    <button
+                        className="btn btn-primary"
+                        name="generate"
+                        onClick={() => { handleSubmitMessage() }}
+                        disabled={currentQuestion.trim() === "" || chosenSchemaId === ""}
+                    >Generate Query</button>
                 </div>
             </main>
         </div>
