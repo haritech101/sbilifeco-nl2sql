@@ -5,11 +5,11 @@ from sbilifeco.cp.query_flow.paths import Paths, QueryRequest
 from sbilifeco.models.base import Response
 
 
-class QueryFlowMicroservice(HttpServer):
+class QueryFlowHttpService(HttpServer):
     def __init__(self):
         HttpServer.__init__(self)
 
-    def set_query_flow(self, query_flow: IQueryFlow) -> QueryFlowMicroservice:
+    def set_query_flow(self, query_flow: IQueryFlow) -> QueryFlowHttpService:
         self.query_flow = query_flow
         return self
 
@@ -46,6 +46,8 @@ class QueryFlowMicroservice(HttpServer):
         @self.post(Paths.QUERIES)
         async def query(session_id: str, req: QueryRequest) -> Response[str]:
             try:
-                return await self.query_flow.query(req.db_id, session_id, req.question)
+                return await self.query_flow.query(
+                    req.db_id, session_id, req.question, req.with_thoughts
+                )
             except Exception as e:
                 return Response.error(e)

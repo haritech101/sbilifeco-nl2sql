@@ -1,5 +1,7 @@
 class EnvVars:
+    test_type = "TEST_TYPE"
     http_port = "HTTP_PORT"
+    http_port_unittest = "HTTP_PORT_UNITTEST"
     llm_proto = "LLM_PROTO"
     llm_host = "LLM_HOST"
     llm_port = "LLM_PORT"
@@ -9,12 +11,13 @@ class EnvVars:
     session_data_proto = "SESSION_DATA_PROTO"
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
-    preamble_file = "PREAMBLE_FILE"
-    postamble_file = "POSTAMBLE_FILE"
+    prompts_file = "PROMPTS_FILE"
 
 
 class Defaults:
+    test_type = "unit"
     http_port = "80"
+    http_port_unittest = "80"
     llm_proto = "http"
     llm_host = "localhost"
     llm_port = "80"

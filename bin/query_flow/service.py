@@ -1,15 +1,17 @@
 from asyncio import run, sleep
+from typing import AsyncGenerator, TextIO
+from webbrowser import get
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
 from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.cp.query_flow.microservice import QueryFlowMicroservice
+from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from os import getenv
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
 
-class QueryFlowExecutable:
+class QueryFlowMicroservice:
     async def run(self) -> None:
         llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
         llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
@@ -35,17 +37,11 @@ class QueryFlowExecutable:
             getenv(EnvVars.session_data_port, Defaults.session_data_port)
         )
 
-        preamble = ""
-        preamble_file = getenv(EnvVars.preamble_file)
-        if preamble_file:
-            with open(preamble_file) as preamble_stream:
-                preamble = preamble_stream.read()
-
-        postamble = ""
-        postamble_file = getenv(EnvVars.postamble_file)
-        if postamble_file:
-            with open(postamble_file) as postamble_stream:
-                postamble = postamble_stream.read()
+        prompts_file = getenv(EnvVars.prompts_file)
+        prompts: list[str] = []
+        if prompts_file:
+            with open(prompts_file) as prompts_stream:
+                prompts = prompts_stream.read().split("=====")
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
@@ -63,9 +59,9 @@ class QueryFlowExecutable:
         flow = QueryFlow()
         flow.set_llm(llm).set_metadata_storage(storage).set_session_data_manager(
             session_data_manager
-        ).set_preamble(preamble).set_postamble(postamble)
+        ).set_prompts(prompts)
 
-        microservice = QueryFlowMicroservice()
+        microservice = QueryFlowHttpService()
         microservice.set_query_flow(flow).set_http_port(flow_port)
         await microservice.listen()
 
@@ -78,4 +74,4 @@ class QueryFlowExecutable:
 
 if __name__ == "__main__":
     load_dotenv()
-    run(QueryFlowExecutable().run_forever())
+    run(QueryFlowMicroservice().run_forever())
