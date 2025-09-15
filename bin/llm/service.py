@@ -13,12 +13,15 @@ class LLMMicroservice:
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
         llm_model = getenv(EnvVars.llm_model, Defaults.llm_model)
         api_key = getenv(EnvVars.api_key, None)
+        thinking_budget = int(getenv(EnvVars.thinking_budget, Defaults.thinking_budget))
 
         if not api_key:
             raise ValueError("API_KEY environment variable is required.")
 
         gemini = Gemini()
-        gemini.set_api_key(api_key).set_model(llm_model)
+        gemini.set_api_key(api_key).set_model(llm_model).set_thinking_budget(
+            thinking_budget
+        )
 
         await gemini.async_init()
 
