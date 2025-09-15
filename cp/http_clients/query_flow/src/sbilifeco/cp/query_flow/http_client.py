@@ -40,14 +40,17 @@ class QueryFlowHttpClient(HttpClient, IQueryFlow):
         except Exception as e:
             return Response.error(e)
 
-    async def query(self, dbId: str, session_id: str, question: str) -> Response[str]:
+    async def query(
+        self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
+    ) -> Response[str]:
         try:
-            return await self.request_as_model(
-                Request(
-                    method="POST",
-                    url=f"{self.url_base}{Paths.QUERIES.format(session_id=session_id)}",
-                    json=QueryRequest(db_id=dbId, question=question).model_dump(),
-                )
+            req = Request(
+                method="POST",
+                url=f"{self.url_base}{Paths.QUERIES.format(session_id=session_id)}",
+                json=QueryRequest(
+                    db_id=dbId, question=question, with_thoughts=with_thoughts
+                ).model_dump(),
             )
+            return await self.request_as_model(req)
         except Exception as e:
             return Response.error(e)

@@ -47,17 +47,15 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202508.18.1501
+        image: sbilife/query-flow:202509.12.0821
         restart: always
         environment:
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager
-            - PREAMBLE_FILE=/app/preamble.txt
-            - POSTAMBLE_FILE=/app/postamble.txt
+            - PROMPTS_FILE=/app/prompt.txt
         volumes:
-            - ./.local/preamble.txt:/app/preamble.txt
-            - ./.local/postamble.txt:/app/postamble.txt
+            - ./.local/prompt.txt:/app/prompt.txt
         ports:
             - 11204:80
         labels:
@@ -84,7 +82,7 @@ services:
         ports:
             - 11205:80
     query-generator-ui:
-        image: sbilife/query-generator-ui:202508.07.1624
+        image: sbilife/query-generator-ui:202509.15.1000
         restart: always
         environment:
             - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
