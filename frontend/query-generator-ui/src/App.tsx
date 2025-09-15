@@ -58,17 +58,23 @@ function App() {
         console.log(`Handling query request with schema ID: ${chosenSchemaId} and question: ${currentQuestion}`);
 
         const response = await api.query(chosenSchemaId, sessionId, currentQuestion, withThoughts);
+
+        // Response recieved, either success or failure
+
+        updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me: ..." message
+
+        const newMessage: ChatMessage = { role: "Me", content: "" };
         if (!response.is_success) {
-            updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
-            updatedChat = [
-                ...updatedChat,
-                { role: "Me", content: `Error: ${response.message}` }];
-            setChat(updatedChat);
-            return;
+            newMessage.content = `Error: ${response.message}`;
+        } else {
+            newMessage.content = response.payload;
         }
 
-        updatedChat.splice(updatedChat.length - 1, 1); // Remove the last "Me" message
-        updatedChat = [...updatedChat, { role: "Me", content: response.payload }];
+        updatedChat = [
+            ...updatedChat,
+            newMessage
+        ];
+
         setChat(updatedChat);
     }
 
