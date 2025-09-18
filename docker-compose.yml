@@ -48,7 +48,7 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202509.12.0821
+        image: sbilife/query-flow:202509.18.0855
         restart: always
         environment:
             - LLM_HOST=llm
