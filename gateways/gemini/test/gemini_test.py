@@ -7,7 +7,6 @@ from unittest import IsolatedAsyncioTestCase
 
 from dotenv import load_dotenv
 from sbilifeco.gateways.gemini import Gemini
-from sbilifeco.models.db_metadata import DB, Table, Field
 
 
 class GeminiTest(IsolatedAsyncioTestCase):
@@ -16,7 +15,12 @@ class GeminiTest(IsolatedAsyncioTestCase):
         api_key = getenv("API_KEY", "")
         model = getenv("MODEL", "gemini-1.5-flash")
 
-        self.gemini = Gemini().set_api_key(api_key).set_model(model)
+        self.gemini = (
+            Gemini()
+            .set_api_key(api_key)
+            .set_model(model)
+            .set_thinking_budget(Gemini.NO_BUDGET)
+        )
         await self.gemini.async_init()
 
     async def asyncTearDown(self) -> None:
@@ -35,3 +39,4 @@ class GeminiTest(IsolatedAsyncioTestCase):
         self.assertGreater(
             len(response.payload), 0, "Response payload should not be empty"
         )
+        print(response.payload)

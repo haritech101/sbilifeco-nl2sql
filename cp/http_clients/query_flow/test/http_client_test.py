@@ -1,3 +1,4 @@
+from random import randint
 import sys
 
 sys.path.append("./src")
@@ -5,7 +6,7 @@ sys.path.append("./src")
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
-from sbilifeco.cp.query_flow.microservice import QueryFlowMicroservice
+from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from sbilifeco.models.base import Response
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from faker import Faker
@@ -18,9 +19,9 @@ class HttpClientTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.flow: IQueryFlow = AsyncMock(spec=IQueryFlow)
 
-        self.microservice = QueryFlowMicroservice().set_query_flow(self.flow)
-        self.microservice.set_http_port(self.FLOW_PORT)
-        await self.microservice.listen()
+        self.http_service = QueryFlowHttpService().set_query_flow(self.flow)
+        self.http_service.set_http_port(self.FLOW_PORT)
+        await self.http_service.listen()
 
         self.client = QueryFlowHttpClient()
         self.client.set_proto("http").set_host("localhost").set_port(self.FLOW_PORT)
@@ -28,7 +29,7 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         self.faker = Faker()
 
     async def asyncTearDown(self) -> None:
-        await self.microservice.stop()
+        await self.http_service.stop()
 
     async def test_start_session(self):
         # Arrange
@@ -80,16 +81,19 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         session_id = uuid4().hex
         question = self.faker.sentence()
         answer = self.faker.sentence()
+        with_thoughts = randint(0, 1) == 1
 
         patched_query_method = patch.object(
             self.flow, "query", return_value=Response.ok(answer)
         ).start()
 
         # Act
-        response = await self.client.query(db_id, session_id, question)
+        response = await self.client.query(db_id, session_id, question, with_thoughts)
 
         # Assert
         self.assertTrue(response.is_success, response.message)
         self.assertEqual(response.payload, answer)
 
-        patched_query_method.assert_called_once_with(db_id, session_id, question)
+        patched_query_method.assert_called_once_with(
+            db_id, session_id, question, with_thoughts
+        )

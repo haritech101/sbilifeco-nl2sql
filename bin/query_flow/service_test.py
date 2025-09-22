@@ -1,9 +1,11 @@
+from asyncio import sleep
 import sys
 
 sys.path.append("./src")
 
 from os import getenv
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import patch
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
@@ -11,37 +13,82 @@ from envvars import EnvVars, Defaults
 from service import QueryFlowMicroservice
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
+from pathlib import Path
 
 
 class Test(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         load_dotenv()
+        self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
+
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
-        self.service = QueryFlowMicroservice()
-        await self.service.run()
+        if self.test_type == "unit":
+            self.service = QueryFlowMicroservice()
+            await self.service.run()
 
         self.client = QueryFlowHttpClient()
-        self.client.set_proto("http").set_host("localhost").set_port(http_port)
+        host = "tech101.in" if self.test_type == "staging" else "localhost"
+        self.client.set_proto("http").set_host(host).set_port(http_port)
 
     async def asyncTearDown(self) -> None: ...
 
-    async def test_query(self) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
         # Arrange
-        db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
+        # db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
+        db_id = "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38"
         session_id = uuid4().hex
-        question = "How many regions are being served?"
 
         # Act
-        query_response = await self.client.query(db_id, session_id, question)
+        query_response = await self.client.query(
+            db_id, session_id, question, with_thoughts
+        )
 
         # Assert
         self.assertTrue(query_response.is_success, query_response.message)
         assert (
             query_response.payload is not None
         ), "Query response data should not be None"
+        print(query_response.payload)
         self.assertIn(
             "select",
             query_response.payload.lower(),
             "Query response should contain 'select'",
         )
+
+    async def test_non_data_query(self) -> None:
+        # Arrange
+        question = "Which regions are found in the south zone?"
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_non_join_query(self) -> None:
+        # Arrange
+        question = "Total Actual NBP from Retal Ageny in bengalor"
+
+        # Act and assert
+        await self._test_with(question)
+
+    async def test_join_query(self) -> None:
+        # Arrange
+        question = "NBP Budget achievement YTD for PMJJBY segment"
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_prompt_file_change(self) -> None:
+        if self.test_type != "unit":
+            self.skipTest("Skipping unit test in non-unit test type")
+
+        # Arrange
+        prompts_path = Path(getenv(EnvVars.prompts_file, ""))
+        assert prompts_path != ""
+
+        with patch.object(self.service, "set_flow_prompt") as patched_method:
+            # Act
+            prompts_path.touch()
+            await sleep(1)
+
+            # Assert
+            patched_method.assert_called_once()

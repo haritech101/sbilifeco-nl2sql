@@ -1,6 +1,6 @@
 services:
     metadata-storage:
-        image: sbilife/metadata-storage:202508.14.0935
+        image: sbilife/metadata-storage:202508.14.1200
         restart: always
         volumes:
             - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
@@ -26,11 +26,12 @@ services:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
     llm:
-        image: sbilife/llm:202508.14.0934
+        image: sbilife/llm:202509.15.1505
         restart: always
         environment:
-            - LLM_MODEL=gemini-1.5-flash
+            - LLM_MODEL=gemini-2.5-flash
             - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
+            - THINKING_BUDGET=-1
         ports:
             - 11203:80
         labels:
@@ -47,17 +48,15 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202508.14.0952
+        image: sbilife/query-flow:202509.18.0855
         restart: always
         environment:
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager
-            - PREAMBLE_FILE=/app/preamble.txt
-            - POSTAMBLE_FILE=/app/postamble.txt
+            - PROMPTS_FILE=/app/prompt.txt
         volumes:
-            - ./.local/preamble.txt:/app/preamble.txt
-            - ./.local/postamble.txt:/app/postamble.txt
+            - ./.local/prompt.txt:/app/prompt.txt
         ports:
             - 11204:80
         labels:
@@ -84,7 +83,7 @@ services:
         ports:
             - 11205:80
     query-generator-ui:
-        image: sbilife/query-generator-ui:202508.07.1624
+        image: sbilife/query-generator-ui:202509.15.1000
         restart: always
         environment:
             - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
