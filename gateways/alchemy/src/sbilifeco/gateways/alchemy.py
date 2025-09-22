@@ -41,7 +41,7 @@ class Alchemy(ISqlDb):
         except Exception as e:
             return Response.error(e)
 
-    async def execute_query(self, query: str) -> Response[Any]:
+    async def execute_query(self, query: str) -> Response[list[dict[str, Any]]]:
         try:
             return await self._ensure_connection(self._execute_query, query)
         except Exception as e:
