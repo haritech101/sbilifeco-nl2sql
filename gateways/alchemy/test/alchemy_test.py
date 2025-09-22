@@ -41,6 +41,6 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(response.is_success, response.message)
         assert response.payload is not None
 
-        row: dict = next(iter(response.payload))
+        row = next(iter(response.payload))
         assert row is not None
         self.assertEqual(row.get("number"), 1)
