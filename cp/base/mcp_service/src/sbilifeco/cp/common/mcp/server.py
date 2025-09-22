@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fastmcp import FastMCP
+from mcp.types import Tool as Tool, CallToolResult as ToolResult
 from uvicorn import Config, Server
 
 
@@ -31,6 +32,8 @@ class MCPServer(FastMCP):
             self, name=self.server_name, instructions=self.server_instructions
         )
         self.create_tools()
+
+    async def async_shutdown(self): ...
 
     async def listen(self) -> None:
         config = Config(
