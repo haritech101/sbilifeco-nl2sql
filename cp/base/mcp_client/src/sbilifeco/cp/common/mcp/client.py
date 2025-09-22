@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import timedelta
 from typing import Any
 from fastmcp import Client
 from fastmcp.client.client import CallToolResult
@@ -30,3 +31,16 @@ class MCPClient(Client):
                 return Response.ok(await self.list_tools())
             except Exception as e:
                 return Response.error(e)
+
+    async def call_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any] | None = None,
+        timeout: timedelta | float | int | None = None,
+        progress_handler: ProgressHandler | None = None,
+        raise_on_error: bool = True,
+    ) -> CallToolResult:
+        async with self:
+            return await super().call_tool(
+                name, arguments, timeout, progress_handler, raise_on_error
+            )
