@@ -22,6 +22,8 @@ class MCPClient(Client):
     async def async_init(self):
         self.transport = StreamableHttpTransport(url=self.server_url)
 
+    async def async_shutdown(self): ...
+
     async def get_tools(self) -> Response[list[Tool]]:
         async with self:
             try:
