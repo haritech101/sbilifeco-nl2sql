@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "tech101-cp-mcp-server"
+name = "sbilifeco-cp-mcp-server"
 version = "0.1.0"
 description = "A base MCP server to which tools should be added"
 dependencies = [
