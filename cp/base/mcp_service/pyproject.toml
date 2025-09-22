@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "tech101-cp-mcp-server"
+version = "0.1.0"
+description = "A base MCP server to which tools should be added"
+dependencies = [
+    "fastmcp>=2.12.3",
+    "uvicorn>=0.35.0"
+]
