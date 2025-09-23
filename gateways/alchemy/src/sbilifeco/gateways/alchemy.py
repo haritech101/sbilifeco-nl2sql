@@ -31,13 +31,14 @@ class Alchemy(ISqlDb):
     async def async_shutdown(self) -> None:
         self.engine.dispose()
 
-    async def _execute_query(self, query: str) -> Response[Any]:
+    async def _execute_query(self, query: str) -> Response[list[dict[str, Any]]]:
         try:
             with self.engine.connect() as connection:
                 result = await get_running_loop().run_in_executor(
                     None, connection.execute, text(query)
                 )
-                return Response.ok(result.mappings().all())
+                rows = result.all()
+                return Response.ok([row._asdict() for row in rows])
         except Exception as e:
             return Response.error(e)
 
