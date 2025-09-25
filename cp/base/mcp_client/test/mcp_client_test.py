@@ -1,5 +1,4 @@
 import sys
-from xml.sax import InputSource
 
 sys.path.append("./src")
 
@@ -67,12 +66,38 @@ class Test(IsolatedAsyncioTestCase):
 
     async def test_say_hello(self) -> None:
         # Arrange
-        async with self.client.client:
+        async with self.client:
             # Act
-            response = await self.client.client.call_tool(
-                "say_hello", {"name": "World"}
-            )
+            response = await self.client.call_tool("say_hello", {"name": "World"})
 
             # Assert
             self.assertTrue(response)
             self.assertEqual(response.data, "Hello, World!")
+
+    async def test_fetch_tools(self) -> None:
+        # Arrange
+
+        # Act
+        list_of_tools = await self.client.fetch_tools()
+
+        # Assert
+        self.assertTrue(list_of_tools)
+        tool = next(iter(list_of_tools))
+        self.assertEqual(tool.name, "say_hello")
+        self.assertEqual(
+            tool.description,
+            "A simple tool that says hello to the given name.",
+        )
+
+    async def test_invoke_tool(self) -> None:
+        # Arrange
+        tool_name = "say_hello"
+        name_argument = "Tester"
+
+        # Act
+        result = await self.client.invoke_tool(tool_name, name=name_argument)
+
+        # Assert
+        self.assertTrue(result)
+        self.assertIn("result", result)
+        self.assertEqual(result["result"], f"Hello, {name_argument}!")

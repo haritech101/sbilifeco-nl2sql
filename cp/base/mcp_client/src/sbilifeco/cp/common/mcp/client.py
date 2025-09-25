@@ -7,9 +7,10 @@ from fastmcp.client.progress import ProgressHandler
 from mcp.types import Tool as Tool, CallToolResult as ToolResult
 from fastmcp.client.transports import StreamableHttpTransport
 from sbilifeco.models.base import Response
+from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
 
 
-class MCPClient(Client):
+class MCPClient(Client, IExternalToolRepo):
     DEFAULT_URL = "http://localhost/mcp"
 
     def __init__(self):
@@ -44,3 +45,36 @@ class MCPClient(Client):
             return await super().call_tool(
                 name, arguments, timeout, progress_handler, raise_on_error
             )
+
+    async def fetch_tools(self) -> list[ExternalTool]:
+        try:
+            response = await self.get_tools()
+
+            if not response.is_success:
+                print(response.message)
+                return []
+            if not response.payload:
+                print("List of tools came up empty")
+                return []
+
+            return [
+                ExternalTool(
+                    name=tool.name,
+                    description=tool.description or "Tool hasn't been described",
+                )
+                for tool in response.payload
+            ]
+        except Exception:
+            return []
+
+    async def invoke_tool(self, tool_name: str, **kwargs) -> dict:
+        try:
+            result = await self.call_tool(tool_name, kwargs)
+            if not result.structured_content:
+                print(f"No content returned from tool {tool_name}")
+                return {}
+
+            return result.structured_content
+        except Exception as e:
+            print(f"Error invoking tool {tool_name}: {e}")
+            return {}
