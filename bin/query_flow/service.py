@@ -111,9 +111,9 @@ class QueryFlowMicroservice(FileSystemEventHandler):
 
     def on_modified(self, event) -> None:
         if event.src_path == self.prompts_file:
-            print(f"Prompts file changed: {event.src_path}")
+            print(f"Prompts file changed: {event.src_path}", flush=True)
             self.set_flow_prompt()
-            print("Prompts reloaded")
+            print("Prompts reloaded", flush=True)
 
 
 if __name__ == "__main__":
