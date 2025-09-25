@@ -1,3 +1,4 @@
+from operator import is_
 from random import randint
 import sys
 
@@ -7,7 +8,11 @@ from typing import AsyncGenerator
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -33,7 +38,16 @@ class FlowTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
         )
         self.tool = ExternalTool(
-            name=self.faker.color_name(), description=self.faker.sentence()
+            name=self.faker.color_name(),
+            description=self.faker.sentence(),
+            params=[
+                ExternalToolParams(
+                    name=self.faker.word(),
+                    description=self.faker.sentence(),
+                    is_required=True,
+                    type="string",
+                )
+            ],
         )
 
         self.tool_repo: IExternalToolRepo = AsyncMock(spec=IExternalToolRepo)
@@ -165,6 +179,9 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.assertIn(self.db_metadata.description, session_data_for_llm)
             self.assertIn(self.tool.name, session_data_for_llm)
             self.assertIn(self.tool.description, session_data_for_llm)
+            for param in self.tool.params:
+                self.assertIn(param.name, session_data_for_llm)
+                self.assertIn(param.description, session_data_for_llm)
         self.assertIn(self.question, session_data_for_llm)
 
         self.assertEqual(llm_call_count, self.num_prompts)

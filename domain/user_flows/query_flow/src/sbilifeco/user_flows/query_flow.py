@@ -126,7 +126,14 @@ class QueryFlow(IQueryFlow):
                     context += "You have access to the following tools to assist you in answering the question:\n"
                     for tool in tools:
                         context += f"Tool name: {tool.name}\n"
-                        context += f"Description: {tool.description}\n"
+                        context += f"Tool description: {tool.description}\n"
+                        context += "Parameters:\n"
+                        for param in tool.params:
+                            context += f"\tParameter name: {param.name}\n"
+                            context += f"\tParameter description: {param.description}\n"
+                            context += f"\tParameter type: {param.type}\n"
+                            context += f"\tIs parameter required: {'Yes' if param.is_required else 'No'}\n"
+                            context += "\n"
                         context += "\n"
                     context += "\n"
                 else:
