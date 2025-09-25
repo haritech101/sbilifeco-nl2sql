@@ -2,9 +2,17 @@ from typing import Protocol
 from pydantic import BaseModel
 
 
+class ExternalToolParams(BaseModel):
+    name: str
+    description: str
+    type: str = "string"
+    is_required: bool = False
+
+
 class ExternalTool(BaseModel):
     name: str
     description: str
+    params: list[ExternalToolParams] = []
     example_usage: str = ""
 
 
