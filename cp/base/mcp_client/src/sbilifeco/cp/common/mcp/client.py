@@ -7,7 +7,11 @@ from fastmcp.client.progress import ProgressHandler
 from mcp.types import Tool as Tool, CallToolResult as ToolResult
 from fastmcp.client.transports import StreamableHttpTransport
 from sbilifeco.models.base import Response
-from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
 
 
 class MCPClient(Client, IExternalToolRepo):
@@ -61,10 +65,25 @@ class MCPClient(Client, IExternalToolRepo):
                 ExternalTool(
                     name=tool.name,
                     description=tool.description or "Tool hasn't been described",
+                    params=[
+                        ExternalToolParams(
+                            name=param_name,
+                            type=param_details.get("type", "string"),
+                            description=param_details.get(
+                                "description", "No description provided"
+                            ),
+                            is_required=(
+                                param_name in tool.inputSchema.get("required", [])
+                            ),
+                        )
+                        for param_name, param_details in tool.inputSchema.get(
+                            "properties", {}
+                        ).items()
+                    ],
                 )
                 for tool in response.payload
             ]
-        except Exception:
+        except Exception as e:
             return []
 
     async def invoke_tool(self, tool_name: str, **kwargs) -> dict:
