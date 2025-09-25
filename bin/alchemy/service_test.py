@@ -34,14 +34,10 @@ class AlchemyMicroserviceTest(IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None: ...
 
     async def test_get_tools(self) -> None:
-        response = await self.client.get_tools()
+        list_of_tools = await self.client.fetch_tools()
+        self.assertGreater(len(list_of_tools), 0)
 
-        self.assertTrue(response.is_success)
-
-        assert response.payload is not None
-        self.assertGreater(len(response.payload), 0)
-
-        tool = next(iter(response.payload))
+        tool = next(iter(list_of_tools))
         self.assertIsNotNone(tool)
         self.assertIn("sql", tool.name)
 
@@ -50,15 +46,13 @@ class AlchemyMicroserviceTest(IsolatedAsyncioTestCase):
         query = "SELECT 1 AS number"
 
         # Act
-        mcp_response = await self.client.call_tool("sql_executor", {"query": query})
+        mcp_response = await self.client.invoke_tool("sql_executor", query=query)
 
         # Assert
-        self.assertFalse(mcp_response.is_error)
+        self.assertTrue(mcp_response)
+        self.assertIn("result", mcp_response)
 
-        assert mcp_response.structured_content is not None
-        self.assertIn("result", mcp_response.structured_content)
-
-        content = mcp_response.structured_content.get("result")
+        content = mcp_response.get("result")
         self.assertEqual(content, [{"number": 1}], content)
 
     async def test_relevant_query(self) -> None:
@@ -66,20 +60,17 @@ class AlchemyMicroserviceTest(IsolatedAsyncioTestCase):
         query = "SELECT * from dim_region"
 
         # Act
-        mcp_response = await self.client.call_tool("sql_executor", {"query": query})
+        mcp_response = await self.client.invoke_tool("sql_executor", query=query)
 
         # Assert
-        self.assertFalse(mcp_response.is_error)
+        self.assertTrue(mcp_response)
+        self.assertIn("result", mcp_response)
 
-        assert mcp_response.structured_content is not None
-
-        self.assertIn("result", mcp_response.structured_content)
-        records = mcp_response.structured_content.get("result")
-
+        records = mcp_response.get("result")
         assert type(records) is list
         self.assertGreater(len(records), 0)
-        record = records[0]
 
+        record = records[0]
         assert type(record) is dict
         for k in record:
             self.assertIsNotNone(k)

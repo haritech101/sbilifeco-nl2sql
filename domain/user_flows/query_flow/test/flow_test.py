@@ -1,3 +1,4 @@
+from operator import is_
 from random import randint
 import sys
 
@@ -7,6 +8,11 @@ from typing import AsyncGenerator
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 from sbilifeco.user_flows.query_flow import QueryFlow
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -31,7 +37,20 @@ class FlowTest(IsolatedAsyncioTestCase):
             name=self.faker.word(),
             description=self.faker.sentence(),
         )
+        self.tool = ExternalTool(
+            name=self.faker.color_name(),
+            description=self.faker.sentence(),
+            params=[
+                ExternalToolParams(
+                    name=self.faker.word(),
+                    description=self.faker.sentence(),
+                    is_required=True,
+                    type="string",
+                )
+            ],
+        )
 
+        self.tool_repo: IExternalToolRepo = AsyncMock(spec=IExternalToolRepo)
         self.metadata_storage: IMetadataStorage = AsyncMock(spec=IMetadataStorage)
         self.llm: ILLM = AsyncMock(spec=ILLM)
         self.session_data_manager: ISessionDataManager = AsyncMock(
@@ -46,7 +65,8 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         self.query_flow = QueryFlow()
         (
-            self.query_flow.set_metadata_storage(self.metadata_storage)
+            self.query_flow.set_tool_repo(self.tool_repo)
+            .set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
             .set_prompts(self.prompts)
@@ -88,6 +108,12 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def __test_query(self, initial_session_data: str = "") -> None:
         # Arrange
+        patched_fetch_tools = patch.object(
+            self.tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[self.tool]),
+        ).start()
+
         patched_get_session_data = patch.object(
             self.session_data_manager,
             "get_session_data",
@@ -128,8 +154,10 @@ class FlowTest(IsolatedAsyncioTestCase):
         if not initial_session_data:
             # db metadata should have been fetched from metadata storage
             self.patched_get_db.assert_called_once()
+            patched_fetch_tools.assert_called_once()
         else:
             self.patched_get_db.assert_not_called()
+            patched_fetch_tools.assert_not_called()
 
         # session data manager should have been queried for the last question asked and its answer
         patched_get_session_data.assert_any_call(
@@ -149,6 +177,11 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.assertIn(self.prompts[0], session_data_for_llm)
             self.assertIn(self.db_metadata.name, session_data_for_llm)
             self.assertIn(self.db_metadata.description, session_data_for_llm)
+            self.assertIn(self.tool.name, session_data_for_llm)
+            self.assertIn(self.tool.description, session_data_for_llm)
+            for param in self.tool.params:
+                self.assertIn(param.name, session_data_for_llm)
+                self.assertIn(param.description, session_data_for_llm)
         self.assertIn(self.question, session_data_for_llm)
 
         self.assertEqual(llm_call_count, self.num_prompts)
