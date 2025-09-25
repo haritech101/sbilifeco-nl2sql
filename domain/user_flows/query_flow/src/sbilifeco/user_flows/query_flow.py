@@ -7,6 +7,7 @@ from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
 from datetime import datetime
+from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
 
 
 class QueryFlow(IQueryFlow):
@@ -14,10 +15,15 @@ class QueryFlow(IQueryFlow):
     SUFFIX_LAST_QA = "-last-qa"
 
     def __init__(self):
+        self._tool_repo: IExternalToolRepo
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
         self._prompts: list[str]
+
+    def set_tool_repo(self, tool_repo: IExternalToolRepo) -> QueryFlow:
+        self._tool_repo = tool_repo
+        return self
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -82,6 +88,7 @@ class QueryFlow(IQueryFlow):
         try:
             prompts_iterator = self._generate_prompts()
 
+            print(f"Fetching session data for session: {session_id}", flush=True)
             context_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}"
             )
@@ -92,6 +99,12 @@ class QueryFlow(IQueryFlow):
             context = context_response.payload
 
             if context == "":
+                print("No pre-saved context found, need to generate", flush=True)
+
+                print("Building list of available external tools", flush=True)
+                tools = await self._tool_repo.fetch_tools()
+
+                print(f"Building metadata for dbId: {dbId}", flush=True)
                 db_response = await self._metadata_storage.get_db(
                     dbId,
                     with_tables=True,
@@ -108,6 +121,16 @@ class QueryFlow(IQueryFlow):
                 preamble = await anext(prompts_iterator, "")
                 if preamble:
                     context += self.__fill_in(preamble) + "\n\n"
+
+                if tools:
+                    context += "You have access to the following tools to assist you in answering the question:\n"
+                    for tool in tools:
+                        context += f"Tool name: {tool.name}\n"
+                        context += f"Description: {tool.description}\n"
+                        context += "\n"
+                    context += "\n"
+                else:
+                    context += "You do not have access to any external tools.\n\n"
 
                 context += (
                     "Here are the details of the database you will be querying.\n\n"
