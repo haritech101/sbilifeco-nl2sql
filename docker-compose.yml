@@ -61,7 +61,7 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202509.25.1240
+        image: sbilife/query-flow:202509.26.0544
         restart: always
         environment:
             - MCP_SERVER_URL=http://sql-db/mcp
