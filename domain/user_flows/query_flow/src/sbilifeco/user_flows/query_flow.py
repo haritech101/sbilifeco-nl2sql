@@ -1,4 +1,6 @@
 from __future__ import annotations
+from json import loads
+from re import search
 from typing import AsyncIterable, AsyncIterator
 from uuid import uuid4
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
@@ -13,6 +15,7 @@ from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
 class QueryFlow(IQueryFlow):
     SUFFIX_METADATA = "-metadata"
     SUFFIX_LAST_QA = "-last-qa"
+    TOOL_CALL_SIGNATURE = "Tool name:(.*)\nTool input:(.*)"
 
     def __init__(self):
         self._tool_repo: IExternalToolRepo
@@ -219,6 +222,54 @@ class QueryFlow(IQueryFlow):
 
                 session_data += answer + "\n\n"
                 full_answer += answer + "\n\n"
+
+                tool_matches = search(self.TOOL_CALL_SIGNATURE, answer)
+                if not tool_matches:
+                    print("No tool call detected, continuing", flush=True)
+                    continue
+
+                while tool_matches:
+                    tool_name = tool_matches.group(1).strip()
+                    tool_params = tool_matches.group(2).strip()
+                    print(
+                        f"Detected tool call for tool: {tool_name} with {tool_params}",
+                        flush=True,
+                    )
+
+                    try:
+                        parameters: dict = loads(tool_params)
+                        tool_response = await self._tool_repo.invoke_tool(
+                            tool_name, **parameters
+                        )
+                        session_data += (
+                            f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
+                        )
+                        full_answer += (
+                            f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
+                        )
+
+                        query_response = await self._llm.generate_reply(session_data)
+                        if not query_response.is_success:
+                            return Response.fail(
+                                query_response.message, query_response.code
+                            )
+                        if not query_response.payload:
+                            return Response.fail(
+                                "LLM did not return a valid answer", 500
+                            )
+
+                        answer = query_response.payload
+                        session_data += query_response.payload + "\n\n"
+                        full_answer += query_response.payload + "\n\n"
+                    except Exception as e:
+                        answer = "done"
+                        print(
+                            f"Could not fulfill tool call due to: {e}, continuing",
+                            flush=True,
+                        )
+                        continue
+
+                    tool_matches = search(self.TOOL_CALL_SIGNATURE, answer)
 
             await self._session_data_manager.update_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}", context

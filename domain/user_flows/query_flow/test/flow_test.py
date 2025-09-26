@@ -20,6 +20,7 @@ from sbilifeco.models.base import Response
 from faker import Faker
 from uuid import uuid4
 from sbilifeco.models.db_metadata import DB
+from json import dumps
 
 
 class FlowTest(IsolatedAsyncioTestCase):
@@ -75,6 +76,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         return await super().asyncSetUp()
 
     async def asyncTearDown(self) -> None:
+        patch.stopall()
         return await super().asyncTearDown()
 
     async def test_start_session(self) -> None:
@@ -234,3 +236,68 @@ class FlowTest(IsolatedAsyncioTestCase):
         patched_delete_session_data.assert_any_call(
             f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
         )
+
+    async def test_tool_call(self) -> None:
+        # Arrange
+        prompts = [self.faker.paragraph() for _ in range(2)]
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        tool_params = {self.tool.params[0].name: self.faker.word()}
+        tool_call = (
+            f"Tool name: {self.tool.name}\n"
+            f"Tool input: {dumps(tool_params)}\n"
+            f"\n\n"
+        )
+        tool_reply = self.faker.sha256()
+
+        patched_fetch_tools = patch.object(
+            self.tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[]),
+        ).start()
+
+        patched_get_session_data = patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+
+        patched_update_session_data = patch.object(
+            self.session_data_manager,
+            "update_session_data",
+            AsyncMock(return_value=Response.ok(None)),
+        ).start()
+
+        patched_llm_query = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(
+                side_effect=[
+                    Response.ok("Understood"),
+                    Response.ok(tool_call),
+                    Response.ok("done"),
+                ]
+            ),
+        ).start()
+
+        patched_invoke = patch.object(
+            self.tool_repo,
+            "invoke_tool",
+            AsyncMock(return_value={"result": tool_reply}),
+        ).start()
+
+        self.query_flow.set_prompts(prompts)
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=self.db_metadata.id,
+            session_id=session_id,
+            question=question,
+            with_thoughts=True,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        patched_invoke.assert_called_with(self.tool.name, **tool_params)
+        assert response.payload is not None
+        self.assertIn(tool_reply, response.payload)
