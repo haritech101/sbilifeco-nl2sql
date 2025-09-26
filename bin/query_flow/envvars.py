@@ -13,6 +13,7 @@ class EnvVars:
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
     prompts_file = "PROMPTS_FILE"
+    db_id = "DB_ID"
 
 
 class Defaults:
