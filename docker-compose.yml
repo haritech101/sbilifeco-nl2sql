@@ -31,7 +31,7 @@ services:
         environment:
             - LLM_MODEL=gemini-2.5-flash
             - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
-            - THINKING_BUDGET=-1
+            - THINKING_BUDGET=1024
         ports:
             - 11203:80
         labels:
