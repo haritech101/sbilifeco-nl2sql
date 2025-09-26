@@ -31,7 +31,7 @@ services:
         environment:
             - LLM_MODEL=gemini-2.5-flash
             - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
-            - THINKING_BUDGET=-1
+            - THINKING_BUDGET=1024
         ports:
             - 11203:80
         labels:
@@ -61,9 +61,10 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202509.18.0855
+        image: sbilife/query-flow:202509.26.0544
         restart: always
         environment:
+            - MCP_SERVER_URL=http://sql-db/mcp
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager

@@ -1,6 +1,7 @@
 from asyncio import run, sleep, get_running_loop
 from typing import AsyncGenerator, TextIO
 from webbrowser import get
+from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
@@ -15,6 +16,7 @@ from watchdog.observers import Observer
 
 class QueryFlowMicroservice(FileSystemEventHandler):
     prompts_file: str
+    tool_repo: MCPClient
     llm: LLMHttpClient
     storage: MetadataStorageHttpClient
     session_data_manager: SessionDataManagerHttpClient
@@ -25,6 +27,8 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
         llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
         llm_port = int(getenv(EnvVars.llm_port, Defaults.llm_port))
+
+        mcp_server_url = getenv(EnvVars.mcp_server_url, Defaults.mcp_server_url)
 
         storage_proto = getenv(
             EnvVars.metadata_storage_proto, Defaults.metadata_storage_proto
@@ -54,6 +58,11 @@ class QueryFlowMicroservice(FileSystemEventHandler):
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
+        # Set up connection to Tool Repository service, aka MCP
+        self.tool_repo = MCPClient()
+        self.tool_repo.set_server_url(mcp_server_url)
+        await self.tool_repo.async_init()
+
         # Set up connection to LLM service
         self.llm = LLMHttpClient()
         self.llm.set_proto(llm_proto).set_host(llm_host).set_port(llm_port)
@@ -72,9 +81,12 @@ class QueryFlowMicroservice(FileSystemEventHandler):
 
         # Set up query flow
         self.flow = QueryFlow()
-        self.flow.set_llm(self.llm).set_metadata_storage(
-            self.storage
-        ).set_session_data_manager(self.session_data_manager)
+        (
+            self.flow.set_tool_repo(self.tool_repo)
+            .set_llm(self.llm)
+            .set_metadata_storage(self.storage)
+            .set_session_data_manager(self.session_data_manager)
+        )
         self.set_flow_prompt()
 
         # Set up http-based listener for query flow
