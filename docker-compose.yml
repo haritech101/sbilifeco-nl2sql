@@ -37,6 +37,19 @@ services:
         labels:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
             - traefik.http.services.llm.loadbalancer.server.url=http://llm
+    sql-db:
+        image: sbilife/alchemy:202509.23.1434
+        restart: always
+        environment:
+            - HTTP_PORT=80
+            - CONNECTION_STRING=postgresql+psycopg://demat_admin:d3m%4073r1%40l@dematerialised-data/dematerialised
+            - SERVER_NAME=Relational Database Server
+            - SERVER_INSTRUCTIONS=This MCP server points to a relational database. It will be used to access the database, mainly to run SQL queries
+        ports:
+            - 11215:80
+        labels:
+            - traefik.http.routers.sql-db.rule=PathPrefix(`/api/v1/sql-db`)
+            - traefik.http.services.sql-db.loadbalancer.server.url=http://sql-db
     session-data-manager:
         image: sbilife/session-data-manager:202508.14.0946
         restart: always
@@ -48,9 +61,10 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202509.12.0821
+        image: sbilife/query-flow:202509.26.0544
         restart: always
         environment:
+            - MCP_SERVER_URL=http://sql-db/mcp
             - LLM_HOST=llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager

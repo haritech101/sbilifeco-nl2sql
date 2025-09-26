@@ -1,9 +1,11 @@
+from asyncio import sleep
 import sys
 
 sys.path.append("./src")
 
 from os import getenv
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import patch
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
@@ -11,22 +13,22 @@ from envvars import EnvVars, Defaults
 from service import QueryFlowMicroservice
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
+from pathlib import Path
 
 
 class Test(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         load_dotenv()
-        test_type = getenv(EnvVars.test_type, Defaults.test_type)
+        self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
 
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
-        self.service = QueryFlowMicroservice()
-
-        if test_type == "unit":
+        if self.test_type == "unit":
+            self.service = QueryFlowMicroservice()
             await self.service.run()
 
         self.client = QueryFlowHttpClient()
-        host = "tech101.in" if test_type == "staging" else "localhost"
+        host = "tech101.in" if self.test_type == "staging" else "localhost"
         self.client.set_proto("http").set_host(host).set_port(http_port)
 
     async def asyncTearDown(self) -> None: ...
@@ -74,3 +76,19 @@ class Test(IsolatedAsyncioTestCase):
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
+
+    async def test_prompt_file_change(self) -> None:
+        if self.test_type != "unit":
+            self.skipTest("Skipping unit test in non-unit test type")
+
+        # Arrange
+        prompts_path = Path(getenv(EnvVars.prompts_file, ""))
+        assert prompts_path != ""
+
+        with patch.object(self.service, "set_flow_prompt") as patched_method:
+            # Act
+            prompts_path.touch()
+            await sleep(1)
+
+            # Assert
+            patched_method.assert_called_once()

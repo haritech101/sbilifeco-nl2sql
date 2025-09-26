@@ -6,10 +6,9 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-models-db-metadata"
-version = "0.1.6"
-description = "description"
+name = "sbilifeco-boundary-sql-db"
+version = "0.1.0"
+description = "Interface to a DB that's known to support SQL"
 dependencies = [
-    "pydantic>=2.11.5",
     "sbilifeco-models-base>=0.1.3"
 ]

@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-mcp-server-sql-db"
+version = "0.1.0"
+description = "MCP server to talk to SQL-based databases"
+dependencies = [
+    "sbilifeco-boundary-sql-db>=0.1.0",
+    "sbilifeco-cp-mcp-server>=0.1.0"
+]
