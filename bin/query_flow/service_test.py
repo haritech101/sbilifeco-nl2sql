@@ -22,6 +22,7 @@ class Test(IsolatedAsyncioTestCase):
         self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
 
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        self.db_id = getenv(EnvVars.db_id, "")
 
         if self.test_type == "unit":
             self.service = QueryFlowMicroservice()
@@ -35,13 +36,11 @@ class Test(IsolatedAsyncioTestCase):
 
     async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
         # Arrange
-        # db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
-        db_id = "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38"
         session_id = uuid4().hex
 
         # Act
         query_response = await self.client.query(
-            db_id, session_id, question, with_thoughts
+            self.db_id, session_id, question, with_thoughts
         )
 
         # Assert
