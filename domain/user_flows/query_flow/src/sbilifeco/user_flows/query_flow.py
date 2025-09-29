@@ -267,7 +267,6 @@ class QueryFlow(IQueryFlow):
                             f"Could not fulfill tool call due to: {e}, continuing",
                             flush=True,
                         )
-                        continue
 
                     tool_matches = search(self.TOOL_CALL_SIGNATURE, answer)
 
