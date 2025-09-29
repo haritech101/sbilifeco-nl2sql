@@ -8,7 +8,11 @@ LIBS_DIR = Path("../..").resolve()
 print(f"Libraries are in the path: {LIBS_DIR}\n\n")
 
 print("Searching for pyproject.toml files...\n\n")
-pyprojects = [pyproject for pyproject in Path(LIBS_DIR).rglob("pyproject.toml")]
+pyprojects = [
+    pyproject
+    for pyproject in Path(LIBS_DIR).rglob("pyproject.toml")
+    if ".venv" not in str(pyproject)
+]
 
 print("The following libraries were found:\n\n")
 
@@ -62,6 +66,8 @@ for i, pyproject in enumerate(pyprojects):
 if not dirty_libs:
     print("All libraries are in sync!")
     exit(0)
+
+print(dirty_libs)
 
 for dirty_lib in dirty_libs:
     print(f"Library {dirty_lib} is out of sync\n")
