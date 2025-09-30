@@ -34,6 +34,9 @@ services:
             - THINKING_BUDGET=1024
         ports:
             - 11203:80
+        # labels:
+        #     - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
+        #     - traefik.http.services.llm.loadbalancer.server.url=http://llm
     vertex-llm:
         image: sbilife/vertex-llm:202509.29.1534
         restart: always
@@ -46,8 +49,8 @@ services:
         volumes:
             - ./.local/service-key-for-vertex-ai.json:/usr/local/vertex-llm/service-key-for-vertex-ai.json
         labels:
-            - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
-            - traefik.http.services.llm.loadbalancer.server.url=http://llm
+            - traefik.http.routers.vertex-llm.rule=PathPrefix(`/api/v1/llm`)
+            - traefik.http.services.vertex-llm.loadbalancer.server.url=http://vertex-llm
     sql-db:
         image: sbilife/alchemy:202509.23.1434
         restart: always
@@ -155,6 +158,8 @@ services:
         env_file: ./.local/dematerialised.env
         volumes:
             - ./.local/.dematerialised:/var/lib/postgresql/data
+        ports:
+            - 11214:5432
     redis-for-sessions:
         image: redis:8.2.0
         restart: always
