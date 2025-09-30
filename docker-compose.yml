@@ -158,8 +158,6 @@ services:
         env_file: ./.local/dematerialised.env
         volumes:
             - ./.local/.dematerialised:/var/lib/postgresql/data
-        ports:
-            - 11214:5432
     redis-for-sessions:
         image: redis:8.2.0
         restart: always
