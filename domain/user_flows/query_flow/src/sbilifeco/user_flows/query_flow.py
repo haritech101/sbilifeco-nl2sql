@@ -244,9 +244,7 @@ class QueryFlow(IQueryFlow):
                         tool_response = await self._tool_repo.invoke_tool(
                             tool_name, **parameters
                         )
-                        session_data += (
-                            f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
-                        )
+                        session_data += f"Tool response from {tool_name}:\n\n{tool_response}\n\nProceed.\n\n"
                         full_answer += (
                             f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
                         )
