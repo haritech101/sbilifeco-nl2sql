@@ -64,21 +64,21 @@ class Test(IsolatedAsyncioTestCase):
         question = "Which regions are found in the south zone?"
 
         # Act and assert
-        await self._test_with(question, with_thoughts=True)
+        await self._test_with(question, with_thoughts=False)
 
     async def test_non_join_query(self) -> None:
         # Arrange
         question = "Total Actual NBP from Retal Ageny in bengalor"
 
         # Act and assert
-        await self._test_with(question)
+        await self._test_with(question, with_thoughts=False)
 
     async def test_join_query(self) -> None:
         # Arrange
         question = "NBP Budget achievement YTD for PMJJBY segment"
 
         # Act and assert
-        await self._test_with(question, with_thoughts=True)
+        await self._test_with(question, with_thoughts=False)
 
     async def test_prompt_file_change(self) -> None:
         if self.test_type != "unit":
