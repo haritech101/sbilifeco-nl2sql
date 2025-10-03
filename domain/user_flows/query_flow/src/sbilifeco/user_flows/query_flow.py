@@ -212,6 +212,7 @@ class QueryFlow(IQueryFlow):
             async for prompt in prompts_iterator:
                 session_data += f"{prompt}\n\n"
                 full_answer += f"{prompt}\n\n"
+                print(session_data, flush=True)
                 query_response = await self._llm.generate_reply(session_data)
 
                 if not query_response.is_success:
@@ -219,6 +220,8 @@ class QueryFlow(IQueryFlow):
                 answer = query_response.payload
                 if answer is None:
                     return Response.fail("LLM did not return a valid answer", 500)
+
+                print(answer, flush=True)
 
                 session_data += answer + "\n\n"
                 full_answer += answer + "\n\n"
@@ -241,13 +244,12 @@ class QueryFlow(IQueryFlow):
                         tool_response = await self._tool_repo.invoke_tool(
                             tool_name, **parameters
                         )
-                        session_data += (
-                            f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
-                        )
+                        session_data += f"Tool response from {tool_name}:\n\n{tool_response}\n\nProceed.\n\n"
                         full_answer += (
                             f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
                         )
 
+                        print(session_data, flush=True)
                         query_response = await self._llm.generate_reply(session_data)
                         if not query_response.is_success:
                             return Response.fail(
@@ -259,6 +261,8 @@ class QueryFlow(IQueryFlow):
                             )
 
                         answer = query_response.payload
+                        print(answer, flush=True)
+
                         session_data += query_response.payload + "\n\n"
                         full_answer += query_response.payload + "\n\n"
                     except Exception as e:
