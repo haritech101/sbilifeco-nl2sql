@@ -74,7 +74,10 @@ class Hydrator:
             for budget in budgets:
                 # Randomly decide how much of the budget to fulfill (50% to 100%)
                 achievement_percent = randint(50, 100)
-                achievement = (achievement_percent / 100) * budget.nbp
+                months_passed = date.today().month - 4 + 1  # Since April
+                achievement = (achievement_percent / 100) * (
+                    months_passed / 12 * budget.nbp
+                )
 
                 # Keep creating imaginary policies until the fulfilled budget is met
                 budget_fulfilled = 0
