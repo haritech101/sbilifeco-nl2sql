@@ -56,7 +56,12 @@ services:
             - SERVER_NAME=Relational Database Server
             - SERVER_INSTRUCTIONS=This MCP server points to a relational database. It will be used to access the database, mainly to run SQL queries
         labels:
-            - traefik.http.routers.sql-db.rule=PathPrefix(`/api/v1/sql-db`)
+            # Rule for HTTP
+            - traefik.http.routers.sql-db-http.rule=PathPrefix(`/api/v1/sql-db`)
+            # Rule for MCP
+            - traefik.http.middlewares.sql-db-sanitise-mcp-path.replacepath.path=/mcp
+            - traefik.http.routers.sql-db-mcp.rule=PathPrefix(`/mcp/sql-db`)
+            - traefik.http.routers.sql-db-mcp.middlewares=sql-db-sanitise-mcp-path
             - traefik.http.services.sql-db.loadbalancer.server.url=http://sql-db
     session-data-manager:
         image: sbilife/session-data-manager:202508.14.0946
