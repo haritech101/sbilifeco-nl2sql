@@ -48,7 +48,11 @@ class Test(IsolatedAsyncioTestCase):
         assert (
             query_response.payload is not None
         ), "Query response data should not be None"
-        print(query_response.payload)
+
+        print("\nLLM's final response follows:\n\n", flush=True)
+        print(query_response.payload, flush=True)
+        print("\nEnd of LLM's final response\n\n", flush=True)
+
         self.assertIn(
             "select",
             query_response.payload.lower(),
