@@ -63,12 +63,12 @@ with Repo(repo_path) as repo:
 
             version_matches = search(r"LATEST:\s*(.*)", shell_output.stdout)
             if not version_matches:
-                print(f" - Unable to retrieve installed version of {library_name}")
+                print(f" - Unable to retrieve hosted version of {library_name}")
                 continue
 
             version_in_pip = version_matches[1]
         except Exception as e:
-            print(f" - Could not get installed version of {library_name}: {e}")
+            print(f" - Could not get hosted version of {library_name}: {e}")
             continue
 
         print(f" - Version in pip is {version_in_pip}")
