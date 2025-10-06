@@ -69,7 +69,7 @@ class Policy(DematerialisedBase):
     productid: Mapped[int] = mapped_column(
         Integer, ForeignKey("dim_product.product_id"), nullable=False
     )
-    policyannualizedpremiium: Mapped[int] = mapped_column(
+    policyannualizedpremium: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0
     )
 
