@@ -69,7 +69,7 @@ class Policy(DematerialisedBase):
     productid: Mapped[int] = mapped_column(
         Integer, ForeignKey("dim_product.product_id"), nullable=False
     )
-    policyannualizedpremiium: Mapped[int] = mapped_column(
+    policyannualizedpremium: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0
     )
 
@@ -113,4 +113,52 @@ class NewBusinessBudget(DematerialisedBase):
     )
     region_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dim_region.region_id"), nullable=False
+    )
+
+
+class RenewalPremiumBudget(DematerialisedBase):
+    __tablename__ = "fact_rp_budget"
+
+    rp_budget_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rp: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    current_flag: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    product_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dim_product.product_id"), nullable=False
+    )
+    sub_channel_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dim_sub_channel.subchannel_id"), nullable=False
+    )
+    region_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dim_region.region_id"), nullable=False
+    )
+
+
+class RenewalPremiumActual(DematerialisedBase):
+    __tablename__ = "fact_rp_actual"
+
+    rp_actual_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    region_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dim_region.region_id"), nullable=False
+    )
+    sub_channel_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dim_sub_channel.subchannel_id"), nullable=False
+    )
+    policytechnicalid: Mapped[str] = mapped_column(
+        String(50), ForeignKey("policy.policytechnicalid"), nullable=False
+    )
+    rp_premium: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rp_cancellations_amount: Mapped[float] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    rp_gross: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rp_service_tax: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rp_entry_fee: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rated_rp: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rated_rp_gross: Mapped[float] = mapped_column(Integer, nullable=False, default=0)
+    rated_rp_service_tax: Mapped[float] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    rated_rp_entry_fee: Mapped[float] = mapped_column(
+        Integer, nullable=False, default=0
     )

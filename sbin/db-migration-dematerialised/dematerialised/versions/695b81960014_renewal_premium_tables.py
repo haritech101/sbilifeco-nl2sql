@@ -9,7 +9,7 @@ Create Date: 2025-10-06 10:55:22.728831
 from typing import Sequence, Union
 
 from alembic.op import create_table, drop_table, create_index, drop_index
-from sqlalchemy import Column, Date, Numeric, String
+from sqlalchemy import Column, Date, Numeric, String, Integer, ForeignKey
 
 
 # revision identifiers, used by Alembic.
@@ -23,11 +23,21 @@ def upgrade() -> None:
     """Upgrade schema."""
     create_table(
         "fact_rp_budget",
-        Column("rp_budget_id", Numeric, primary_key=True),
-        Column("current_flag", Numeric),
-        Column("product_id", Numeric),
-        Column("region_id", Numeric),
-        Column("sub_channel_id", Numeric),
+        Column("rp_budget_id", Integer, primary_key=True),
+        Column("current_flag", Integer),
+        Column(
+            "product_id",
+            Integer,
+            ForeignKey("dim_product.product_id", ondelete="CASCADE"),
+        ),
+        Column(
+            "region_id", Integer, ForeignKey("dim_region.region_id", ondelete="CASCADE")
+        ),
+        Column(
+            "sub_channel_id",
+            Integer,
+            ForeignKey("dim_sub_channel.subchannel_id", ondelete="CASCADE"),
+        ),
         Column("rp", Numeric(32, 8)),
     )
 
@@ -41,11 +51,21 @@ def upgrade() -> None:
 
     create_table(
         "fact_rp_actual",
-        Column("rp_actual_id", Numeric, primary_key=True),
+        Column("rp_actual_id", Integer, primary_key=True),
         Column("date", Date),
-        Column("region_id", Numeric),
-        Column("sub_channel_id", Numeric),
-        Column("policytechnicalid", String(50)),
+        Column(
+            "region_id", Integer, ForeignKey("dim_region.region_id", ondelete="CASCADE")
+        ),
+        Column(
+            "sub_channel_id",
+            Integer,
+            ForeignKey("dim_sub_channel.subchannel_id", ondelete="CASCADE"),
+        ),
+        Column(
+            "policytechnicalid",
+            String(50),
+            ForeignKey("policy.policytechnicalid", ondelete="CASCADE"),
+        ),
         Column("rp_premium", Numeric(32, 8)),
         Column("rp_cancellations_amount", Numeric(32, 8)),
         Column("rp_gross", Numeric(32, 8)),
