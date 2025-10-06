@@ -27,7 +27,6 @@ def upgrade() -> None:
         Column("current_flag", Numeric),
         Column("product_id", Numeric),
         Column("region_id", Numeric),
-        Column("master_channel_id", Numeric),
         Column("sub_channel_id", Numeric),
         Column("rp", Numeric(32, 8)),
     )
