@@ -173,3 +173,19 @@ class RenewalPremiumActual(DematerialisedBase):
     rated_rp_entry_fee: Mapped[float] = mapped_column(
         Integer, nullable=False, default=0
     )
+
+
+@dataclass
+class NewBusinessRefund(DematerialisedBase):
+    __tablename__ = "nb_refund_aotg"
+
+    as_on_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    branch: Mapped[str] = mapped_column(String(32), nullable=False)
+    broad_segment: Mapped[str] = mapped_column(String(32), nullable=False)
+    channel: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    lob: Mapped[str] = mapped_column(String(32), nullable=False)
+    product: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    region: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    zone: Mapped[str] = mapped_column(String(32), nullable=False)
+    month: Mapped[str] = mapped_column(String(6), nullable=False, primary_key=True)
+    mtd_refund_amt: Mapped[float] = mapped_column(Integer, nullable=False)
