@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 from sqlalchemy import Integer, String, Date, ForeignKey
 from sqlmodel import SQLModel
@@ -9,6 +10,7 @@ class DematerialisedBase(DeclarativeBase):
     pass
 
 
+@dataclass
 class Region(DematerialisedBase):
     __tablename__ = "dim_region"
 
@@ -17,6 +19,7 @@ class Region(DematerialisedBase):
     zone: Mapped[Optional[str]] = mapped_column(String(64))
 
 
+@dataclass
 class MasterChannel(DematerialisedBase):
     __tablename__ = "dim_master_channel"
 
@@ -26,6 +29,7 @@ class MasterChannel(DematerialisedBase):
     )
 
 
+@dataclass
 class SubChannel(DematerialisedBase):
     __tablename__ = "dim_sub_channel"
 
@@ -40,6 +44,7 @@ class SubChannel(DematerialisedBase):
     )
 
 
+@dataclass
 class ProductBroadSegment(DematerialisedBase):
     __tablename__ = "dim_product_broad_segment"
 
@@ -47,6 +52,7 @@ class ProductBroadSegment(DematerialisedBase):
     broad_segment: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
 
 
+@dataclass
 class Product(DematerialisedBase):
     __tablename__ = "dim_product"
 
@@ -60,6 +66,7 @@ class Product(DematerialisedBase):
     lob: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+@dataclass
 class Policy(DematerialisedBase):
     __tablename__ = "policy"
 
@@ -74,6 +81,7 @@ class Policy(DematerialisedBase):
     )
 
 
+@dataclass
 class NewBusinessActual(DematerialisedBase):
     __tablename__ = "fact_nbp_actual"
 
@@ -94,6 +102,7 @@ class NewBusinessActual(DematerialisedBase):
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
 
 
+@dataclass
 class NewBusinessBudget(DematerialisedBase):
     __tablename__ = "fact_nbp_budget"
 
@@ -116,6 +125,7 @@ class NewBusinessBudget(DematerialisedBase):
     )
 
 
+@dataclass
 class RenewalPremiumBudget(DematerialisedBase):
     __tablename__ = "fact_rp_budget"
 
@@ -133,6 +143,7 @@ class RenewalPremiumBudget(DematerialisedBase):
     )
 
 
+@dataclass
 class RenewalPremiumActual(DematerialisedBase):
     __tablename__ = "fact_rp_actual"
 
@@ -162,3 +173,19 @@ class RenewalPremiumActual(DematerialisedBase):
     rated_rp_entry_fee: Mapped[float] = mapped_column(
         Integer, nullable=False, default=0
     )
+
+
+@dataclass
+class NewBusinessRefund(DematerialisedBase):
+    __tablename__ = "nb_refund_aotg"
+
+    as_on_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    branch: Mapped[str] = mapped_column(String(32), nullable=False)
+    broad_segment: Mapped[str] = mapped_column(String(32), nullable=False)
+    channel: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    lob: Mapped[str] = mapped_column(String(32), nullable=False)
+    product: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    region: Mapped[str] = mapped_column(String(32), nullable=False, primary_key=True)
+    zone: Mapped[str] = mapped_column(String(32), nullable=False)
+    month: Mapped[str] = mapped_column(String(6), nullable=False, primary_key=True)
+    mtd_refund_amt: Mapped[float] = mapped_column(Integer, nullable=False)
