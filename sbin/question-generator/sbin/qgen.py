@@ -1,0 +1,448 @@
+from __future__ import annotations
+from calendar import month_name
+from random import choice, randint
+from typing import Literal, Sequence, Tuple
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Engine, select
+from sqlalchemy.orm import Session
+from .model import Region, MasterChannel, SubChannel, ProductBroadSegment, Product
+from asyncio import run
+from argparse import ArgumentParser
+from dotenv import load_dotenv
+from os import getenv
+from sbin.envvars import EnvVars, Defaults
+from sys import argv
+from sbilifeco.cp.llm.http_client import LLMHttpClient
+
+
+class QGenRegion(BaseModel):
+    focus: Literal["zone"] | Literal["region"] = "region"
+    index: int | Sequence[int] = -1
+
+
+class QGenProduct(BaseModel):
+    focus: Literal["product"] | Literal["segment"] | Literal["lob"] = "product"
+    index: int | Sequence[int] = -1
+
+
+class QGenTimeframe(BaseModel):
+    focus: Literal["month"] | Literal["quarter"] | Literal["year"] = "month"
+    is_to_date: bool = True
+    quarter_number: int | None = None
+    year: int | None = None
+    month: int | None = None
+
+
+class QGenMetric(BaseModel):
+    focus: Literal["nbp"] | Literal["rp"] | Literal["refund"] | Literal["persistency"]
+    index: int | Sequence[int] = -1
+
+
+class QGenRequest(BaseModel):
+    metric: QGenMetric
+    region: None | QGenRegion = None
+    product: None | QGenProduct = None
+    channel_index: None | int | Sequence[int] = None
+    temporal: None | QGenTimeframe = None
+
+
+class QGen:
+    default_num_tests = 100
+    available_metrics: dict[str, list[list[str]]] = {
+        "nbp": [["New Business Premium", "NBP", "Rated NBP"], ["Actual NBP"]],
+        "rp": [
+            ["Renewal Premium", "RP", "Rated RP", "IRP"],
+            ["Actual RP", "Actual Renewal Premium"],
+        ],
+        "refund": [["New Business Refund", "Refund", "NB refund"]],
+        "persistency": [
+            ["Persistency", "Rolling Persistency"],
+            ["Collectable", "Collectable amount"],
+            ["Collected", "Collected amount"],
+        ],
+    }
+
+    imperatives: list[str] = ["Show me", "Give me", "What is the", "I need", "How much"]
+
+    def __init__(self):
+        self.conn_string = ""
+        self.engine: Engine
+        # Initialize dimension data containers
+        self.regions: list[str] = []
+        self.zones: list[str | None] = []
+        self.master_channels: list[str] = []
+        self.sub_channels: list[str] = []
+        self.broad_segments: list[str] = []
+        self.products: list[str] = []
+        self.lobs: list[str] = []
+        self.llm_client: LLMHttpClient
+        self.llm_proto: str
+        self.llm_host: str
+        self.llm_port: int
+
+    def set_conn_string(self, conn_string: str) -> QGen:
+        self.conn_string = conn_string
+        return self
+
+    def set_llm_scheme(self, proto: str, host: str, port: int) -> QGen:
+        self.llm_proto = proto
+        self.llm_host = host
+        self.llm_port = port
+        return self
+
+    async def async_init(self):
+        self.engine = create_engine(self.conn_string)
+
+        # Get the list of values for the dimension models from models.py
+        with Session(self.engine) as session:
+            # Get all regions
+            self.regions = list(
+                session.scalars(select(Region.region).order_by(Region.region))
+            )
+
+            # Get all zones (distinct, excluding None values)
+            self.zones = list(
+                session.scalars(
+                    select(Region.zone)
+                    .distinct()
+                    .where(Region.zone.is_not(None))
+                    .order_by(Region.zone)
+                )
+            )
+
+            # Get all master channels
+            self.master_channels = list(
+                session.scalars(
+                    select(MasterChannel.master_channel_name).order_by(
+                        MasterChannel.master_channel_name
+                    )
+                )
+            )
+
+            # Get all sub channels
+            self.sub_channels = list(
+                session.scalars(
+                    select(SubChannel.sub_channel_name).order_by(
+                        SubChannel.sub_channel_name
+                    )
+                )
+            )
+
+            # Get all product broad segments
+            self.broad_segments = list(
+                session.scalars(
+                    select(ProductBroadSegment.broad_segment).order_by(
+                        ProductBroadSegment.broad_segment
+                    )
+                )
+            )
+
+            # Get all products
+            self.products = list(
+                session.scalars(
+                    select(Product.product_name).order_by(Product.product_name)
+                )
+            )
+
+            # Get all LOBs
+            self.lobs = list(
+                session.scalars(select(Product.lob).distinct().order_by(Product.lob))
+            )
+
+        self.llm_client = LLMHttpClient()
+        (
+            self.llm_client.set_proto(self.llm_proto)
+            .set_host(self.llm_host)
+            .set_port(self.llm_port)
+        )
+
+    async def async_shutdown(self) -> None:
+        self.engine.dispose()
+
+    async def generate_one(self, request: QGenRequest) -> Tuple[str | list[str], ...]:
+        result_fields = []
+
+        # Handle metric
+        metric_request = request.metric
+        metric_category = self.available_metrics.get(
+            metric_request.focus, [["Unknown Metric"]]
+        )
+
+        metric_words: list[str] = []
+        if isinstance(metric_request.index, list):
+            raise NotImplementedError()
+        elif isinstance(metric_request.index, int):
+            if metric_request.index == -1:
+                metric_words = choice(metric_category)
+            else:
+                metric_words = metric_category[metric_request.index]
+
+        result_fields.append(metric_words)
+
+        # Handle temporal
+        if request.temporal is None:
+            temporal_text = "MTD"
+        else:
+            temporal_request = request.temporal
+            temporal_text = ""
+
+            if temporal_request.focus == "month":
+                if temporal_request.is_to_date:
+                    temporal_text = "MTD"
+                elif temporal_request.month:
+                    temporal_text = month_name[temporal_request.month]
+                    if temporal_request.year:
+                        temporal_text += f" {temporal_request.year}"
+
+            elif temporal_request.focus == "quarter":
+                if temporal_request.is_to_date:
+                    temporal_text = "QTD"
+                elif temporal_request.quarter_number:
+                    temporal_text = f"Q{temporal_request.quarter_number}"
+                    if temporal_request.year:
+                        temporal_text += f" {temporal_request.year}"
+
+            elif temporal_request.focus == "year":
+                if temporal_request.year:
+                    temporal_text = str(temporal_request.year)
+                    if temporal_request.is_to_date:
+                        temporal_text = f"{temporal_request.year} YTD"
+                elif temporal_request.is_to_date:
+                    temporal_text = "YTD"
+
+        result_fields.append(temporal_text)
+
+        # Handle region if specified
+        if request.region is not None:
+            region_request = request.region
+            if region_request.focus == "region":
+                if isinstance(region_request.index, list):
+                    raise NotImplementedError()
+                elif isinstance(region_request.index, int):
+                    if region_request.index == -1:
+                        selected_region = choice(self.regions)
+                    else:
+                        selected_region = self.regions[region_request.index]
+                    result_fields.append(selected_region)
+            elif region_request.focus == "zone":
+                if isinstance(region_request.index, list):
+                    raise NotImplementedError()
+                elif isinstance(region_request.index, int):
+                    if region_request.index == -1:
+                        selected_zone = choice(self.zones)
+                    else:
+                        selected_zone = self.zones[region_request.index]
+                    result_fields.append(selected_zone)
+
+        # Handle channel if specified
+        if request.channel_index is not None:
+            if isinstance(request.channel_index, list):
+                raise NotImplementedError()
+            elif isinstance(request.channel_index, int):
+                if request.channel_index == -1:
+                    selected_channel = choice(self.sub_channels)
+                else:
+                    selected_channel = self.sub_channels[request.channel_index]
+                result_fields.append(selected_channel)
+
+        # Handle product if specified
+        if request.product is not None:
+            product_request = request.product
+            if product_request.focus == "product":
+                if isinstance(product_request.index, list):
+                    raise NotImplementedError()
+                elif isinstance(product_request.index, int):
+                    if product_request.index == -1:
+                        selected_product = choice(self.products)
+                    else:
+                        selected_product = self.products[product_request.index]
+                    result_fields.append(selected_product)
+            elif product_request.focus == "segment":
+                if isinstance(product_request.index, list):
+                    raise NotImplementedError()
+                elif isinstance(product_request.index, int):
+                    if product_request.index == -1:
+                        selected_segment = choice(self.broad_segments)
+                    else:
+                        selected_segment = self.broad_segments[product_request.index]
+                    result_fields.append(selected_segment)
+            elif product_request.focus == "lob":
+                if isinstance(product_request.index, list):
+                    raise NotImplementedError()
+                elif isinstance(product_request.index, int):
+                    if product_request.index == -1:
+                        selected_lob = choice(self.lobs)
+                    else:
+                        selected_lob = self.lobs[product_request.index]
+                    result_fields.append(selected_lob)
+
+        # TODO: Add other components to result_fields as needed
+
+        return tuple(result_fields)
+
+    async def generate_one_line(self, request: QGenRequest) -> str:
+        """Generate a natural English sentence from the request components.
+
+        Examples:
+        - "Show me New Business Premium for March 2025"
+        - "Give me NBP for YTD for Mumbai"
+        - "What is Renewal Premium Q3 2024 for West Zone"
+        - "I need Persistency for MTD"
+        - "How much Refund for 2023 for South Region"
+        """
+        result_tuple = await self.generate_one(request)
+
+        # Random imperative starter for business context
+        imperative = choice(self.imperatives)
+
+        # Extract components from the tuple
+        components = [choice(result_tuple[0])]  # Start with a random metric word
+
+        # Process remaining components with appropriate prepositions
+        for i in range(1, len(result_tuple)):
+            component = result_tuple[i]
+            if i == 1:
+                # First non-metric component is temporal
+                if component in ["MTD", "YTD", "QTD"]:
+                    if component == "MTD":
+                        if randint(0, 1) == 0:
+                            components.append(component)
+                    else:
+                        components.append(component)
+                else:
+                    components.append(f"during {component}")
+            else:
+                # All other dimensions get "for"
+                components.append(f"for {component}")
+
+        # Join all components into a natural English sentence
+        return f"{imperative} {' '.join(components)}"
+
+    async def generate_many_lines(self, num: int = -1) -> list[str]:
+        if num == -1:
+            num = self.default_num_tests
+
+        lines = []
+        for _ in range(num):
+            # Randomly decide which components to include
+            include_region = choice([True, False])
+            include_product = choice([True, False])
+            include_channel = choice([True, False])
+            include_temporal = choice([True, False])
+
+            metric = choice(list(self.available_metrics.keys()))
+
+            # Create a QGenRequest with random selections
+            request = QGenRequest(
+                metric=QGenMetric(focus=metric, index=-1),
+                region=(
+                    QGenRegion(focus=choice(["region", "zone"]), index=-1)
+                    if include_region
+                    else None
+                ),
+                product=(
+                    QGenProduct(focus=choice(["product", "segment"]), index=-1)
+                    if include_product
+                    else None
+                ),
+                channel_index=-1 if include_channel else None,
+                temporal=(
+                    QGenTimeframe(
+                        focus=choice(["month", "quarter", "year"]),
+                        is_to_date=choice([True, False]),
+                        quarter_number=choice([1, 2, 3, 4]),
+                        year=choice([2023, 2024, 2025]),
+                        month=choice(range(1, 13)),
+                    )
+                    if include_temporal
+                    else None
+                ),
+            )
+
+            line = await self.generate_one_line(request)
+            lines.append(line)
+
+        return lines
+
+    async def generate_with_llm(self, num_questions: int) -> str:
+        try:
+            if num_questions == -1:
+                num_questions = self.default_num_tests
+
+            formatted_metrics = ""
+            for category, metrics in self.available_metrics.items():
+                formatted_metrics += f"  Metric category: {category}\n"
+                for metric in metrics:
+                    formatted_metrics += f"    {' aka '.join(metric)}\n"
+
+            prompt = (
+                f"I want you to generate some questions for a business intelligence dashboard.\n\n"
+                f"Here is a list of metrics and dimensions that can be used and their possible values:\n\n"
+                f"An imperative phrase to start each question, such as: {', '.join(self.imperatives)}\n"
+                f"Use your own generated imperative once in a while.\n\n"
+                f"Metrics:\n"
+                f"{formatted_metrics}\n\n"
+                f"Dimensions:\n"
+                f"  Location centric: \n"
+                f"    Regions: Possible values: {', '.join(self.regions)}\n"
+                f"    Zones: Possible values: {', '.join(self.zones)}\n\n"
+                f"  Channels: Possible values: {', '.join(self.sub_channels)}\n\n"
+                f"  Product centric: \n"
+                # f"    Products: Possible values: {', '.join(self.products)}\n"
+                f"    Broad Segments: Possible values: {', '.join(self.broad_segments)}\n"
+                f"    LOBs: Possible values: {', '.join(self.lobs)}\n\n"
+                f"  Temporal: \n"
+                f"    Month to Date (MTD)\n"
+                f"    Quarter to Date (QTD)\n"
+                f"    Year to Date (YTD)\n"
+                f"    Specific Month (e.g., March 2025)\n"
+                f"    Specific Quarter (e.g., Q3 2024)\n"
+                f"    Specific Year (e.g., 2023)\n\n"
+                f"  Additional temporal (for persistency only): \n"
+                f"    One of 13M, 25M, 37M, 49M, 61M, indicating a rolling monthly period\n\n"
+                f"One well-formed question will have:"
+                f"- One metric from one category, using one of the possible names for the metric\n"
+                f"- Zero or one temporal condition\n"
+                f"- Zero or one location centric dimension (region or zone)\n"
+                f"- Zero or one channel\n"
+                f"- Zero or one product centric dimension (product, broad segment, or LOB)\n\n"
+                f"Each question should be a single line, starting with an imperative phrase, "
+                f"and should be in natural English as if spoken by a business user.\n"
+                f"Introduce subtle spelling and grammar mistakes once in a while."
+                f"Each question should be unique and not repeat any other question.\n\n"
+                f"Display one question per line, starting with 1-based serial number.\n"
+                f"At the start and end of the list print a line with ===\n\n"
+                f"Use the above information to generate {num_questions} relevant questions.\n\n"
+            )
+
+            print(prompt, flush=True)
+
+            llm_response = await self.llm_client.generate_reply(prompt)
+            if not llm_response.is_success:
+                return llm_response.message
+            if llm_response.payload is None:
+                return "LLM returned no payload."
+
+            return llm_response.payload
+
+        except Exception as e:
+            print(f"Error in LLM generation: {e}")
+            return "LLM generation failed."
+
+    async def run_once(self, num_questions=-1) -> None:
+        await qgen.async_init()
+        result = await self.generate_with_llm(num_questions=num_questions)
+        print(result)
+
+
+if __name__ == "__main__":
+    load_dotenv()
+
+    num_lines = -1
+    try:
+        num_lines = int(argv[1])
+    except Exception as e:
+        print(f"Warning: {e}")
+
+    qgen = QGen().set_conn_string(getenv(EnvVars.conn_string, Defaults.conn_string))
+    run(qgen.run_once(num_questions=num_lines))
