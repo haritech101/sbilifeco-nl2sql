@@ -17,6 +17,7 @@ from sbin.qgen import (
     QGenProduct,
     QGenTimeframe,
 )
+from sbin.http import QGenHttpClient, QGenHttpServer
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -27,6 +28,9 @@ class Test(IsolatedAsyncioTestCase):
         llm_proto = getenv(EnvVars.llm_proto, Defaults.llm_proto)
         llm_host = getenv(EnvVars.llm_host, Defaults.llm_host)
         llm_port = int(getenv(EnvVars.llm_port, Defaults.llm_port))
+        http_listen_port = int(
+            getenv(EnvVars.http_listen_port, Defaults.http_listen_port)
+        )
 
         # Initialise the service(s) here
         self.service = (
@@ -36,13 +40,20 @@ class Test(IsolatedAsyncioTestCase):
         )
         await self.service.async_init()
 
+        self.http_server = QGenHttpServer().set_qgen(self.service)
+        self.http_server.set_http_port(http_listen_port)
+        await self.http_server.listen()
+
         # Initialise the client(s) here
-        ...
+        self.http_client = QGenHttpClient()
+        self.http_client.set_proto("http").set_host("localhost").set_port(
+            http_listen_port
+        )
 
     async def asyncTearDown(self) -> None:
         # Shutdown the service(s) here
+        await self.http_server.stop()
         await self.service.async_shutdown()
-        ...
 
     async def test_generate_with_llm(self) -> None:
         # Arrange
@@ -54,3 +65,18 @@ class Test(IsolatedAsyncioTestCase):
         # Assert
         print(result)
         assert result is not None
+
+    async def test_generate_using_http(self) -> None:
+        # Arrange
+        num_tests = -1
+
+        # Act
+        response = await self.http_client.generate_requests(num_tests)
+
+        # Assert
+        print(response)
+
+        self.assertTrue(response.is_success, response.message)
+
+        assert response.payload is not None
+        self.assertTrue(response.payload)
