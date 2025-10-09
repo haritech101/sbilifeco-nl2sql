@@ -64,7 +64,7 @@ for library_name in library_names:
             ],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=10,
         )
 
         version_matches = search(r"LATEST:\s*(.*)", shell_output.stdout)
