@@ -31,18 +31,20 @@ class Test(IsolatedAsyncioTestCase):
         http_listen_port = int(
             getenv(EnvVars.http_listen_port, Defaults.http_listen_port)
         )
+        self.test_mode = getenv("TEST_MODE", "unit").lower()
 
-        # Initialise the service(s) here
-        self.service = (
-            QGen()
-            .set_conn_string(conn_string)
-            .set_llm_scheme(llm_proto, llm_host, llm_port)
-        )
-        await self.service.async_init()
+        if self.test_mode == "unit":
+            # Initialise the service(s) here
+            self.service = (
+                QGen()
+                .set_conn_string(conn_string)
+                .set_llm_scheme(llm_proto, llm_host, llm_port)
+            )
+            await self.service.async_init()
 
-        self.http_server = QGenHttpServer().set_qgen(self.service)
-        self.http_server.set_http_port(http_listen_port)
-        await self.http_server.listen()
+            self.http_server = QGenHttpServer().set_qgen(self.service)
+            self.http_server.set_http_port(http_listen_port)
+            await self.http_server.listen()
 
         # Initialise the client(s) here
         self.http_client = QGenHttpClient()
@@ -52,10 +54,14 @@ class Test(IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         # Shutdown the service(s) here
-        await self.http_server.stop()
-        await self.service.async_shutdown()
+        if self.test_mode == "unit":
+            await self.http_server.stop()
+            await self.service.async_shutdown()
 
     async def test_generate_with_llm(self) -> None:
+        if self.test_mode != "unit":
+            self.skipTest("Skipping unit test in non-unit mode")
+
         # Arrange
         num_tests = -1
 
