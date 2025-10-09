@@ -20,13 +20,17 @@ class QueryGeneratorTester:
             print("Session ID is inexplicably empty")
             return
 
-        metric = "nbp"
-        max_queries = 10
+        metric = ""
+        max_queries = 1000
 
         qa_list = []
-        with open(f".local/questions_{metric}.txt") as file_of_questions:
+        with open(
+            f".local/questions{f"_{metric}" if metric else ""}.txt"
+        ) as file_of_questions:
             time_tag = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            with open(f".local/answers_{metric}_{time_tag}.md", "w") as md_file:
+            with open(
+                f".local/answers{f"_{metric}" if metric else ""}_{time_tag}.md", "w"
+            ) as md_file:
                 # sequence_tag = 1
                 questions = islice(file_of_questions, max_queries)
 
@@ -64,7 +68,7 @@ class QueryGeneratorTester:
 
         pd.DataFrame(qa_list).to_excel(
             # f"answers_{time_tag}_{sequence_tag}.xlsx", index=False
-            f".local/answers_{metric}_{time_tag}.xlsx",
+            f".local/answers{f"_{metric}" if metric else ""}_{time_tag}.xlsx",
             index=False,
         )
 
