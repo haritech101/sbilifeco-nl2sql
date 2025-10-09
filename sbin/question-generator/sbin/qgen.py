@@ -49,10 +49,15 @@ class QGenRequest(BaseModel):
 class QGen:
     default_num_tests = 100
     available_metrics: dict[str, list[list[str]]] = {
-        "nbp": [["New Business Premium", "NBP", "Rated NBP"], ["Actual NBP"]],
+        "nbp": [
+            ["New Business Premium", "NBP", "Rated NBP"],
+            ["Actual NBP"],
+            ["Budget Achievement", "NB Achievement"],
+        ],
         "rp": [
             ["Renewal Premium", "RP", "Rated RP", "IRP"],
             ["Actual RP", "Actual Renewal Premium"],
+            ["Renewal Budget Achievement", "RP Achievement"],
         ],
         "refund": [["New Business Refund", "Refund", "NB refund"]],
         "persistency": [
