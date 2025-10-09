@@ -69,20 +69,20 @@ class QGenHttpServer(HttpServer):
         super().build_routes()
 
         @self.get(Paths.generate_requests)
-        async def generate_requests(num_requests: int = -1) -> Response[str]:
+        async def generate_requests(num_questions: int = -1) -> Response[str]:
             try:
-                return Response.ok(await self.qgen.generate_with_llm(num_requests))
+                return Response.ok(await self.qgen.generate_with_llm(num_questions))
             except Exception as e:
                 return Response.error(e)
 
 
 class QGenHttpClient(HttpClient):
-    async def generate_requests(self, num_requests: int = -1) -> Response[str]:
+    async def generate_requests(self, num_questions: int = -1) -> Response[str]:
         try:
             req = Request(
                 method="GET",
                 url=f"{self.url_base}{Paths.generate_requests}",
-                params={"num_requests": num_requests},
+                params={"num_requests": num_questions},
             )
             return await self.request_as_model(req)
         except Exception as e:

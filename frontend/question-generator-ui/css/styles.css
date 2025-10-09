@@ -1,0 +1,19 @@
+body {
+    font-family: sans;
+    line-height: 2rem;
+    padding: 1rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+button {
+    padding: 0.5rem;
+}
+
+.textbox {
+    padding: 0.5rem;
+}
