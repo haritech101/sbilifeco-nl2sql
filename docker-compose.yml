@@ -34,7 +34,7 @@ services:
         #     - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
         #     - traefik.http.services.llm.loadbalancer.server.url=http://llm
     vertex-llm:
-        image: sbilife/vertex-llm:202510.09.1100
+        image: sbilife/vertex-llm:202510.10.1045
         restart: always
         environment:
             - HTTP_PORT=80
