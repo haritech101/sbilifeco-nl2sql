@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-gateway-vertex"
-version = "0.1.1"
+version = "0.1.2"
 description = "Gateway to Google Vertex AI"
 dependencies = [
     "anthropic>=0.68.1",

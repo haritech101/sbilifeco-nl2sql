@@ -47,6 +47,7 @@ class VertexAI(ILLM):
                     }
                 ],
                 model=self.model,
+                temperature=0,
             )
 
             return Response.ok(
