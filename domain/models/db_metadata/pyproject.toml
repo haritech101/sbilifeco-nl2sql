@@ -7,9 +7,9 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-models-db-metadata"
-version = "0.1.5"
+version = "0.1.6"
 description = "description"
 dependencies = [
-    "pydantic==2.11.5",
+    "pydantic>=2.11.5",
     "sbilifeco-models-base>=0.1.3"
 ]
