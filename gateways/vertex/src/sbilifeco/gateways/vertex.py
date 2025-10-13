@@ -10,6 +10,7 @@ class VertexAI(ILLM):
         self.region: str = ""
         self.project_id: str = ""
         self.model: str = ""
+        self.max_output_tokens = 8192
 
     def set_region(self, region: str) -> VertexAI:
         self.region = region
@@ -23,6 +24,10 @@ class VertexAI(ILLM):
         self.model = model
         return self
 
+    def set_max_output_tokens(self, max_output_tokens: int) -> VertexAI:
+        self.max_output_tokens = max_output_tokens
+        return self
+
     async def async_init(self) -> None:
         self.vertex_client = AsyncAnthropicVertex(
             region=self.region, project_id=self.project_id
@@ -34,7 +39,7 @@ class VertexAI(ILLM):
     async def generate_reply(self, context: str) -> Response[str]:
         try:
             message = await self.vertex_client.messages.create(
-                max_tokens=1024,
+                max_tokens=self.max_output_tokens,
                 messages=[
                     {
                         "role": "user",
@@ -42,6 +47,7 @@ class VertexAI(ILLM):
                     }
                 ],
                 model=self.model,
+                temperature=0,
             )
 
             return Response.ok(

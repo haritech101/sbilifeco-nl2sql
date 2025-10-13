@@ -18,6 +18,8 @@ from sbin.model import (
     Policy,
     NewBusinessBudget,
     NewBusinessActual,
+    RenewalPremiumBudget,
+    RenewalPremiumActual,
 )
 
 
@@ -38,6 +40,7 @@ class Test(IsolatedAsyncioTestCase):
         with engine.connect() as conn:
             conn.execute(text("truncate policy cascade"))
             conn.execute(text("truncate fact_nbp_budget"))
+            conn.execute(text("truncate fact_rp_budget"))
             conn.commit()
 
         # Shutdown the service(s) here
@@ -72,6 +75,43 @@ class Test(IsolatedAsyncioTestCase):
         engine = create_engine(self.conn_string)
         with engine.connect() as conn:
             result = conn.execute(select(func.count()).select_from(NewBusinessBudget))
+            count = result.scalar_one()
+            self.assertGreater(count, 0)
+        engine.dispose()
+
+    async def test_hydrate_rp_budget(self) -> None:
+        # Act
+        await self.hydrator.hydrate_rp_budget()
+
+        # Assert
+        engine = create_engine(self.conn_string)
+        with engine.connect() as conn:
+            result = conn.execute(
+                select(func.count()).select_from(RenewalPremiumBudget)
+            )
+            count = result.scalar_one()
+            self.assertGreater(count, 0)
+        engine.dispose()
+
+    async def test_hydrate_rp_actuals(self) -> None:
+        # Arrange
+        await self.hydrator.hydrate_rp_budget()
+
+        # Act
+        await self.hydrator.hydrate_rp_actuals()
+
+        # Assert
+        engine = create_engine(self.conn_string)
+        with engine.connect() as conn:
+            # Check for actuals entries
+            result = conn.execute(
+                select(func.count()).select_from(RenewalPremiumActual)
+            )
+            count = result.scalar_one()
+            self.assertGreater(count, 0)
+
+            # Check for policy entries
+            result = conn.execute(select(func.count()).select_from(Policy))
             count = result.scalar_one()
             self.assertGreater(count, 0)
         engine.dispose()

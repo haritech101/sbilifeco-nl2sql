@@ -10,7 +10,7 @@ target-version = "py310"
 
 [project]
 name = "sbilifeco-user-flow-generate-query"
-version = "0.1.26"
+version = "0.1.27"
 description = "User flow for query and reply"
 dependencies = [
     "sbilifeco-models-base>=0.1.3",

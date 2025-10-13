@@ -12,6 +12,8 @@ from sbin.model import (
     Policy,
     NewBusinessActual,
     NewBusinessBudget,
+    RenewalPremiumBudget,
+    RenewalPremiumActual,
 )
 from sqlalchemy import create_engine, Engine, Connection, select, Select, text
 from sqlalchemy.orm import Session
@@ -65,6 +67,8 @@ class Hydrator:
 
         await self.hydrate_nbp_budget()
         await self.hydrate_nbp_actuals()
+        await self.hydrate_rp_budget()
+        await self.hydrate_rp_actuals()
 
     async def hydrate_nbp_actuals(self) -> None:
         seed(42)
@@ -95,7 +99,7 @@ class Hydrator:
                         policytechnicalid=str(uuid4()),
                         policycurrentstatus=choice(["Active", "Lapsed", "Surrendered"]),
                         policysumassured=sum_assured,
-                        policyannualizedpremiium=premium,
+                        policyannualizedpremium=premium,
                     )
                     budget_fulfilled += premium
                     session.add(policy)
@@ -149,6 +153,89 @@ class Hydrator:
                                 rated_nbp_gross=rated_nbp_gross,
                             )
                         )
+
+    async def hydrate_rp_budget(self) -> None:
+        seed(42)
+        with Session(self.engine) as session, session.begin():
+            for region_id in self.regions:
+                for channel_id in self.channels:
+                    for product_id in self.products:
+                        print(
+                            f"Renewal Budget for Region: {region_id}, Channel: {channel_id}, "
+                            f"Product: {product_id}"
+                        )
+
+                        rp = round(randint(5000000, 20000000), -6)
+
+                        session.add(
+                            RenewalPremiumBudget(
+                                region_id=region_id,
+                                sub_channel_id=channel_id,
+                                product_id=product_id,
+                                current_flag=1,
+                                rp=rp,
+                            )
+                        )
+
+    async def hydrate_rp_actuals(self) -> None:
+        seed(42)
+        with Session(self.engine) as session, session.begin():
+            stmt = select(RenewalPremiumBudget)
+            budgets = session.scalars(stmt)
+            for budget in budgets:
+                # Randomly decide how much of the budget to fulfill (50% to 100%)
+                achievement_percent = randint(50, 100)
+                months_passed = date.today().month - 4 + 1  # Since April
+                achievement = (achievement_percent / 100) * (
+                    months_passed * float(budget.rp) / 12
+                )
+
+                # Keep creating renewal actuals until the fulfilled budget is met
+                budget_fulfilled = 0
+                while budget_fulfilled < achievement:
+                    print(
+                        f"Policy and actuals for Region: {budget.region_id}, "
+                        f"Channel: {budget.sub_channel_id}, Product: {budget.product_id}, "
+                        f"{budget_fulfilled} / {achievement} ({budget.rp})"
+                    )
+
+                    sum_assured = round(randint(500000, 10000000), -5)
+                    renewal_premium = round(sum_assured * 0.05, -2)
+                    gross_premium = renewal_premium + randint(
+                        0, 100
+                    )  # Small random gross up
+                    policy_id = str(uuid4())  # Generate a policy ID to link
+
+                    policy = Policy(
+                        productid=budget.product_id,
+                        policytechnicalid=policy_id,
+                        policycurrentstatus=choice(["Active", "Lapsed", "Surrendered"]),
+                        policysumassured=sum_assured,
+                        policyannualizedpremium=renewal_premium,
+                    )
+                    budget_fulfilled += renewal_premium
+                    session.add(policy)
+                    session.flush()  # Ensure policies get their IDs
+
+                    # Random date since April 1st of this year
+                    renewal_date = self.faker.date_between(
+                        date(2025, 4, 1), date.today()
+                    )
+
+                    # Create renewal premium actual entry
+                    rp_actual = RenewalPremiumActual(
+                        region_id=budget.region_id,
+                        sub_channel_id=budget.sub_channel_id,
+                        policytechnicalid=policy_id,
+                        date=renewal_date,
+                        rp_premium=renewal_premium,
+                        rated_rp=renewal_premium,  # Assume rated_rp = rp
+                        rp_gross=gross_premium,  # Small random gross up
+                        rated_rp_gross=gross_premium,  # Assume rated_rp_gross
+                    )
+                    session.add(rp_actual)
+                    budget_fulfilled += renewal_premium
+                    session.flush()
 
     def _select_regions(self) -> Select:
         return (
