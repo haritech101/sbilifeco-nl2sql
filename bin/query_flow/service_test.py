@@ -97,3 +97,13 @@ class Test(IsolatedAsyncioTestCase):
 
             # Assert
             patched_method.assert_called_once()
+
+    async def test_infer_schema(self) -> None:
+        # Arrange
+        question = "Please tell me what you have inferred."
+
+        # Act and assert
+        llm_reply = await self._test_with(question, with_thoughts=False)
+
+        with open(".local/inferred.md", "w") as inference:
+            inference.write(llm_reply)
