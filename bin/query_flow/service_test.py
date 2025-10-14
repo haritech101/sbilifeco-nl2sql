@@ -34,7 +34,7 @@ class Test(IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None: ...
 
-    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> str:
         # Arrange
         session_id = uuid4().hex
 
@@ -58,6 +58,8 @@ class Test(IsolatedAsyncioTestCase):
             query_response.payload.lower(),
             "Query response should contain 'select'",
         )
+
+        return query_response.payload
 
     async def test_non_data_query(self) -> None:
         # Arrange
