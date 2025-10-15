@@ -84,11 +84,11 @@ Format the query nicely using the following rules.
 
     * Generated Query:
 
-      <the final query>
+      <the final query in markdown>
     
     * Result:
       
-      <the final result>
+      <the final result in a markdown table>
 
 
 **Metadata**
