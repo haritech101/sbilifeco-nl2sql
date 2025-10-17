@@ -1,0 +1,99 @@
+cubes:
+    - name: dealer_channel
+      sql_table: dealer_channel
+
+      dimensions:
+          - name: channeltype
+            sql: channeltype
+            type: string
+            public: false
+
+          - name: channelid
+            sql: channelid
+            type: string
+            public: false
+
+          - name: channeltechnicalid
+            sql: channeltechnicalid
+            type: string
+            public: true
+
+          - name: channelcode
+            sql: channelcode
+            type: string
+            public: false
+
+          - name: channelsigle
+            sql: channelsigle
+            type: string
+            public: false
+
+          - name: channelfirstname
+            sql: channelfirstname
+            type: string
+            public: false
+
+          - name: channelmiddlename
+            sql: channelmiddlename
+            type: string
+            public: false
+
+          - name: channellastname
+            sql: channellastname
+            type: string
+            public: false
+
+          - name: channellicenseissuedate
+            sql: channellicenseissuedate
+            type: time
+            public: false
+
+          - name: channelactivestatus
+            sql: channelactivestatus
+            type: string
+            public: false
+
+          - name: ulipcertified
+            sql: ulipcertified
+            type: string
+            public: false
+
+          - name: um_banktechnicalid
+            sql: um_banktechnicalid
+            type: string
+            public: false
+
+          - name: um_bankcode
+            sql: um_bankcode
+            type: string
+            public: false
+
+          - name: um_bankname
+            sql: um_bankname
+            type: string
+            public: true
+
+          - name: banktechnicalid
+            sql: banktechnicalid
+            type: string
+            public: false
+
+          - name: servicebranchmktg
+            sql: servicebranchmktg
+            type: string
+            public: false
+
+          - name: channelcodegenerationdate
+            sql: channelcodegenerationdate
+            type: time
+            public: false
+
+          - name: channelunqid
+            sql: channelunqid
+            type: string
+            public: false
+
+          - name: umunqid
+            sql: umunqid
+            type: string
+            public: false

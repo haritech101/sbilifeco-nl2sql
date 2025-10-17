@@ -1,0 +1,50 @@
+cubes:
+    - name: dim_product
+      description: List of insurance products using which policies are issued. Before answering the main question, query all the possible distinct values of the product_name field and the lob field (two seperate queries) in this table.
+      sql_table: dim_product
+      public: true
+      joins:
+          - name: dim_product_broad_segment
+            relationship: many_to_one
+            sql: "{CUBE}.broad_segment_id = {dim_product_broad_segment}.prod_broad_seg_id"
+
+      dimensions:
+          - name: product_id
+            sql: product_id
+            type: number
+            primary_key: true
+            public: true
+            description: Primary key identifying each product. This is used as a foreign key by policies to identify the product as which a policy is issued. Always use this field to join actuals table with budget table.
+
+          - name: lob
+            sql: lob
+            type: string
+            description: The line of business (LOB) to which this product caters. This field is a master value and will need to be enumerated before other queries about products.
+
+          - name: product_name
+            sql: product_name
+            type: string
+            description: The name of the insurance product. Queries will often use the name of a product to match against. This field is a master value.
+
+          - name: broad_segment_id
+            sql: broad_segment_id
+            type: number
+            description: The broad segment from dim_product_broad_segment under which this product falls
+
+          - name: launched_date
+            sql: launched_date
+            type: time
+            description: The date on which a product was launched in market
+            public: false
+
+          - name: closed_date
+            sql: closed_date
+            type: time
+            description: The date on which a product was pulled off market
+            public: false
+
+          - name: relaunched_date
+            sql: relaunched_date
+            type: time
+            description: The date on which a product was relaunched in the market after having been discontinued
+            public: false

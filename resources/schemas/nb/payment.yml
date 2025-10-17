@@ -1,0 +1,210 @@
+cubes:
+    - name: payment
+      sql_table: payment
+
+      dimensions:
+          - name: paymenttechnicalid
+            sql: paymenttechnicalid
+            type: string
+            public: true
+
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+            public: true
+
+          - name: policyproposalnumber
+            sql: policyproposalnumber
+            type: string
+            public: false
+
+          - name: paymentstatus
+            sql: paymentstatus
+            type: string
+            public: true
+
+          - name: paymentinstrumentnumber
+            sql: paymentinstrumentnumber
+            type: string
+            public: true
+
+          - name: paymentmechanism
+            sql: paymentmechanism
+            type: string
+            public: true
+
+          - name: instrumentreceiveddate
+            sql: instrumentreceiveddate
+            type: time
+            public: true
+
+          - name: bankrealiseddate
+            sql: bankrealiseddate
+            type: time
+            public: true
+
+          - name: branchapprovaldate
+            sql: branchapprovaldate
+            type: time
+            public: true
+
+          - name: paymentservicingbranch
+            sql: paymentservicingbranch
+            type: string
+            public: false
+
+          - name: paymenttype
+            sql: paymenttype
+            type: string
+            public: true
+
+          - name: transtechnicalid
+            sql: transtechnicalid
+            type: string
+            public: true
+
+          - name: servicebranchmktg
+            sql: servicebranchmktg
+            type: string
+            public: false
+
+          - name: serviceregionnamemktg
+            sql: serviceregionnamemktg
+            type: string
+            public: false
+
+          - name: upserttimestamp
+            sql: upserttimestamp
+            type: time
+            public: false
+
+          - name: instrumentdate
+            sql: instrumentdate
+            type: time
+            public: true
+
+          - name: paymentvalid
+            sql: paymentvalid
+            type: string
+            public: true
+
+          - name: paymentoperationtype
+            sql: paymentoperationtype
+            type: string
+            public: true
+
+          - name: servicepc
+            sql: servicepc
+            type: string
+            public: false
+
+          - name: paymententrydate
+            sql: paymententrydate
+            type: time
+            public: false
+
+          - name: histobranchcode
+            sql: histobranchcode
+            type: string
+            public: false
+
+          - name: technicalhistotreeidseq
+            sql: technicalhistotreeidseq
+            type: string
+            public: false
+
+          - name: instrumentlocationtype
+            sql: instumentlocationtype
+            type: string
+            public: false
+
+          - name: cmshierarchyid
+            sql: cmshierarchyid
+            type: string
+            public: false
+
+          - name: policyunqid
+            sql: policyunqid
+            type: string
+            public: true
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+            public: false
+
+          - name: dishonoureddate
+            sql: dishonoureddate
+            type: time
+            public: false
+
+          - name: drawnbank
+            sql: drawnbank
+            type: string
+            public: false
+
+          - name: drawnbranch
+            sql: drawnbranch
+            type: string
+            public: false
+
+          - name: collectionbank
+            sql: collectionbank
+            type: string
+            public: false
+
+          - name: paymentunqid
+            sql: paymentunqid
+            type: string
+            public: true
+
+          - name: city
+            sql: city
+            type: string
+            public: false
+
+          - name: lastactiondate
+            sql: lastactiondate
+            type: time
+            public: false
+
+          - name: sourceuserid
+            sql: sourceuserid
+            type: string
+            public: false
+
+          - name: approvedby
+            sql: approvedby
+            type: string
+            public: false
+
+          - name: eftaccountnumber
+            sql: eftaccountnumber
+            type: string
+            public: false
+
+          - name: bankcode
+            sql: bankcode
+            type: string
+            public: false
+
+          - name: branchcode
+            sql: branchcode
+            type: string
+            public: false
+
+      measures:
+          - name: paymentamount
+            sql: paymentamount
+            type: number
+            public: true
+
+          - name: paymentcharges
+            sql: paymentcharges
+            type: number
+            public: false
+
+          - name: paymentresidualamount
+            sql: paymentresidualamount
+            type: number
+            public: true

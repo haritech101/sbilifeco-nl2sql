@@ -1,0 +1,18 @@
+cubes:
+    - name: dim_master_channel
+      description: A list of sales master channels. Policy sales are attributed to such channels. Before answering the main question, query all the possible distinct values for the master_channel_name field of this table.
+      sql_table: dim_master_channel
+      public: true
+
+      dimensions:
+          - name: masterchannel_id
+            sql: masterchannel_id
+            type: number
+            primary_key: true
+            public: true
+            description: The primary key that identifies each sales master channel. This is used as a foreign key for sub channels to categories sub channels under master channels. Never use this when joining actuals table and budget table.
+
+          - name: master_channel_name
+            sql: master_channel_name
+            type: string
+            description: The name of the sales master channel. Queries will often match against a certain sales master channel name. If the questions mentions a channel, it chould be here or could be a subchannel. This field is a master value.

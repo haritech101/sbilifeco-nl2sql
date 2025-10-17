@@ -1,0 +1,270 @@
+cubes:
+    - name: proposaldepositmovement
+      sql_table: proposaldepositmovement
+
+      dimensions:
+          - name: businesstype
+            sql: businesstype
+            type: string
+            public: false
+
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+            public: true
+
+          - name: channelcode
+            sql: channelcode
+            type: string
+            public: false
+
+          - name: status
+            sql: status
+            type: string
+            public: true
+
+          - name: substatus
+            sql: substatus
+            type: string
+            public: true
+
+          - name: proposal
+            sql: proposal
+            type: string
+            public: true
+
+          - name: servicebranchops
+            sql: servicebranchops
+            type: string
+            public: false
+
+          - name: paymentmechanism
+            sql: paymentmechanism
+            type: string
+            public: false
+
+          - name: month
+            sql: month
+            type: string
+            public: false
+
+          - name: bankcode
+            sql: bankcode
+            type: string
+            public: false
+
+          - name: bankname
+            sql: bankname
+            type: string
+            public: false
+
+          - name: bankbranchcode
+            sql: bankbranchcode
+            type: string
+            public: false
+
+          - name: bankbranchname
+            sql: bankbranchname
+            type: string
+            public: false
+
+          - name: reqstatus
+            sql: reqstatus
+            type: string
+            public: false
+
+          - name: reqtype
+            sql: reqtype
+            type: string
+            public: false
+
+          - name: uwtype
+            sql: uwtype
+            type: string
+            public: false
+
+          - name: uwstatus
+            sql: uwstatus
+            type: string
+            public: false
+
+          - name: channeltype
+            sql: channeltype
+            type: string
+            public: false
+
+          - name: pcname
+            sql: pcname
+            type: string
+            public: false
+
+          - name: proposalapprovaldate
+            sql: proposalapprovaldate
+            type: time
+            public: false
+
+          - name: proposalapprovaltime
+            sql: proposalapprovaltime
+            type: string
+            public: false
+
+          - name: paymentstatus
+            sql: paymentstatus
+            type: string
+            public: false
+
+          - name: cashieringdate
+            sql: cashieringdate
+            type: time
+            public: true
+
+          - name: servicebranchname
+            sql: servicebranchname
+            type: string
+            public: false
+
+          - name: pl_sys
+            sql: pl_sys
+            type: string
+            public: false
+
+          - name: precallingflag
+            sql: precallingflag
+            type: string
+            public: false
+
+          - name: firstdataentryapprovaldate
+            sql: firstdataentryapprovaldate
+            type: time
+            public: false
+
+          - name: firstdataentryapprovaltime
+            sql: firstdataentryapprovaltime
+            type: string
+            public: false
+
+          - name: policyholderid
+            sql: policyholderid
+            type: string
+            public: false
+
+          - name: policyholdername
+            sql: policyholdername
+            type: string
+            public: false
+
+          - name: policyholderofficephone
+            sql: policyholderofficephone
+            type: string
+            public: false
+
+          - name: policyholderhomephone
+            sql: policyholderhomephone
+            type: string
+            public: false
+
+          - name: policyholdermobile
+            sql: policyholdermobile
+            type: string
+            public: false
+
+          - name: mainreason
+            sql: mainreason
+            type: string
+            public: false
+
+          - name: subreason
+            sql: subreason
+            type: string
+            public: false
+
+          - name: ageing
+            sql: ageing
+            type: number
+            public: false
+
+          - name: calldate
+            sql: calldate
+            type: time
+            public: false
+
+          - name: frequency
+            sql: frequency
+            type: string
+            public: false
+
+          - name: serviceregionname
+            sql: serviceregionname
+            type: string
+            public: false
+
+          - name: cancellationdatetime
+            sql: cancellationdatetime
+            type: time
+            public: false
+
+          - name: policystatus
+            sql: policystatus
+            type: string
+            public: true
+
+          - name: policystatussub
+            sql: policystatussub
+            type: string
+            public: true
+
+          - name: bankcirclename
+            sql: bankcirclename
+            type: string
+            public: false
+
+          - name: zone
+            sql: zone
+            type: string
+            public: false
+
+          - name: cetimestamp
+            sql: cetimestamp
+            type: time
+            public: true
+
+          - name: recordinserteddate
+            sql: recordinserteddate
+            type: time
+            public: false
+
+          - name: policyunqid
+            sql: policyunqid
+            type: string
+            public: true
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+            public: false
+
+          - name: workflow_stage
+            sql: workflow_stage
+            type: string
+            public: false
+
+          - name: wf_app_status_desc
+            sql: wf_app_status_desc
+            type: string
+            public: false
+
+          - name: cnct_otp
+            sql: cnct_otp
+            type: string
+            public: false
+
+      measures:
+          - name: amount
+            sql: amount
+            type: number
+            public: true
+
+          - name: policysumassured
+            sql: policysumassured
+            type: number
+            public: false

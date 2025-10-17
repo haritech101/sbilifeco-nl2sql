@@ -1,0 +1,174 @@
+cubes:
+    - name: contactmaster
+      sql_table: contactmaster
+
+      dimensions:
+          - name: contacttechnicalid
+            sql: contacttechnicalid
+            type: string
+            public: true
+
+          - name: correspondenceaddress1
+            sql: correspondenceaddress1
+            type: string
+            public: false
+
+          - name: correspondenceaddress2
+            sql: correspondenceaddress2
+            type: string
+            public: false
+
+          - name: correspondenceaddress3
+            sql: correspondenceaddress3
+            type: string
+            public: false
+
+          - name: correspondencecity
+            sql: correspondencecity
+            type: string
+            public: false
+
+          - name: correspondencestate
+            sql: correspondencestate
+            type: string
+            public: false
+
+          - name: correspondencepostcode
+            sql: correspondencepostcode
+            type: string
+            public: false
+
+          - name: permanentaddress1
+            sql: permanentaddress1
+            type: string
+            public: false
+
+          - name: permanentaddress2
+            sql: permanentaddress2
+            type: string
+            public: false
+
+          - name: permanentaddress3
+            sql: permanentaddress3
+            type: string
+            public: false
+
+          - name: permanentcity
+            sql: permanentcity
+            type: string
+            public: false
+
+          - name: permanentstate
+            sql: permanentstate
+            type: string
+            public: false
+
+          - name: permanentpostcode
+            sql: permanentpostcode
+            type: string
+            public: false
+
+          - name: contactresidence
+            sql: contactresidence
+            type: string
+            public: false
+
+          - name: contactresidencehash
+            sql: contactresidencehash
+            type: number
+            public: false
+
+          - name: contactoffice
+            sql: contactoffice
+            type: string
+            public: false
+
+          - name: contactofficehash
+            sql: contactofficehash
+            type: number
+            public: false
+
+          - name: contactmobile
+            sql: contactmobile
+            type: string
+            public: true
+
+          - name: contactmobilehash
+            sql: contactmobilehash
+            type: number
+            public: false
+
+          - name: contactfax
+            sql: contactfax
+            type: string
+            public: false
+
+          - name: contactfaxhash
+            sql: contactfaxhash
+            type: number
+            public: false
+
+          - name: upserttimestamp
+            sql: upserttimestamp
+            type: time
+            public: false
+
+          - name: emailid
+            sql: emailid
+            type: string
+            public: false
+
+          - name: correspondenceareatype
+            sql: correspondenceareatype
+            type: string
+            public: false
+
+          - name: permanentareatype
+            sql: permanentareatype
+            type: string
+            public: false
+
+          - name: contactunqid
+            sql: contactunqid
+            type: string
+            public: true
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+            public: false
+
+          - name: contact_mobile
+            sql: contact_mobile
+            type: string
+            public: false
+
+          - name: emailverifflag
+            sql: emailverifflag
+            type: string
+            public: false
+
+          - name: prev_updatedate
+            sql: prev_updatedate
+            type: time
+            public: false
+
+          - name: contactmobile2
+            sql: contactmobile2
+            type: string
+            public: false
+
+          - name: contactmobile3
+            sql: contactmobile3
+            type: string
+            public: false
+
+          - name: taxmobile1
+            sql: taxmobile1
+            type: string
+            public: false
+
+          - name: taxmobile2
+            sql: taxmobile2
+            type: string
+            public: false

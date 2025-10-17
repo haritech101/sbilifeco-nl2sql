@@ -1,0 +1,309 @@
+cubes:
+    - name: cms_active_deactive_cif_data
+      sql_table: cms_active_deactive_cif_data
+
+      dimensions:
+          - name: quarter_date
+            sql: quarter_date
+            type: time
+            public: false
+
+          - name: cif_code
+            sql: cif_code
+            type: string
+            public: true
+
+          - name: title
+            sql: title
+            type: string
+            public: false
+
+          - name: cif_name
+            sql: cif_name
+            type: string
+            public: false
+
+          - name: sex
+            sql: sex
+            type: string
+            public: false
+
+          - name: address1
+            sql: address1
+            type: string
+            public: true
+
+          - name: address2
+            sql: address2
+            type: string
+            public: true
+
+          - name: address3
+            sql: address3
+            type: string
+            public: true
+
+          - name: street
+            sql: street
+            type: string
+            public: false
+
+          - name: city
+            sql: city
+            type: string
+            public: false
+
+          - name: pin
+            sql: pin
+            type: string
+            public: false
+
+          - name: state_nm
+            sql: state_nm
+            type: string
+            public: false
+
+          - name: primary_email
+            sql: primary_email
+            type: string
+            public: false
+
+          - name: secondary_email
+            sql: secondary_email
+            type: string
+            public: false
+
+          - name: certificate_no
+            sql: certificate_no
+            type: string
+            public: false
+
+          - name: certificate_issue_date
+            sql: certificate_issue_date
+            type: string
+            public: false
+
+          - name: certificate_expiry_date
+            sql: certificate_expiry_date
+            type: string
+            public: false
+
+          - name: certificate_ren_date
+            sql: certificate_ren_date
+            type: string
+            public: false
+
+          - name: status
+            sql: status
+            type: string
+            public: true
+
+          - name: deactivation_date
+            sql: deactivation_date
+            type: string
+            public: false
+
+          - name: activation_date
+            sql: activation_date
+            type: string
+            public: false
+
+          - name: first_activation_dt
+            sql: first_activation_dt
+            type: string
+            public: false
+
+          - name: allocation_date
+            sql: allocation_date
+            type: string
+            public: false
+
+          - name: qualification
+            sql: qualification
+            type: string
+            public: false
+
+          - name: status_chg_reason_nm
+            sql: status_chg_reason_nm
+            type: string
+            public: false
+
+          - name: dateofbirth
+            sql: dateofbirth
+            type: string
+            public: false
+
+          - name: pan
+            sql: pan
+            type: string
+            public: false
+
+          - name: mobile
+            sql: mobile
+            type: string
+            public: true
+
+          - name: urn
+            sql: urn
+            type: string
+            public: false
+
+          - name: ulip_license_no
+            sql: ulip_license_no
+            type: string
+            public: false
+
+          - name: ulip_license_issue_date
+            sql: ulip_license_issue_date
+            type: string
+            public: false
+
+          - name: ulip_license_expiry_date
+            sql: ulip_license_expiry_date
+            type: string
+            public: false
+
+          - name: pf_number
+            sql: pf_number
+            type: string
+            public: false
+
+          - name: remarks
+            sql: remarks
+            type: string
+            public: false
+
+          - name: bank_code
+            sql: bank_code
+            type: string
+            public: false
+
+          - name: bank_nm
+            sql: bank_nm
+            type: string
+            public: false
+
+          - name: branch_pms
+            sql: branch_pms
+            type: string
+            public: false
+
+          - name: branch_name
+            sql: branch_name
+            type: string
+            public: false
+
+          - name: branch_code
+            sql: branch_code
+            type: string
+            public: false
+
+          - name: bdm_code
+            sql: bdm_code
+            type: string
+            public: false
+
+          - name: region_cd
+            sql: region_cd
+            type: string
+            public: false
+
+          - name: zone_name
+            sql: zone_name
+            type: string
+            public: false
+
+          - name: network_code
+            sql: network_code
+            type: string
+            public: false
+
+          - name: network_name
+            sql: network_name
+            type: string
+            public: false
+
+          - name: circle_pms
+            sql: circle_pms
+            type: string
+            public: false
+
+          - name: category
+            sql: category
+            type: string
+            public: false
+
+          - name: sub_category
+            sql: sub_category
+            type: string
+            public: false
+
+          - name: sbil_region
+            sql: sbil_region
+            type: string
+            public: false
+
+          - name: cabank_code
+            sql: cabank_code
+            type: string
+            public: false
+
+          - name: cabank_lic_num
+            sql: cabank_lic_num
+            type: string
+            public: false
+
+          - name: cabank_lic_issue
+            sql: cabank_lic_issue
+            type: string
+            public: false
+
+          - name: cabank_lic_exp
+            sql: cabank_lic_exp
+            type: string
+            public: false
+
+          - name: inprocessloginid
+            sql: inprocessloginid
+            type: string
+            public: false
+
+          - name: inprocessusername
+            sql: inprocessusername
+            type: string
+            public: false
+
+          - name: requirementclosedloginid
+            sql: requirementclosedloginid
+            type: string
+            public: false
+
+          - name: requirementclosedusername
+            sql: requirementclosedusername
+            type: string
+            public: false
+
+          - name: created_date
+            sql: created_date
+            type: time
+            public: false
+
+          - name: sign_image
+            sql: sign_image
+            type: string
+            public: false
+
+          - name: photo_image
+            sql: photo_image
+            type: string
+            public: false
+
+          - name: month
+            sql: month
+            type: string
+            public: false
+
+          - name: bdm_emp_code
+            sql: bdm_emp_code
+            type: string
+            public: false

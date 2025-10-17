@@ -1,0 +1,620 @@
+cubes:
+    - name: policy
+      sql_table: policy
+
+      dimensions:
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+            public: true
+
+          - name: policyproposalnumber
+            sql: policyproposalnumber
+            type: string
+            public: true
+
+          - name: policynumber
+            sql: policynumber
+            type: string
+            public: true
+
+          - name: policycurrentstatus
+            sql: policycurrentstatus
+            type: string
+            public: true
+
+          - name: policycurrentstatussub
+            sql: policycurrentstatussub
+            type: string
+            public: true
+
+          - name: policycurrentstatusseffectdate
+            sql: policycurrentstatusseffectdate
+            type: time
+            public: true
+
+          - name: policyriskcommencementdate
+            sql: policyriskcommencementdate
+            type: time
+            public: true
+
+          - name: proposalsubmissiondate
+            sql: proposalsubmissiondate
+            type: time
+            public: false
+
+          - name: policypaymentterm
+            sql: policypaymentterm
+            type: number
+            public: false
+
+          - name: policyissuedate
+            sql: policyissuedate
+            type: time
+            public: true
+
+          - name: policyprintdate
+            sql: policyprintdate
+            type: time
+            public: false
+
+          - name: proposalapprovaldate
+            sql: proposalapprovaldate
+            type: string
+            public: true
+
+          - name: productname
+            sql: productname
+            type: string
+            public: true
+
+          - name: productplan
+            sql: productplan
+            type: string
+            public: true
+
+          - name: commissionrate
+            sql: commissionrate
+            type: number
+            public: false
+
+          - name: holderid
+            sql: holderid
+            type: number
+            public: true
+
+          - name: holderpersonfirstname
+            sql: holderpersonfirstname
+            type: string
+            public: true
+
+          - name: holderpersonmiddlename
+            sql: holderpersonmiddlename
+            type: string
+            public: true
+
+          - name: holderpersonlastname
+            sql: holderpersonlastname
+            type: string
+            public: true
+
+          - name: holderpersondob
+            sql: holderpersondob
+            type: time
+            public: true
+
+          - name: premiumpaymentfrequency
+            sql: premiumpaymentfrequency
+            type: string
+            public: true
+
+          - name: premiumfup
+            sql: premiumfup
+            type: time
+            public: true
+
+          - name: servicebranchops
+            sql: servicebranchops
+            type: string
+            public: true
+
+          - name: channeltype
+            sql: channeltype
+            type: string
+            public: true
+
+          - name: channeltechnicalid
+            sql: channeltechnicalid
+            type: string
+            public: true
+
+          - name: statusproposaleffectdate
+            sql: statusproposaleffectdate
+            type: time
+            public: false
+
+          - name: statusrejectioneffectdate
+            sql: statusrejectioneffectdate
+            type: time
+            public: false
+
+          - name: statuswithdrawaleffectdate
+            sql: statuswithdrawaleffectdate
+            type: time
+            public: false
+
+          - name: statuspendingreqdeffectdate
+            sql: statuspendingreqdeffectdate
+            type: time
+            public: false
+
+          - name: statusunderwritingeffectdate
+            sql: statusunderwritingeffectdate
+            type: time
+            public: false
+
+          - name: statuscancellationeffectdate
+            sql: statuscancellationeffectdate
+            type: time
+            public: true
+
+          - name: statuslapseeffectdate
+            sql: statuslapseeffectdate
+            type: time
+            public: false
+
+          - name: statusmaturityeffectdate
+            sql: statusmaturityeffectdate
+            type: time
+            public: false
+
+          - name: statustechlapseeffectdate
+            sql: statustechlapseeffectdate
+            type: time
+            public: false
+
+          - name: statusprepropositioneffectdate
+            sql: statusprepropositioneffectdate
+            type: time
+            public: false
+
+          - name: statusinforceeffectdate
+            sql: statusinforceeffectdate
+            type: time
+            public: false
+
+          - name: statusunderwritteneffectdate
+            sql: statusunderwritteneffectdate
+            type: time
+            public: false
+
+          - name: policytype
+            sql: policytype
+            type: string
+            public: true
+
+          - name: policytypesub
+            sql: policytypesub
+            type: string
+            public: false
+
+          - name: vestingage
+            sql: vestingage
+            type: number
+            public: false
+
+          - name: revivaldate
+            sql: revivaldate
+            type: time
+            public: false
+
+          - name: productid
+            sql: productid
+            type: string
+            public: true
+
+          - name: banktechnicalid
+            sql: banktechnicalid
+            type: string
+            public: true
+
+          - name: underwritingexpressflag
+            sql: underwritingexpressflag
+            type: string
+            public: false
+
+          - name: policybenefitterm
+            sql: policybenefitterm
+            type: number
+            public: false
+
+          - name: underwritingdecisionstatus
+            sql: underwritingdecisionstatus
+            type: string
+            public: false
+
+          - name: technicaltreeagencyid
+            sql: technicaltreeagencyid
+            type: string
+            public: true
+
+          - name: holderpersongender
+            sql: holderpersongender
+            type: string
+            public: false
+
+          - name: servicebranchmktg
+            sql: servicebranchmktg
+            type: string
+            public: false
+
+          - name: serviceregionnamemktg
+            sql: serviceregionnamemktg
+            type: string
+            public: true
+
+          - name: upserttimestamp
+            sql: upserttimestamp
+            type: time
+            public: false
+
+          - name: subscriptiontechnicalid
+            sql: subscriptiontechnicalid
+            type: string
+            public: true
+
+          - name: policypaymentmechanism
+            sql: policypaymentmechanism
+            type: string
+            public: false
+
+          - name: servicepc
+            sql: servicepc
+            type: string
+            public: false
+
+          - name: policyfirstcashieringdate
+            sql: policyfirstcashieringdate
+            type: time
+            public: true
+
+          - name: policyproposaldate
+            sql: policyproposaldate
+            type: time
+            public: true
+
+          - name: holdertechnicalid
+            sql: holdertechnicalid
+            type: string
+            public: true
+
+          - name: policydispatchawbnumber
+            sql: policydispatchawbnumber
+            type: string
+            public: false
+
+          - name: policydispatchdate
+            sql: policydispatchdate
+            type: time
+            public: false
+
+          - name: requirementmedicalflag
+            sql: requirementmedicalflag
+            type: string
+            public: false
+
+          - name: requirementnonmedicalflag
+            sql: requirementnonmedicalflag
+            type: string
+            public: false
+
+          - name: holderstaffflag
+            sql: holderstaffflag
+            type: string
+            public: false
+
+          - name: productparticipatingtype
+            sql: productparticipatingtype
+            type: string
+            public: false
+
+          - name: statusclaimeffectdate
+            sql: statusclaimeffectdate
+            type: time
+            public: false
+
+          - name: userfilter1
+            sql: userfilter1
+            type: string
+            public: false
+
+          - name: userfilter2
+            sql: userfilter2
+            type: string
+            public: false
+
+          - name: userfilter3
+            sql: userfilter3
+            type: string
+            public: false
+
+          - name: policyissuancesuc
+            sql: policyissuancesuc
+            type: number
+            public: false
+
+          - name: paymentmechanismactivationdate
+            sql: paymentmechanismactivationdate
+            type: time
+            public: false
+
+          - name: contactaddress1
+            sql: contactaddress1
+            type: string
+            public: false
+
+          - name: contactaddress2
+            sql: contactaddress2
+            type: string
+            public: false
+
+          - name: contactaddress3
+            sql: contactaddress3
+            type: string
+            public: false
+
+          - name: contactcity
+            sql: contactcity
+            type: string
+            public: false
+
+          - name: contactstate
+            sql: contactstate
+            type: string
+            public: false
+
+          - name: contactpostcode
+            sql: contactpostcode
+            type: string
+            public: false
+
+          - name: contactareatype
+            sql: contactareatype
+            type: string
+            public: false
+
+          - name: serviceregionnameops
+            sql: serviceregionnameops
+            type: string
+            public: false
+
+          - name: policycurrentstatusentrydate
+            sql: policycurrentstatusentrydate
+            type: time
+            public: false
+
+          - name: producttechnicalid
+            sql: producttechnicalid
+            type: string
+            public: true
+
+          - name: rmcode
+            sql: rmcode
+            type: string
+            public: false
+
+          - name: alternatechannel
+            sql: alternatechannel
+            type: string
+            public: false
+
+          - name: monthlyincome
+            sql: monthlyincome
+            type: number
+            public: false
+
+          - name: worksiteid
+            sql: worksiteid
+            type: string
+            public: false
+
+          - name: ssspaname
+            sql: ssspaname
+            type: string
+            public: false
+
+          - name: kamcode
+            sql: kamcode
+            type: string
+            public: false
+
+          - name: pl_sys
+            sql: pl_sys
+            type: string
+            public: true
+
+          - name: filenum
+            sql: filenum
+            type: string
+            public: false
+
+          - name: referencenum
+            sql: referencenum
+            type: string
+            public: false
+
+          - name: quotationno
+            sql: quotationno
+            type: string
+            public: false
+
+          - name: merchantcode
+            sql: merchantcode
+            type: string
+            public: false
+
+          - name: payprefduedate
+            sql: payprefduedate
+            type: time
+            public: false
+
+          - name: assignmentflag
+            sql: assignmentflag
+            type: string
+            public: true
+
+          - name: proposalcategory
+            sql: proposalcategory
+            type: string
+            public: false
+
+          - name: channelunqid
+            sql: channelunqid
+            type: string
+            public: true
+
+          - name: bankunqid
+            sql: bankunqid
+            type: string
+            public: true
+
+          - name: policyunqid
+            sql: policyunqid
+            type: string
+            public: true
+
+          - name: holderunqid
+            sql: holderunqid
+            type: string
+            public: true
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+            public: false
+
+          - name: pmsproposalstatus
+            sql: pmsproposalstatus
+            type: string
+            public: true
+
+          - name: propsalcancelcomments
+            sql: propsalcancelcomments
+            type: string
+            public: false
+
+          - name: propsalfirstscandate
+            sql: propsalfirstscandate
+            type: time
+            public: false
+
+          - name: hniflag
+            sql: hniflag
+            type: string
+            public: false
+
+          - name: uin
+            sql: uin
+            type: string
+            public: false
+
+          - name: consentflag
+            sql: consentflag
+            type: string
+            public: false
+
+          - name: riskcategory
+            sql: riskcategory
+            type: string
+            public: true
+
+          - name: riskscore
+            sql: riskscore
+            type: number
+            public: false
+
+          - name: suspendedflag
+            sql: suspendedflag
+            type: string
+            public: false
+
+          - name: policyenddate
+            sql: policyenddate
+            type: time
+            public: false
+
+          - name: migrationflag
+            sql: migrationflag
+            type: string
+            public: false
+
+          - name: comboflag
+            sql: comboflag
+            type: string
+            public: false
+
+          - name: comboid
+            sql: comboid
+            type: string
+            public: false
+
+          - name: periodofpostponed
+            sql: periodofpostponed
+            type: number
+            public: false
+
+          - name: agentownlifeflag
+            sql: agentownlifeflag
+            type: string
+            public: false
+
+          - name: asp_flag
+            sql: asp_flag
+            type: string
+            public: false
+
+          - name: whatsapp_nb_flag
+            sql: whatsapp_nb_flag
+            type: string
+            public: false
+
+          - name: nrigstwaiver
+            sql: nrigstwaiver
+            type: string
+            public: false
+
+          - name: revivalenddate
+            sql: revivalenddate
+            type: time
+            public: false
+
+          - name: proposalmedicalflag
+            sql: proposalmedicalflag
+            type: string
+            public: false
+
+      measures:
+          - name: policysumassured
+            sql: policysumassured
+            type: number
+            public: false
+
+          - name: premiumgrossamount
+            sql: premiumgrossamount
+            type: number
+            public: true
+
+          - name: policyannualizedpremium
+            sql: policyannualizedpremium
+            type: number
+            public: false
+
+          - name: premiumnetamount
+            sql: premiumnetamount
+            type: number
+            public: true
+
+          - name: ratedpremium
+            sql: ratedpremium
+            type: number
+            public: false

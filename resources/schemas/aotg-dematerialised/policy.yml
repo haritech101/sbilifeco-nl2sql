@@ -1,0 +1,34 @@
+cubes:
+    - name: policy
+      description: List of insurance policies that are either in proposal, active, in grace period or lapsed.
+      sql_table: policy
+      public: true
+
+      dimensions:
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+            primary_key: true
+            public: true
+            description: Primary key identifying each policy created
+
+          - name: policycurrentstatus
+            sql: policycurrentstatus
+            type: string
+            description: The current status of the policy
+
+          - name: productid
+            sql: productid
+            type: number
+            description: The life insurance product from dim_products that was sold as the mentioned policy.
+
+      measures:
+          - name: policysumassured
+            sql: policysumassured
+            type: number
+            description: The sum assured amount of the policy, i.e. the amount paid when the event insured by the policy occurs
+
+          - name: policyannualizedpremium
+            sql: policyannualizedpremium
+            type: number
+            description: The premium of the policy shown annualised

@@ -1,0 +1,18 @@
+cubes:
+    - name: dim_product_broad_segment
+      description: A list of segments under which insurance products fall. These are called broad segments. Before answering the main question, query all the possible distinct values of the broad_segment field of this table.
+      sql_table: dim_product_broad_segment
+      public: true
+
+      dimensions:
+          - name: prod_broad_seg_id
+            sql: prod_broad_seg_id
+            type: number
+            primary_key: true
+            public: true
+            description: The primary key which identifies each product broad segment. This is used as a foreign key for products to categorise products under different segments.
+
+          - name: broad_segment
+            sql: broad_segment
+            type: string
+            description: The name of the broad segment under which products are categorised. Queries will regularly use the name of the broad segment to match against. This field is a master value and will need to be enumerated before other queries about products.

@@ -1,0 +1,122 @@
+cubes:
+    - name: premium
+      sql_table: premium
+      public: false
+
+      dimensions:
+          - name: premiumtechnicalid
+            sql: premiumtechnicalid
+            type: string
+
+          - name: transtechnicalid
+            sql: transtechnicalid
+            type: string
+
+          - name: transactiontype
+            sql: transactiontype
+            type: string
+
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+
+          - name: policyproposalnumber
+            sql: policyproposalnumber
+            type: string
+
+          - name: premiumtype
+            sql: premiumtype
+            type: string
+
+          - name: transactionduetype
+            sql: transactionduetype
+            type: string
+
+          - name: policyyear
+            sql: policyyear
+            type: string
+
+          - name: transactionpaid
+            sql: transactionpaid
+            type: string
+
+          - name: transactionvalid
+            sql: transactionvalid
+            type: string
+
+          - name: transactionduedate
+            sql: transactionduedate
+            type: time
+
+          - name: premiumpaymentallocationdate
+            sql: premiumpaymentallocationdate
+            type: time
+
+          - name: servicebranchmktg
+            sql: servicebranchmktg
+            type: string
+
+          - name: serviceregionnamemktg
+            sql: serviceregionnamemktg
+            type: string
+
+          - name: servicepc
+            sql: servicepc
+            type: string
+
+          - name: upserttimestamp
+            sql: upserttimestamp
+            type: time
+
+          - name: transactioncancellationdate
+            sql: transactioncancellationdate
+            type: time
+
+          - name: transactionordersendingdate
+            sql: transactionordersendingdate
+            type: time
+
+          - name: eventeffectivedate
+            sql: eventeffectivedate
+            type: time
+
+          - name: technicalhistotreeidseq
+            sql: technicalhistotreeidseq
+            type: number
+
+          - name: histobranchcode
+            sql: histobranchcode
+            type: string
+
+          - name: policyunqid
+            sql: policyunqid
+            type: string
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+
+      measures:
+          - name: transactionamount
+            sql: transactionamount
+            type: number
+
+          - name: transactionservicetax
+            sql: transactionservicetax
+            type: number
+
+          - name: transactioninvestedamount
+            sql: transactioninvestedamount
+            type: number
+
+          - name: transactionshortfallamount
+            sql: transactionshortfallamount
+            type: number
+
+          - name: swachhbharatcess
+            sql: swachhbharatcess
+            type: number
+
+          - name: krishikalyancess
+            sql: krishikalyancess
+            type: number

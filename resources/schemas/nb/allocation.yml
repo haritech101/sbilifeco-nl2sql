@@ -1,0 +1,124 @@
+cubes:
+    - name: allocation
+      sql_table: allocation
+      public: false
+
+      dimensions:
+          - name: allocationtechnicalid
+            sql: allocationtechnicalid
+            type: string
+            primary_key: true
+            public: true
+
+          - name: allocationvalid
+            sql: allocationvalid
+            type: string
+
+          - name: paymenttechnicalid
+            sql: paymenttechnicalid
+            type: string
+
+          - name: premiumtechnicalid
+            sql: premiumtechnicalid
+            type: string
+
+          - name: premiumpaymentallocationdate
+            sql: premiumpaymentallocationdate
+            type: time
+
+          - name: upserttimestamp
+            sql: upserttimestamp
+            type: time
+
+          - name: policytechnicalid
+            sql: policytechnicalid
+            type: string
+
+          - name: premiumtype
+            sql: premiumtype
+            type: string
+
+          - name: policyyear
+            sql: policyyear
+            type: string
+
+          - name: allocationentrydate
+            sql: allocationentrydate
+            type: time
+
+          - name: allocationcancellationdate
+            sql: allocationcancellationdate
+            type: time
+
+          - name: histoentrybranchcode
+            sql: histoentrybranchcode
+            type: string
+
+          - name: histocancellationbranchcode
+            sql: histocancellationbranchcode
+            type: string
+
+          - name: technicalentryhistotreeidseq
+            sql: technicalentryhistotreeidseq
+            type: number
+
+          - name: technicalcancelhistotreeidseq
+            sql: technicalcancelhistotreeidseq
+            type: number
+
+          - name: cmshierarchyid
+            sql: cmshierarchyid
+            type: string
+
+          - name: policyunqid
+            sql: policyunqid
+            type: string
+
+          - name: systemflag
+            sql: systemflag
+            type: string
+
+          - name: eventtechnicalid
+            sql: eventtechnicalid
+            type: string
+
+          - name: oldallocationtechnicalid
+            sql: oldallocationtechnicalid
+            type: string
+
+          - name: originalallocationdate
+            sql: originalallocationdate
+            type: time
+
+      measures:
+          - name: allocationamount
+            sql: allocationamount
+            type: number
+
+          - name: entryfee
+            sql: entryfee
+            type: number
+
+          - name: servicetax
+            sql: servicetax
+            type: number
+
+          - name: servicetaxonentryfee
+            sql: servicetaxonentryfee
+            type: number
+
+          - name: swachhbharatcess
+            sql: swachhbharatcess
+            type: number
+
+          - name: swachhbharatcessentryfee
+            sql: swachhbharatcessentryfee
+            type: number
+
+          - name: krishikalyancess
+            sql: krishikalyancess
+            type: number
+
+          - name: krishikalyancessentryfee
+            sql: krishikalyancessentryfee
+            type: number

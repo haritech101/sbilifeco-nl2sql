@@ -1,0 +1,36 @@
+cubes:
+    - name: piwc_workflow_det
+      sql_table: piwc_workflow_det
+
+      dimensions:
+          - name: proposal_number
+            sql: proposal_number
+            type: string
+
+          - name: piwc_category
+            sql: piwc_category
+            type: string
+
+          - name: piwc_status
+            sql: piwc_status
+            type: string
+
+          - name: piwc_cmpltn_dt
+            sql: piwc_cmpltn_dt
+            type: time
+
+          - name: main_reason
+            sql: main_reason
+            type: string
+
+          - name: sub_reason
+            sql: sub_reason
+            type: string
+
+          - name: sub_category
+            sql: sub_category
+            type: string
+
+          - name: piwc_remark
+            sql: piwc_remark
+            type: string
