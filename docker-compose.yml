@@ -87,9 +87,7 @@ services:
     query-generator-ui:
         image: sbilife/query-generator-ui:202509.15.1000
         restart: always
-        environment:
-            - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
-            - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
+        env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
     redis:
