@@ -13,6 +13,9 @@ class EnvVars:
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
     prompts_file = "PROMPTS_FILE"
+    master_table_query = "MASTER_TABLE_QUERY"
+    single_table_query = "SINGLE_TABLE_QUERY"
+    joined_tables_query = "JOINED_TABLES_QUERY"
     db_id = "DB_ID"
 
 
