@@ -61,23 +61,23 @@ class Test(IsolatedAsyncioTestCase):
 
         return query_response.payload
 
-    async def test_non_data_query(self) -> None:
+    async def test_master_table_query(self) -> None:
         # Arrange
-        question = "Which regions are found in the south zone?"
+        question = getenv(EnvVars.master_table_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
 
-    async def test_non_join_query(self) -> None:
+    async def test_single_table_query(self) -> None:
         # Arrange
-        question = "Total Actual NBP from Retal Ageny in bengalor"
+        question = getenv(EnvVars.single_table_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
 
-    async def test_join_query(self) -> None:
+    async def test_joined_tables_query(self) -> None:
         # Arrange
-        question = "NBP Budget achievement YTD for PMJJBY segment"
+        question = getenv(EnvVars.joined_tables_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
