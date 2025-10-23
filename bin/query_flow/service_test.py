@@ -61,6 +61,13 @@ class Test(IsolatedAsyncioTestCase):
 
         return query_response.payload
 
+    async def test_metadata_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.metadata_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
     async def test_master_table_query(self) -> None:
         # Arrange
         question = getenv(EnvVars.master_table_query, "")
