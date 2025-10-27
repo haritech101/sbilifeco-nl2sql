@@ -27,7 +27,7 @@ services:
         environment:
             - HTTP_PORT=80
             - VERTEX_AI_REGION=global
-            - VERTEX_AI_PROJECT_ID=prj-uat-website-agent
+            - VERTEX_AI_PROJECT_ID=prj-uat-di-website-agent
             - VERTEX_AI_MODEL=gemini-2.5-flash
             - GOOGLE_APPLICATION_CREDENTIALS=/usr/local/vertex-llm/service-key-for-vertex-ai.json
         volumes:
