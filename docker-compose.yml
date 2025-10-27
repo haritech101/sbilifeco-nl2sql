@@ -2,8 +2,6 @@ services:
     metadata-storage:
         image: sbilife/metadata-storage:202508.14.1200
         restart: always
-        volumes:
-            - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
         environment:
             - MICROSERVICE_PORT=80
             - DB_HOST=postgres
@@ -23,16 +21,6 @@ services:
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
-    llm:
-        image: sbilife/llm:202509.15.1505
-        restart: always
-        environment:
-            - LLM_MODEL=gemini-2.5-flash
-            - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
-            - THINKING_BUDGET=1024
-        # labels:
-        #     - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
-        #     - traefik.http.services.llm.loadbalancer.server.url=http://llm
     vertex-llm:
         image: sbilife/vertex-llm:202510.10.1045
         restart: always
@@ -72,11 +60,11 @@ services:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202510.03.1519
+        image: sbilife/query-flow:202510.13.0829
         restart: always
         environment:
             - MCP_SERVER_URL=http://sql-db/mcp
-            - LLM_HOST=llm
+            - LLM_HOST=vertex-llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager
             - PROMPTS_FILE=/app/prompt.txt
@@ -96,21 +84,10 @@ services:
         ports:
             - 11200:80
             - 11201:8080
-    metadata-manager:
-        image: sbilife/metadata-manager:202506.30.1955
-        restart: always
-        environment:
-            - VITE_API_PROTO=${VITE_API_PROTO:-http}
-            - VITE_API_HOST=${VITE_API_HOST:-localhost}
-            - VITE_API_PORT=${VITE_API_PORT:-80}
-        ports:
-            - 11205:80
     query-generator-ui:
         image: sbilife/query-generator-ui:202509.15.1000
         restart: always
-        environment:
-            - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
-            - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
+        env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
     redis:
@@ -139,18 +116,6 @@ services:
             - 11208:4000
             - 11209:8081
         env_file: .local/synmetrix.env
-    materialsed-data:
-        image: postgres:17.5
-        restart: always
-        env_file: ./.local/materialised.env
-        volumes:
-            - ./.local/.materialised:/var/lib/postgresql/data
-    dematerialised-data:
-        image: postgres:17.5
-        restart: always
-        env_file: ./.local/dematerialised.env
-        volumes:
-            - ./.local/.dematerialised:/var/lib/postgresql/data
     redis-for-sessions:
         image: redis:8.2.0
         restart: always

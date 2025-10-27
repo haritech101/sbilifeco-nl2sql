@@ -34,7 +34,7 @@ class Test(IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None: ...
 
-    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> str:
         # Arrange
         session_id = uuid4().hex
 
@@ -59,23 +59,32 @@ class Test(IsolatedAsyncioTestCase):
             "Query response should contain 'select'",
         )
 
-    async def test_non_data_query(self) -> None:
+        return query_response.payload
+
+    async def test_metadata_query(self) -> None:
         # Arrange
-        question = "Which regions are found in the south zone?"
+        question = getenv(EnvVars.metadata_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
 
-    async def test_non_join_query(self) -> None:
+    async def test_master_table_query(self) -> None:
         # Arrange
-        question = "Total Actual NBP from Retal Ageny in bengalor"
+        question = getenv(EnvVars.master_table_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
 
-    async def test_join_query(self) -> None:
+    async def test_single_table_query(self) -> None:
         # Arrange
-        question = "NBP Budget achievement YTD for PMJJBY segment"
+        question = getenv(EnvVars.single_table_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_joined_tables_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.joined_tables_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
@@ -95,3 +104,13 @@ class Test(IsolatedAsyncioTestCase):
 
             # Assert
             patched_method.assert_called_once()
+
+    async def test_infer_schema(self) -> None:
+        # Arrange
+        question = "Please tell me what you have inferred."
+
+        # Act and assert
+        llm_reply = await self._test_with(question, with_thoughts=False)
+
+        with open(".local/inferred.md", "w") as inference:
+            inference.write(llm_reply)
