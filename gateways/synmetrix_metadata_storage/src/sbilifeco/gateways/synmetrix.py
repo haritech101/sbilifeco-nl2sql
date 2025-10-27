@@ -52,6 +52,11 @@ class Synmetrix(IMetadataStorage):
         self.conn: AsyncConnection | None = None
         self.api_jwt: str | None = None
 
+        self.admin_api_proto = "http"
+        self.admin_api_host = "localhost"
+        self.admin_api_port = 80
+        self.admin_api_base_path = "/"
+
     def set_db_username(self, username: str) -> Synmetrix:
         self.db_username = username
         return self
@@ -106,6 +111,30 @@ class Synmetrix(IMetadataStorage):
 
     def set_cube_api_port(self, port: int) -> Synmetrix:
         self.cube_api_port = port
+        return self
+
+    def set_admin_api_secret(self, secret: str) -> Synmetrix:
+        self.admin_api_secret = secret
+        return self
+
+    def set_admin_api_username(self, username: str) -> Synmetrix:
+        self.admin_api_username = username
+        return self
+
+    def set_admin_api_proto(self, proto: str) -> Synmetrix:
+        self.admin_api_proto = proto
+        return self
+
+    def set_admin_api_host(self, host: str) -> Synmetrix:
+        self.admin_api_host = host
+        return self
+
+    def set_admin_api_port(self, port: int) -> Synmetrix:
+        self.admin_api_port = port
+        return self
+
+    def set_admin_api_base_path(self, path: str) -> Synmetrix:
+        self.admin_api_base_path = path
         return self
 
     async def __with_db_connection(self, func: Callable | None, *args, **kwargs) -> Any:
@@ -387,3 +416,39 @@ class Synmetrix(IMetadataStorage):
         raise NotImplementedError(
             "Single field retrieval is irrelevant in Synmetrix gateway since cubes return the entire schema hierarchy"
         )
+
+    async def _send_admin_api_request(self, graph_query: dict) -> Response[str]:
+        req = Request()
+        req.url = (
+            f"{self.admin_api_proto}://"
+            f"{self.admin_api_host}"
+            f"{f":{self.admin_api_port}" if self.admin_api_port else ""}"
+            f"{self.admin_api_base_path}"
+        )
+        req.method = "POST"
+        req.headers = {
+            "Content-Type": "application/json",
+            "Hasura-Client-Name": self.admin_api_username,
+            "x-hasura-admin-secret": self.admin_api_secret,
+        }
+        req.json = graph_query
+
+        http_client = HttpClient()
+        http_response = await http_client.request_as_binary(req)
+
+        if not http_response.is_success:
+            return Response.fail(http_response.message, http_response.code)
+        elif not http_response.payload:
+            return Response.fail("Admin API response is inexplicably empty", 500)
+
+        return Response.ok(http_response.payload.decode("utf-8"))
+
+    async def _get_data_sources(self) -> Response[list[dict[str, Any]]]:
+        try:
+            response = await self._send_admin_api_request(
+                {"query": "query datasource { datasources { id name } }"}
+            )
+            return Response.ok([])
+        except Exception as e:
+            print(f"Error fetching data sources: {e}")
+            return Response.error(e)

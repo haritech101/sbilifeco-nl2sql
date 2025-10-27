@@ -29,6 +29,13 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
         cube_api_host = getenv("CUBE_API_HOST", "localhost")
         cube_api_port = int(getenv("CUBE_API_PORT", 4000))
 
+        admin_api_secret = getenv("ADMIN_API_SECRET", "")
+        admin_api_username = getenv("ADMIN_API_USERNAME", "")
+        admin_api_proto = getenv("ADMIN_API_PROTO", "http")
+        admin_api_host = getenv("ADMIN_API_HOST", "localhost")
+        admin_api_port = int(getenv("ADMIN_API_PORT", 80))
+        admin_api_base_path = getenv("ADMIN_API_BASE_PATH", "/")
+
         self.synmetrix = (
             Synmetrix()
             .set_db_username(db_username)
@@ -45,6 +52,12 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
             .set_cube_api_proto(cube_api_proto)
             .set_cube_api_host(cube_api_host)
             .set_cube_api_port(cube_api_port)
+            .set_admin_api_secret(admin_api_secret)
+            .set_admin_api_username(admin_api_username)
+            .set_admin_api_proto(admin_api_proto)
+            .set_admin_api_host(admin_api_host)
+            .set_admin_api_port(admin_api_port)
+            .set_admin_api_base_path(admin_api_base_path)
         )
         await self.synmetrix.async_init()
 
@@ -97,3 +110,15 @@ class SynmetrixTest(IsolatedAsyncioTestCase):
                 self.assertTrue(field.type)
                 self.assertTrue(hasattr(field, "description"))
                 self.assertTrue(hasattr(field, "aka"))
+
+    async def test_get_datasources(self) -> None:
+        # Arrange
+        ...
+
+        # Act
+        fetch_response = await self.synmetrix._get_data_sources()
+
+        # Assert
+        self.assertTrue(fetch_response.is_success, fetch_response.message)
+        assert fetch_response.payload is not None
+        self.assertTrue(fetch_response.payload)
