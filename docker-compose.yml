@@ -22,13 +22,13 @@ services:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
     vertex-llm:
-        image: sbilife/vertex-llm:202510.10.1045
+        image: sbilife/vertex-llm:202510.27.0915
         restart: always
         environment:
             - HTTP_PORT=80
-            - VERTEX_AI_REGION=us-east5
-            - VERTEX_AI_PROJECT_ID=prj-uat-di-genai
-            - VERTEX_AI_MODEL=claude-sonnet-4
+            - VERTEX_AI_REGION=global
+            - VERTEX_AI_PROJECT_ID=prj-uat-website-agent
+            - VERTEX_AI_MODEL=gemini-2.5-flash
             - GOOGLE_APPLICATION_CREDENTIALS=/usr/local/vertex-llm/service-key-for-vertex-ai.json
         volumes:
             - ./.local/service-key-for-vertex-ai.json:/usr/local/vertex-llm/service-key-for-vertex-ai.json
