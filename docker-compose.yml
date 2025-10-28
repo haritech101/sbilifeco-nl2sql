@@ -121,3 +121,37 @@ services:
         restart: always
         volumes:
             - ./.local/.redis-for-sessions:/data
+    authentik-pgsql:
+        image: postgres:16-alpine
+        restart: always
+        env_file: .local/authentik.env
+        volumes:
+            - .local/.authentik-pg:/var/lib/postgresql/data
+    authentik-server:
+        image: ghcr.io/goauthentik/server:2025.8.4
+        restart: always
+        command: server
+        env_file: .local/authentik.env
+        ports:
+            - 11202:9000
+            - 11203:9443
+        volumes:
+            - .local/.authentik-media:/media
+            - .local/.authentik-templates:/templates
+        labels:
+            - traefik.http.routers.outpost.rule=PathPrefix(`/outpost.goauthentik.io`)
+            - traefik.http.services.outpost.loadbalancer.server.url=http://authentik-server:9000
+    authentik-worker:
+        image: ghcr.io/goauthentik/server:2025.8.4
+        restart: always
+        command: worker
+        expose:
+            - 9000
+            - 9443
+        env_file: .local/authentik.env
+        user: root
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./.local/.authentik-media:/media
+            - ./.local/.authentik-templates:/templates
+            - ./.local/.authetik-certs:/certs
