@@ -85,11 +85,18 @@ services:
             - 11200:80
             - 11201:8080
     query-generator-ui:
-        image: sbilife/query-generator-ui:202509.15.1000
+        image: sbilife/query-generator-ui:202510.28.1001
         restart: always
         env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
+        labels:
+            - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
+            - traefik.http.routers.query-ui.middlewares=authz
+            - traefik.http.services.query-ui.loadbalancer.server.url=http://query-generator-ui
+            - traefik.http.middlewares.authz.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
+            - traefik.http.middlewares.authz.forwardauth.trustforwardheader=true
+            - traefik.http.middlewares.authz.forwardauth.authresponseheaders=X-Authentik-Username
     redis:
         image: redis:7.0.0
         restart: always
