@@ -1,9 +1,11 @@
+from asyncio import sleep
 import sys
 
 sys.path.append("./src")
 
 from os import getenv
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import patch
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
@@ -11,35 +13,34 @@ from envvars import EnvVars, Defaults
 from service import QueryFlowMicroservice
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
+from pathlib import Path
 
 
 class Test(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         load_dotenv()
-        test_type = getenv(EnvVars.test_type, Defaults.test_type)
+        self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
 
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        self.db_id = getenv(EnvVars.db_id, "")
 
-        self.service = QueryFlowMicroservice()
-
-        if test_type == "unit":
+        if self.test_type == "unit":
+            self.service = QueryFlowMicroservice()
             await self.service.run()
 
         self.client = QueryFlowHttpClient()
-        host = "tech101.in" if test_type == "staging" else "localhost"
+        host = "tech101.in" if self.test_type == "staging" else "localhost"
         self.client.set_proto("http").set_host(host).set_port(http_port)
 
     async def asyncTearDown(self) -> None: ...
 
-    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> str:
         # Arrange
-        # db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
-        db_id = "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38"
         session_id = uuid4().hex
 
         # Act
         query_response = await self.client.query(
-            db_id, session_id, question, with_thoughts
+            self.db_id, session_id, question, with_thoughts
         )
 
         # Assert
@@ -47,23 +48,69 @@ class Test(IsolatedAsyncioTestCase):
         assert (
             query_response.payload is not None
         ), "Query response data should not be None"
-        print(query_response.payload)
+
+        print("\nLLM's final response follows:\n\n", flush=True)
+        print(query_response.payload, flush=True)
+        print("\nEnd of LLM's final response\n\n", flush=True)
+
         self.assertIn(
             "select",
             query_response.payload.lower(),
             "Query response should contain 'select'",
         )
 
-    async def test_non_join_query(self) -> None:
-        # Arrange
-        question = "Total Actual NBP from Retal Ageny in bengalor"
+        return query_response.payload
 
-        # Act and assert
-        await self._test_with(question)
-
-    async def test_join_query(self) -> None:
+    async def test_metadata_query(self) -> None:
         # Arrange
-        question = "NBP Budget achievement YTD for PMJJBY segment"
+        question = getenv(EnvVars.metadata_query, "")
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
+
+    async def test_master_table_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.master_table_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_single_table_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.single_table_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_joined_tables_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.joined_tables_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_prompt_file_change(self) -> None:
+        if self.test_type != "unit":
+            self.skipTest("Skipping unit test in non-unit test type")
+
+        # Arrange
+        prompts_path = Path(getenv(EnvVars.prompts_file, ""))
+        assert prompts_path != ""
+
+        with patch.object(self.service, "set_flow_prompt") as patched_method:
+            # Act
+            prompts_path.touch()
+            await sleep(1)
+
+            # Assert
+            patched_method.assert_called_once()
+
+    async def test_infer_schema(self) -> None:
+        # Arrange
+        question = "Please tell me what you have inferred."
+
+        # Act and assert
+        llm_reply = await self._test_with(question, with_thoughts=False)
+
+        with open(".local/inferred.md", "w") as inference:
+            inference.write(llm_reply)

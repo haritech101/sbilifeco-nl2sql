@@ -2,10 +2,6 @@ services:
     metadata-storage:
         image: sbilife/metadata-storage:202508.14.1200
         restart: always
-        volumes:
-            - /var/lib/sbilifeco/db-metadata:/var/lib/sbilifeco/db-metadata
-        ports:
-            - 11202:80
         environment:
             - MICROSERVICE_PORT=80
             - DB_HOST=postgres
@@ -25,39 +21,55 @@ services:
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
             - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
-    llm:
-        image: sbilife/llm:202508.22.1356
+    vertex-llm:
+        image: sbilife/vertex-llm:202510.27.0915
         restart: always
         environment:
-            - LLM_MODEL=gemini-1.5-flash
-            - API_KEY=AIzaSyANExa3L6OVR0RevN8zteCuA8agcPFl3EU
-        ports:
-            - 11203:80
+            - HTTP_PORT=80
+            - VERTEX_AI_REGION=global
+            - VERTEX_AI_PROJECT_ID=prj-uat-di-website-agent
+            - VERTEX_AI_MODEL=gemini-2.5-flash
+            - GOOGLE_APPLICATION_CREDENTIALS=/usr/local/vertex-llm/service-key-for-vertex-ai.json
+        volumes:
+            - ./.local/service-key-for-vertex-ai.json:/usr/local/vertex-llm/service-key-for-vertex-ai.json
         labels:
-            - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/llm`)
-            - traefik.http.services.llm.loadbalancer.server.url=http://llm
+            - traefik.http.routers.vertex-llm.rule=PathPrefix(`/api/v1/llm`)
+            - traefik.http.services.vertex-llm.loadbalancer.server.url=http://vertex-llm
+    sql-db:
+        image: sbilife/alchemy:202509.23.1434
+        restart: always
+        environment:
+            - HTTP_PORT=80
+            - CONNECTION_STRING=postgresql+psycopg://demat_admin:d3m%4073r1%40l@dematerialised-data/dematerialised
+            - SERVER_NAME=Relational Database Server
+            - SERVER_INSTRUCTIONS=This MCP server points to a relational database. It will be used to access the database, mainly to run SQL queries
+        labels:
+            # Rule for HTTP
+            - traefik.http.routers.sql-db-http.rule=PathPrefix(`/api/v1/sql-db`)
+            # Rule for MCP
+            - traefik.http.middlewares.sql-db-sanitise-mcp-path.replacepath.path=/mcp
+            - traefik.http.routers.sql-db-mcp.rule=PathPrefix(`/mcp/sql-db`)
+            - traefik.http.routers.sql-db-mcp.middlewares=sql-db-sanitise-mcp-path
+            - traefik.http.services.sql-db.loadbalancer.server.url=http://sql-db
     session-data-manager:
         image: sbilife/session-data-manager:202508.14.0946
         restart: always
         environment:
             - REDIS_HOST=redis-for-sessions
-        ports:
-            - 11212:80
         labels:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
-        image: sbilife/query-flow:202509.12.0821
+        image: sbilife/query-flow:202510.13.0829
         restart: always
         environment:
-            - LLM_HOST=llm
+            - MCP_SERVER_URL=http://sql-db/mcp
+            - LLM_HOST=vertex-llm
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager
             - PROMPTS_FILE=/app/prompt.txt
         volumes:
             - ./.local/prompt.txt:/app/prompt.txt
-        ports:
-            - 11204:80
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
             - traefik.http.services.query-flow.loadbalancer.server.url=http://query-flow
@@ -72,21 +84,10 @@ services:
         ports:
             - 11200:80
             - 11201:8080
-    metadata-manager:
-        image: sbilife/metadata-manager:202506.30.1955
-        restart: always
-        environment:
-            - VITE_API_PROTO=${VITE_API_PROTO:-http}
-            - VITE_API_HOST=${VITE_API_HOST:-localhost}
-            - VITE_API_PORT=${VITE_API_PORT:-80}
-        ports:
-            - 11205:80
     query-generator-ui:
         image: sbilife/query-generator-ui:202509.15.1000
         restart: always
-        environment:
-            - VITE_METADATA_URL=${VITE_METADATA_URL:-http://localhost}
-            - VITE_QUERY_FLOW_URL=${VITE_QUERY_FLOW_URL:-http://localhost}
+        env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
     redis:
@@ -96,8 +97,6 @@ services:
     postgres:
         image: postgres:13
         restart: always
-        ports:
-            - 11210:5432
         volumes:
             - ./.local/.pg:/var/lib/postgresql/data
         env_file: .local/pg.env
@@ -117,22 +116,42 @@ services:
             - 11208:4000
             - 11209:8081
         env_file: .local/synmetrix.env
-    materialsed-data:
-        image: postgres:17.5
-        restart: always
-        env_file: ./.local/materialised.env
-        volumes:
-            - ./.local/.materialised:/var/lib/postgresql/data
-    dematerialised-data:
-        image: postgres:17.5
-        restart: always
-        env_file: ./.local/dematerialised.env
-        volumes:
-            - ./.local/.dematerialised:/var/lib/postgresql/data
     redis-for-sessions:
         image: redis:8.2.0
         restart: always
         volumes:
             - ./.local/.redis-for-sessions:/data
+    authentik-pgsql:
+        image: postgres:16-alpine
+        restart: always
+        env_file: .local/authentik.env
+        volumes:
+            - .local/.authentik-pg:/var/lib/postgresql/data
+    authentik-server:
+        image: ghcr.io/goauthentik/server:2025.8.4
+        restart: always
+        command: server
+        env_file: .local/authentik.env
         ports:
-            - 11211:6379
+            - 11202:9000
+            - 11203:9443
+        volumes:
+            - .local/.authentik-media:/media
+            - .local/.authentik-templates:/templates
+        labels:
+            - traefik.http.routers.outpost.rule=PathPrefix(`/outpost.goauthentik.io`)
+            - traefik.http.services.outpost.loadbalancer.server.url=http://authentik-server:9000
+    authentik-worker:
+        image: ghcr.io/goauthentik/server:2025.8.4
+        restart: always
+        command: worker
+        expose:
+            - 9000
+            - 9443
+        env_file: .local/authentik.env
+        user: root
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./.local/.authentik-media:/media
+            - ./.local/.authentik-templates:/templates
+            - ./.local/.authetik-certs:/certs

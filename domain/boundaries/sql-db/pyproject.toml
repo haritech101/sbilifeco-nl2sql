@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-boundary-sql-db"
+version = "0.1.0"
+description = "Interface to a DB that's known to support SQL"
+dependencies = [
+    "sbilifeco-models-base>=0.1.3"
+]

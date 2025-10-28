@@ -2,6 +2,7 @@ class EnvVars:
     test_type = "TEST_TYPE"
     http_port = "HTTP_PORT"
     http_port_unittest = "HTTP_PORT_UNITTEST"
+    mcp_server_url = "MCP_SERVER_URL"
     llm_proto = "LLM_PROTO"
     llm_host = "LLM_HOST"
     llm_port = "LLM_PORT"
@@ -12,12 +13,18 @@ class EnvVars:
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
     prompts_file = "PROMPTS_FILE"
+    metadata_query = "METADATA_QUERY"
+    master_table_query = "MASTER_TABLE_QUERY"
+    single_table_query = "SINGLE_TABLE_QUERY"
+    joined_tables_query = "JOINED_TABLES_QUERY"
+    db_id = "DB_ID"
 
 
 class Defaults:
     test_type = "unit"
     http_port = "80"
     http_port_unittest = "80"
+    mcp_server_url = "http://localhost/mcp"
     llm_proto = "http"
     llm_host = "localhost"
     llm_port = "80"

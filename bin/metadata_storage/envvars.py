@@ -1,4 +1,5 @@
 class EnvVars:
+    test_type = "TEST_TYPE"
     microservice_proto = "MICROSERVICE_PROTO"
     microservice_host = "MICROSERVICE_HOST"
     microservice_port = "MICROSERVICE_PORT"
@@ -19,6 +20,7 @@ class EnvVars:
 
 
 class Defaults:
+    test_type = "unit"
     microservice_proto = "http"
     microservice_host = "localhost"
     microservice_port = "80"

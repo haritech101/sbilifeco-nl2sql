@@ -9,18 +9,17 @@ from dotenv import load_dotenv
 
 class ServiceTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.service = MetadataStorageMicroservice()
+        load_dotenv()
+
+        self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
+        http_port = int(getenv(EnvVars.microservice_port, Defaults.microservice_port))
+
+        if self.test_type == "unit":
+            self.service = MetadataStorageMicroservice()
+            await self.service.start()
 
         self.client = MetadataStorageHttpClient()
-        (
-            self.client.set_port(
-                int(getenv(EnvVars.microservice_port, Defaults.microservice_port))
-            )
-            .set_proto("http")
-            .set_host("localhost")
-        )
-
-        await self.service.start()
+        self.client.set_port(http_port).set_proto("http").set_host("localhost")
 
     async def asyncTearDown(self) -> None:
         return await super().asyncTearDown()
