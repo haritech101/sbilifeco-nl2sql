@@ -94,6 +94,7 @@ services:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
             - traefik.http.routers.query-ui.middlewares=authz
             - traefik.http.services.query-ui.loadbalancer.server.url=http://query-generator-ui
+            # - traefik.http.middlewares.authz.forwardauth.address=http://authentik-server:9000/authentik/outpost.goauthentik.io/auth/traefik
             - traefik.http.middlewares.authz.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
             - traefik.http.middlewares.authz.forwardauth.trustforwardheader=true
             - traefik.http.middlewares.authz.forwardauth.authresponseheaders=X-Authentik-Username
@@ -146,8 +147,10 @@ services:
             - .local/.authentik-media:/media
             - .local/.authentik-templates:/templates
         labels:
-            - traefik.http.routers.outpost.rule=PathPrefix(`/outpost.goauthentik.io`)
-            - traefik.http.services.outpost.loadbalancer.server.url=http://authentik-server:9000
+            - traefik.http.routers.authentik-host.rule=Host(`${AUTH_DOMAIN}`)
+            - traefik.http.routers.outpost-path.rule=PathPrefix(`/outpost.goauthentik.io`)
+            # - traefik.http.routers.authentik.rule=PathPrefix(`/authentik`)
+            - traefik.http.services.authentik.loadbalancer.server.url=http://authentik-server:9000
     authentik-worker:
         image: ghcr.io/goauthentik/server:2025.8.4
         restart: always
