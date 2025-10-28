@@ -85,7 +85,7 @@ services:
             - 11200:80
             - 11201:8080
     query-generator-ui:
-        image: sbilife/query-generator-ui:202509.15.1000
+        image: sbilife/query-generator-ui:202510.28.1001
         restart: always
         env_file: .local/query-generator-ui.env
         ports:
