@@ -1,4 +1,4 @@
-# gcr.io/prj-uat-di-website-agent/reverse-proxy-nl2sql
+# gcr.io/prj-uat-di-website-agent/reverse-proxy-nl2sql-with-ws
 FROM nginx:alpine
 
 COPY ./nl2sql.conf /etc/nginx/conf.d/default.conf.template
