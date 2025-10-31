@@ -61,6 +61,8 @@ services:
         env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
+        volumes:
+            - ./.local/query-generator.vite.config.ts:/usr/local/query-generator-ui/vite.config.ts
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
             - traefik.http.routers.query-ui.middlewares=authentik@docker
