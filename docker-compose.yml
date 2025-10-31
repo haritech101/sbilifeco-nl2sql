@@ -149,9 +149,6 @@ services:
         image: ghcr.io/goauthentik/server:2025.8.4
         restart: always
         command: worker
-        expose:
-            - 9000
-            - 9443
         env_file: .local/authentik.env
         user: root
         volumes:
