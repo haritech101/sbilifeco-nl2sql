@@ -137,7 +137,6 @@ services:
         env_file: .local/authentik.env
         ports:
             - 11202:9000
-            - 11203:9443
         volumes:
             - .local/.authentik-media:/media
             - .local/.authentik-templates:/templates
