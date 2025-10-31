@@ -126,7 +126,7 @@ services:
         volumes:
             - .local/.authentik-pg:/var/lib/postgresql/data
     authentik-server:
-        image: ghcr.io/goauthentik/server:2025.8.4
+        image: ghcr.io/goauthentik/server:2025.10.0
         restart: always
         command: server
         env_file: .local/authentik.env
@@ -136,7 +136,7 @@ services:
             - .local/.authentik-media:/media
             - .local/.authentik-templates:/templates
     authentik-worker:
-        image: ghcr.io/goauthentik/server:2025.8.4
+        image: ghcr.io/goauthentik/server:2025.10.0
         restart: always
         command: worker
         env_file: .local/authentik.env
@@ -147,7 +147,7 @@ services:
             - ./.local/.authentik-templates:/templates
             - ./.local/.authetik-certs:/certs
     authentik-proxy:
-        image: ghcr.io/goauthentik/proxy
+        image: ghcr.io/goauthentik/proxy:2025.10.0
         ports:
             - 11203:9000
         env_file: .local/authentik-proxy.env
