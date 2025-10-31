@@ -20,7 +20,6 @@ services:
 
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
-            - traefik.http.services.metadata-storage.loadbalancer.server.url=http://metadata-storage
     vertex-llm:
         image: sbilife/vertex-llm:202510.27.0915
         restart: always
@@ -34,7 +33,6 @@ services:
             - ./.local/service-key-for-vertex-ai.json:/usr/local/vertex-llm/service-key-for-vertex-ai.json
         labels:
             - traefik.http.routers.vertex-llm.rule=PathPrefix(`/api/v1/llm`)
-            - traefik.http.services.vertex-llm.loadbalancer.server.url=http://vertex-llm
     sql-db:
         image: sbilife/alchemy:202509.23.1434
         restart: always
@@ -50,7 +48,6 @@ services:
             - traefik.http.middlewares.sql-db-sanitise-mcp-path.replacepath.path=/mcp
             - traefik.http.routers.sql-db-mcp.rule=PathPrefix(`/mcp/sql-db`)
             - traefik.http.routers.sql-db-mcp.middlewares=sql-db-sanitise-mcp-path
-            - traefik.http.services.sql-db.loadbalancer.server.url=http://sql-db
     session-data-manager:
         image: sbilife/session-data-manager:202508.14.0946
         restart: always
@@ -58,7 +55,6 @@ services:
             - REDIS_HOST=redis-for-sessions
         labels:
             - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
-            - traefik.http.services.llm.loadbalancer.server.url=http://session-data-manager
     query-flow:
         image: sbilife/query-flow:202510.13.0829
         restart: always
@@ -72,7 +68,6 @@ services:
             - ./.local/prompt.txt:/app/prompt.txt
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
-            - traefik.http.services.query-flow.loadbalancer.server.url=http://query-flow
     traefik:
         image: traefik:3.4.1
         restart: always
