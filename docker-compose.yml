@@ -5,14 +5,6 @@ services:
         env_file: .local/metadata-storage.env
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
-    vertex-llm:
-        image: sbilife/vertex-llm:202510.27.0915
-        restart: always
-        env_file: .local/vertex-llm.env
-        volumes:
-            - ./.local/service-key-for-vertex-ai.json:/usr/local/vertex-llm/service-key-for-vertex-ai.json
-        labels:
-            - traefik.http.routers.vertex-llm.rule=PathPrefix(`/api/v1/llm`)
     sql-db:
         image: sbilife/alchemy:202509.23.1434
         restart: always
@@ -36,7 +28,9 @@ services:
         restart: always
         environment:
             - MCP_SERVER_URL=http://sql-db/mcp
-            - LLM_HOST=vertex-llm
+            - LLM_PROTO= # Use 'http' or 'https' based on your LLM microservice configuration
+            - LLM_HOST= # Use the hostname where LLM microservice is running
+            - LLM_PORT= # Use the port where LLM microservice is running
             - METADATA_STORAGE_HOST=metadata-storage
             - SESSION_DATA_HOST=session-data-manager
             - PROMPTS_FILE=/app/prompt.txt
