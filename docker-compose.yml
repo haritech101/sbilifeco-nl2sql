@@ -5,17 +5,6 @@ services:
         env_file: .local/metadata-storage.env
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
-    sql-db:
-        image: sbilife/alchemy:202509.23.1434
-        restart: always
-        env_file: .local/sql-db.env
-        labels:
-            # Rule for HTTP
-            - traefik.http.routers.sql-db-http.rule=PathPrefix(`/api/v1/sql-db`)
-            # Rule for MCP
-            - traefik.http.middlewares.sql-db-sanitise-mcp-path.replacepath.path=/mcp
-            - traefik.http.routers.sql-db-mcp.rule=PathPrefix(`/mcp/sql-db`)
-            - traefik.http.routers.sql-db-mcp.middlewares=sql-db-sanitise-mcp-path
     session-data-manager:
         image: sbilife/session-data-manager:202508.14.0946
         restart: always
