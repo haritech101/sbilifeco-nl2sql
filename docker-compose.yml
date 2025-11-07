@@ -52,7 +52,6 @@ services:
             - ./.local/query-generator.vite.config.ts:/usr/local/query-generator-ui/vite.config.ts
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
-            - traefik.http.routers.query-ui.middlewares=authentik@docker
     redis:
         image: redis:7.0.0
         restart: always
@@ -84,40 +83,3 @@ services:
         restart: always
         volumes:
             - ./.local/.redis-for-sessions:/data
-    authentik-pgsql:
-        image: postgres:16-alpine
-        restart: always
-        env_file: .local/authentik.env
-        volumes:
-            - .local/.authentik-pg:/var/lib/postgresql/data
-    authentik-server:
-        image: ghcr.io/goauthentik/server:2025.10.0
-        restart: always
-        command: server
-        env_file: .local/authentik.env
-        ports:
-            - 11202:9000
-        volumes:
-            - .local/.authentik-media:/media
-            - .local/.authentik-templates:/templates
-    authentik-worker:
-        image: ghcr.io/goauthentik/server:2025.10.0
-        restart: always
-        command: worker
-        env_file: .local/authentik.env
-        user: root
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./.local/.authentik-media:/media
-            - ./.local/.authentik-templates:/templates
-            - ./.local/.authetik-certs:/certs
-    authentik-proxy:
-        image: ghcr.io/goauthentik/proxy:2025.10.0
-        ports:
-            - 11203:9000
-        env_file: .local/authentik-proxy.env
-        labels:
-            - traefik.http.routers.outpost.rule=PathPrefix(`/outpost.goauthentik.io/`)
-            - traefik.http.middlewares.authentik.forwardauth.address=http://authentik-proxy:9000/outpost.goauthentik.io/auth/traefik
-            - traefik.http.middlewares.authentik.forwardauth.trustForwardHeader=true
-            - traefik.http.middlewares.authentik.forwardauth.authResponseHeaders=X-authentik-username
