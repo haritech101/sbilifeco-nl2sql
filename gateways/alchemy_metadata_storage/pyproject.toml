@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-gateway-sqlalchemy"
+version = "0.1.0"
+description = "Using SQLAlchemy for database-based operations including storage of metadata"
+dependencies = [
+    "sqlalchemy>=2.0.43",
+    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-models-db-metadata>=0.1.6",
+    "sbilifeco-boundary-metadata-storage>=0.1.5",
+]
