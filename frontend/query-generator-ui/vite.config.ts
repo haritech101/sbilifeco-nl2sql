@@ -6,6 +6,7 @@ const theEnv = loadEnv("", "");
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [react()],
+    base: theEnv?.VITE_APP_BASE_PATH || "/query-ui",
     server: {
         allowedHosts: ["all"],
         host: "0.0.0.0",

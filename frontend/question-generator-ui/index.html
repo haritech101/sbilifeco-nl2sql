@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Question Generator</title>
+        <link rel="stylesheet" href="./css/styles.css" />
+        <script type="module" src="./js/app.js" defer></script>
+    </head>
+    <body>
+        <main>
+            <form id="form-question-generator">
+                <label for="num-questions"
+                    >How many questions to generate?</label
+                >
+                <input
+                    class="textbox"
+                    type="number"
+                    id="num-questions"
+                    name="numQuestions"
+                    min="1"
+                    max="500"
+                    value="100"
+                />
+                <button type="submit">Generate Questions</button>
+                <div id="container-generated-questions"></div>
+            </form>
+        </main>
+    </body>
+</html>

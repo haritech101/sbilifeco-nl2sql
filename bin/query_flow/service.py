@@ -106,8 +106,7 @@ class QueryFlowMicroservice(FileSystemEventHandler):
 
     def set_flow_prompt(self) -> None:
         with open(self.prompts_file) as prompts_stream:
-            prompts = prompts_stream.read().split("=====")
-        self.flow.set_prompts(prompts)
+            self.flow.set_prompt(prompts_stream.read())
 
     def on_modified(self, event) -> None:
         if event.src_path == self.prompts_file:

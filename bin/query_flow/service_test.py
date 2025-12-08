@@ -22,6 +22,7 @@ class Test(IsolatedAsyncioTestCase):
         self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
 
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        self.db_id = getenv(EnvVars.db_id, "")
 
         if self.test_type == "unit":
             self.service = QueryFlowMicroservice()
@@ -33,15 +34,13 @@ class Test(IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None: ...
 
-    async def _test_with(self, question: str, with_thoughts: bool = True) -> None:
+    async def _test_with(self, question: str, with_thoughts: bool = True) -> str:
         # Arrange
-        # db_id = "0bac8529-2da1-44f9-ad6e-0964be4e7d54"
-        db_id = "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38"
         session_id = uuid4().hex
 
         # Act
         query_response = await self.client.query(
-            db_id, session_id, question, with_thoughts
+            self.db_id, session_id, question, with_thoughts
         )
 
         # Assert
@@ -49,33 +48,46 @@ class Test(IsolatedAsyncioTestCase):
         assert (
             query_response.payload is not None
         ), "Query response data should not be None"
-        print(query_response.payload)
+
+        print("\nLLM's final response follows:\n\n", flush=True)
+        print(query_response.payload, flush=True)
+        print("\nEnd of LLM's final response\n\n", flush=True)
+
         self.assertIn(
             "select",
             query_response.payload.lower(),
             "Query response should contain 'select'",
         )
 
-    async def test_non_data_query(self) -> None:
+        return query_response.payload
+
+    async def test_metadata_query(self) -> None:
         # Arrange
-        question = "Which regions are found in the south zone?"
+        question = getenv(EnvVars.metadata_query, "")
 
         # Act and assert
-        await self._test_with(question, with_thoughts=True)
+        await self._test_with(question, with_thoughts=False)
 
-    async def test_non_join_query(self) -> None:
+    async def test_master_table_query(self) -> None:
         # Arrange
-        question = "Total Actual NBP from Retal Ageny in bengalor"
+        question = getenv(EnvVars.master_table_query, "")
 
         # Act and assert
-        await self._test_with(question)
+        await self._test_with(question, with_thoughts=False)
 
-    async def test_join_query(self) -> None:
+    async def test_single_table_query(self) -> None:
         # Arrange
-        question = "NBP Budget achievement YTD for PMJJBY segment"
+        question = getenv(EnvVars.single_table_query, "")
 
         # Act and assert
-        await self._test_with(question, with_thoughts=True)
+        await self._test_with(question, with_thoughts=False)
+
+    async def test_joined_tables_query(self) -> None:
+        # Arrange
+        question = getenv(EnvVars.joined_tables_query, "")
+
+        # Act and assert
+        await self._test_with(question, with_thoughts=False)
 
     async def test_prompt_file_change(self) -> None:
         if self.test_type != "unit":
@@ -92,3 +104,13 @@ class Test(IsolatedAsyncioTestCase):
 
             # Assert
             patched_method.assert_called_once()
+
+    async def test_infer_schema(self) -> None:
+        # Arrange
+        question = "Please tell me what you have inferred."
+
+        # Act and assert
+        llm_reply = await self._test_with(question, with_thoughts=False)
+
+        with open(".local/inferred.md", "w") as inference:
+            inference.write(llm_reply)
