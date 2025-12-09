@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-boundary-population-counter"
+version = "0.1.0"
+description = "Contract for population counter, i.e. number of items that satisfy some criteria."
+dependencies = [
+    "sbilifeco-models-base>=0.1.3",
+]

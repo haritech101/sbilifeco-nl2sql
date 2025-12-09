@@ -1,3 +1,5 @@
+import datetime
+from random import randint
 import sys
 
 sys.path.append("./src")
@@ -9,6 +11,7 @@ from envvars import EnvVars, Defaults
 from faker import Faker
 
 # Import the necessary service(s) here
+from datetime import date, datetime
 from sbilifeco.gateways.redis import Redis
 
 
@@ -102,3 +105,73 @@ class RedisTest(IsolatedAsyncioTestCase):
         fetch_response2 = await self.service.get_session_data(key2)
         self.assertEqual(fetch_response1.payload, "")
         self.assertEqual(fetch_response2.payload, "")
+
+    async def test_count_by_named_division(self) -> None:
+        # Arrange
+        key = self.faker.word()
+        division = self.faker.word()
+        num_entries = randint(1, 1000)
+
+        await self.service.update_session_data(f"{key}::{division}", str(num_entries))
+
+        # Act
+        count_response = await self.service.count_by_named_division(key, division)
+
+        # Assert
+        self.assertTrue(count_response.is_success, count_response.message)
+        assert count_response.payload is not None
+        self.assertEqual(count_response.payload, num_entries)
+
+    async def test_count_by_numeric_range(self) -> None:
+        # Arrange
+        key = self.faker.word()
+        min = randint(1, 5) * 100
+        max = randint(6, 10) * 100
+        num_entries = randint(1000, 2000)
+
+        await self.service.update_session_data(f"{key}::{min}::{max}", str(num_entries))
+
+        # Act
+        count_response = await self.service.count_by_numeric_range(key, min, max)
+
+        # Assert
+        self.assertTrue(count_response.is_success, count_response.message)
+        assert count_response.payload is not None
+        self.assertEqual(count_response.payload, num_entries)
+
+    async def test_count_by_date_range(self) -> None:
+        # Arrange
+        key = self.faker.word()
+        start_date = date(2025, 1, 1)
+        end_date = date(2025, 1, 31)
+        num_entries = randint(1000, 2000)
+
+        await self.service.update_session_data(
+            f"{key}::{start_date}::{end_date}", str(num_entries)
+        )
+
+        # Act
+        count_response = await self.service.count_by_date_range(
+            key, start_date, end_date
+        )
+
+        # Assert
+        self.assertTrue(count_response.is_success, count_response.message)
+        assert count_response.payload is not None
+        self.assertEqual(count_response.payload, num_entries)
+
+    async def test_count_by_boolean(self) -> None:
+        # Arrange
+        key = self.faker.word()
+        bool_value = randint(0, 1) == 1
+        num_entries = randint(1, 1000)
+
+        await self.service.update_session_data(f"{key}::{bool_value}", str(num_entries))
+
+        # Act
+        count_response = await self.service.count_by_boolean(key, bool_value)
+
+        # Assert
+        self.assertTrue(count_response.is_success, count_response.message)
+        assert count_response.payload is not None
+        self.assertEqual(count_response.payload, num_entries)
