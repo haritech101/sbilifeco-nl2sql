@@ -12,13 +12,18 @@ services:
             - ./.local/.alchemy:/var/lib/alchemy
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
-    session-data-manager:
-        image: sbilife/session-data-manager:202508.14.0946
+    redis-gateway:
+        image: sbilife/redis-gateway:202512.09.1416
         restart: always
         environment:
             - REDIS_HOST=redis-for-sessions
         labels:
-            - traefik.http.routers.llm.rule=PathPrefix(`/api/v1/session-data`)
+            - traefik.http.routers.session-data.rule=PathPrefix(`/api/v1/session-data`)
+            - traefik.http.routers.session-data.service=session-data
+            - traefik.http.services.session-data.loadBalancer.server.url=http://redis-gateway:80
+            - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
+            - traefik.http.routers.population-counter.service=population-counter
+            - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
     query-flow:
         image: sbilife/query-flow:202510.13.0829
         restart: always
