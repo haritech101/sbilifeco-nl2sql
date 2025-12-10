@@ -3,6 +3,8 @@ from datetime import datetime
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from itertools import islice
 import pandas as pd
+from os import getenv
+from dotenv import load_dotenv
 
 
 class QueryGeneratorTester:
@@ -21,7 +23,7 @@ class QueryGeneratorTester:
             return
 
         metric = ""
-        max_queries = 1000
+        max_queries = int(getenv("MAX_QUERIES", "10"))
 
         qa_list = []
         with open(
@@ -38,8 +40,7 @@ class QueryGeneratorTester:
                     print(f"Question {i}: {question}".strip())
 
                     query_response = await client.query(
-                        # "ed0d5b22-2d57-41df-a98d-a5f9ddf92a38",
-                        "0bac8529-2da1-44f9-ad6e-0964be4e7d54",
+                        getenv("DB_ID", ""),
                         session_id,
                         question.strip(),
                         with_thoughts=False,
@@ -74,4 +75,5 @@ class QueryGeneratorTester:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     run(QueryGeneratorTester().start())

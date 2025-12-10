@@ -10,7 +10,6 @@ from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
 from datetime import datetime
-from sbilifeco.boundaries.tool_support import IExternalToolRepo, ExternalTool
 from pprint import pformat
 
 
@@ -24,15 +23,10 @@ class QueryFlow(IQueryFlow):
     )
 
     def __init__(self):
-        self._tool_repo: IExternalToolRepo
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
         self._prompt: str
-
-    def set_tool_repo(self, tool_repo: IExternalToolRepo) -> QueryFlow:
-        self._tool_repo = tool_repo
-        return self
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -104,9 +98,6 @@ class QueryFlow(IQueryFlow):
             if context == "":
                 print("No pre-saved context found, need to generate", flush=True)
 
-                print("Building list of available external tools", flush=True)
-                tools = await self._tool_repo.fetch_tools()
-
                 print(f"Building metadata for dbId: {dbId}", flush=True)
                 db_response = await self._metadata_storage.get_db(
                     dbId,
@@ -122,23 +113,6 @@ class QueryFlow(IQueryFlow):
                     return Response.fail("Metadata is inexplicably blank", 500)
 
                 context += self.__fill_in(self._prompt)
-
-                if tools:
-                    context += "You have access to the following tools to assist you in answering the question:\n"
-                    for tool in tools:
-                        context += f"Tool name: {tool.name}\n"
-                        context += f"Tool description: {tool.description}\n"
-                        context += "Parameters:\n"
-                        for param in tool.params:
-                            context += f"\tParameter name: {param.name}\n"
-                            context += f"\tParameter description: {param.description}\n"
-                            context += f"\tParameter type: {param.type}\n"
-                            context += f"\tIs parameter required: {'Yes' if param.is_required else 'No'}\n"
-                            context += "\n"
-                        context += "\n"
-                    context += "\n"
-                else:
-                    context += "You do not have access to any external tools.\n\n"
 
                 context += (
                     "Here are the details of the database you will be querying.\n\n"
@@ -237,115 +211,41 @@ class QueryFlow(IQueryFlow):
             master_dim_matches = search(self.MASTER_VALUES_SIGNATURE, answer)
             if not master_dim_matches:
                 print("No master dimension values detected, continuing", flush=True)
+            elif master_dim_matches is not None:
+                dimension = master_dim_matches.group(1).strip()
+                values = master_dim_matches.group(2).strip()
+                print(
+                    f"Detected master dimension values for dimension: {dimension} with values: {values}",
+                    flush=True,
+                )
 
-            tool_matches = search(self.TOOL_CALL_SIGNATURE, answer)
-            if not tool_matches:
-                print("No tool call detected, continuing", flush=True)
-
-            while tool_matches or master_dim_matches:
-                print(f"\n\n##### LOOP #{loop_num} #####\n\n", flush=True)
-                loop_num += 1
-
-                if master_dim_matches is not None:
-                    dimension = master_dim_matches.group(1).strip()
-                    values = master_dim_matches.group(2).strip()
-                    print(
-                        f"Detected master dimension values for dimension: {dimension} with values: {values}",
-                        flush=True,
-                    )
-
-                    existing = {}
-                    cache_get_response = (
-                        await self._session_data_manager.get_session_data(
-                            f"{dbId}{self.SUFFIX_MASTER_VALUES}"
-                        )
-                    )
-                    if cache_get_response.is_success:
-                        if cache_get_response.payload is not None:
-                            try:
-                                existing = loads(cache_get_response.payload)
-                            except Exception as e:
-                                existing = {}
-                                print(
-                                    f"Could not parse existing master dimension values due to: {e}, continuing",
-                                    flush=True,
-                                )
-
-                        existing[dimension] = values
-                        cache_set_response = (
-                            await self._session_data_manager.update_session_data(
-                                f"{dbId}{self.SUFFIX_MASTER_VALUES}",
-                                dumps(existing),
-                            )
-                        )
-                        if not cache_set_response.is_success:
+                existing = {}
+                cache_get_response = await self._session_data_manager.get_session_data(
+                    f"{dbId}{self.SUFFIX_MASTER_VALUES}"
+                )
+                if cache_get_response.is_success:
+                    if cache_get_response.payload is not None:
+                        try:
+                            existing = loads(cache_get_response.payload)
+                        except Exception as e:
+                            existing = {}
                             print(
-                                f"Could not save updated master dimension values due to: {cache_set_response.message}, continuing",
+                                f"Could not parse existing master dimension values due to: {e}, continuing",
                                 flush=True,
                             )
-                else:
-                    print("No master dimension values detected, continuing", flush=True)
 
-                if tool_matches is not None:
-                    tool_name = tool_matches.group(1).strip()
-                    tool_params = tool_matches.group(2).strip()
-                    print(
-                        f"Detected tool call for tool: {tool_name} with {tool_params}",
-                        flush=True,
+                    existing[dimension] = values
+                    cache_set_response = (
+                        await self._session_data_manager.update_session_data(
+                            f"{dbId}{self.SUFFIX_MASTER_VALUES}",
+                            dumps(existing),
+                        )
                     )
-
-                    try:
-                        parameters: dict = loads(tool_params)
-                        tool_response = await self._tool_repo.invoke_tool(
-                            tool_name, **parameters
-                        )
-
-                        tool_response_stmt = (
-                            f"Tool response from {tool_name}:\n\n{tool_response}\n\n"
-                        )
-                        print(tool_response_stmt, flush=True)
-
-                        session_data += tool_response_stmt
-                        full_answer += tool_response_stmt
-
-                        session_data += "Proceed.\n\n"
-
-                        query_response = await self._llm.generate_reply(session_data)
-                        if not query_response.is_success:
-                            return Response.fail(
-                                query_response.message, query_response.code
-                            )
-                        if not query_response.payload:
-                            return Response.fail(
-                                "LLM did not return a valid answer", 500
-                            )
-
-                        answer = query_response.payload
-                        print(answer, flush=True)
-
-                        session_data += answer + "\n\n"
-                        full_answer += answer + "\n\n"
-
-                        tool_matches = search(self.TOOL_CALL_SIGNATURE, answer)
-                        master_dim_matches = search(
-                            self.MASTER_VALUES_SIGNATURE, answer
-                        )
-                    except Exception as e:
-                        answer = "done"
-                        tool_matches = None
-                        master_dim_matches = None
+                    if not cache_set_response.is_success:
                         print(
-                            f"Could not fulfill tool call due to: {e}, continuing",
+                            f"Could not save updated master dimension values due to: {cache_set_response.message}, continuing",
                             flush=True,
                         )
-                else:
-                    print("No tool call detected, continuing", flush=True)
-                    master_dim_matches = None
-
-            print(
-                "No further tool calls or master dimension evaluations detected, finishing",
-                flush=True,
-            )
 
             await self._session_data_manager.update_session_data(
                 f"{session_id}{self.SUFFIX_METADATA}", context

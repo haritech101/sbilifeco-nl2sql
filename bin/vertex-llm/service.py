@@ -4,7 +4,7 @@ from typing import NoReturn
 
 from dotenv import load_dotenv
 from sbilifeco.cp.llm.http_server import LLMHttpServer
-from sbilifeco.gateways.vertex import VertexAI
+from sbilifeco.gateways.vertex_gemini import VertexGemini
 
 from envvars import Defaults, EnvVars
 
@@ -19,7 +19,10 @@ class VertexLLMMicroservice:
 
         # Vertex gateway
         self.llm = (
-            VertexAI().set_region(region).set_project_id(project_id).set_model(model)
+            VertexGemini()
+            .set_region(region)
+            .set_project_id(project_id)
+            .set_model(model)
         )
         await self.llm.async_init()
 
