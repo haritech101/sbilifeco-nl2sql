@@ -1,22 +1,22 @@
+import sys
 from pprint import pformat
 from random import randint
-import sys
 
 sys.path.append("./src")
 
-from turtle import update
-from typing import AsyncGenerator
+from json import dumps
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
-from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.metadata_storage import IMetadataStorage
+from uuid import uuid4
+
+from faker import Faker
 from sbilifeco.boundaries.llm import ILLM
+from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.models.base import Response
-from faker import Faker
-from uuid import uuid4
 from sbilifeco.models.db_metadata import DB
-from json import dumps
+
+from sbilifeco.user_flows.query_flow import QueryFlow
 
 
 class FlowTest(IsolatedAsyncioTestCase):
