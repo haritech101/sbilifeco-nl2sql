@@ -17,6 +17,11 @@ class QueryFlow(IQueryFlow):
     SUFFIX_METADATA = "-metadata"
     SUFFIX_LAST_QA = "-last-qa"
     SUFFIX_MASTER_VALUES = "-master-values"
+    PLACEHOLDER_METADATA = "db_metadata"
+    PLACEHOLDER_LAST_QA = "last_qa"
+    PLACEHOLDER_QUESTION = "question"
+    PLACEHOLDER_MASTER_VALUES = "master_values"
+    PLACEHOLDER_THIS_MONTH = "this_month"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n- Tool input:(.*)"
     MASTER_VALUES_SIGNATURE = (
         r"- Master dimension values evaluated.\n- Dimension:= (.*)\n- Values:= (.*)\n"
@@ -76,26 +81,27 @@ class QueryFlow(IQueryFlow):
         except Exception as e:
             return Response.error(e)
 
-    def __fill_in(self, template: str) -> str:
-        now = datetime.now()
-        filled_in = template.format(this_month=now.strftime("%b %Y"))
-        return filled_in
-
     async def query(
         self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
     ) -> Response[str]:
         try:
-            print(f"Fetching session data for session: {session_id}", flush=True)
-            context_response = await self._session_data_manager.get_session_data(
-                f"{session_id}{self.SUFFIX_METADATA}"
+            print(f"Fetching cached db metadata for session: {session_id}", flush=True)
+            cached_db_metadata_response = (
+                await self._session_data_manager.get_session_data(
+                    f"{session_id}{self.SUFFIX_METADATA}"
+                )
             )
-            if not context_response.is_success:
-                return Response.fail(context_response.message, context_response.code)
-            if context_response.payload is None:
+            if not cached_db_metadata_response.is_success:
+                return Response.fail(
+                    cached_db_metadata_response.message,
+                    cached_db_metadata_response.code,
+                )
+            if cached_db_metadata_response.payload is None:
                 return Response.fail("Metadata is inexplicably None", 500)
-            context = context_response.payload
+            db_metadata = cached_db_metadata_response.payload
 
-            if context == "":
+            # DB metadata, try cache, otherwise build
+            if db_metadata == "":
                 print("No pre-saved context found, need to generate", flush=True)
 
                 print(f"Building metadata for dbId: {dbId}", flush=True)
@@ -112,91 +118,83 @@ class QueryFlow(IQueryFlow):
                 if db is None:
                     return Response.fail("Metadata is inexplicably blank", 500)
 
-                context += self.__fill_in(self._prompt)
-
-                context += (
-                    "Here are the details of the database you will be querying.\n\n"
-                )
-                context += f"Database name: {db.name}\n"
+                db_metadata = ""
+                db_metadata += f"Database name: {db.name}\n"
                 if db.description:
-                    context += f"Database description: {db.description}\n"
+                    db_metadata += f"Database description: {db.description}\n"
                 if db.tables is not None:
                     for table in db.tables:
-                        context += f"\tTable name: {table.name}\n"
-                        context += f"\tTable description: {table.description}\n"
+                        db_metadata += f"\tTable name: {table.name}\n"
+                        db_metadata += f"\tTable description: {table.description}\n"
                         if table.fields is not None:
                             for field in table.fields:
-                                context += f"\t\tField name: {field.name}, type: {field.type}\n"
+                                db_metadata += f"\t\tField name: {field.name}, type: {field.type}\n"
                                 if field.description:
-                                    context += (
+                                    db_metadata += (
                                         f"\t\tField description: {field.description}\n"
                                     )
                                 if field.aka:
-                                    context += f"\t\tOther names for field '{field.name}': {field.aka}\n"
-
+                                    db_metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
                 if db.kpis:
-                    context += "KPIs:\n"
+                    db_metadata += "KPIs:\n"
                     for kpi in db.kpis:
-                        context += f"\tKPI name: {kpi.name}\n"
-                        context += f"\tKPI other names: {kpi.aka}\n"
-                        context += f"\tKPI description: {kpi.description}\n"
-                        context += f"\tKPI formula: {kpi.formula}\n"
+                        db_metadata += f"\tKPI name: {kpi.name}\n"
+                        db_metadata += f"\tKPI other names: {kpi.aka}\n"
+                        db_metadata += f"\tKPI description: {kpi.description}\n"
+                        db_metadata += f"\tKPI formula: {kpi.formula}\n"
 
                 if db.additional_info:
-                    context += (
+                    db_metadata += (
                         "Also keep in mind the following additional points.\n"
                         f"{db.additional_info}\n"
                     )
+            else:
+                print("Pre-saved db metadata found, using it", flush=True)
 
-                cache_response = await self._session_data_manager.get_session_data(
-                    f"{dbId}{self.SUFFIX_MASTER_VALUES}"
+            # Master values, try cache
+            master_values = "Not defined"
+            cached_master_values = await self._session_data_manager.get_session_data(
+                f"{dbId}{self.SUFFIX_MASTER_VALUES}"
+            )
+            if not cached_master_values.is_success:
+                print(
+                    f"Could not get master dimension values due to: {cached_master_values.message}, continuing",
+                    flush=True,
                 )
-                if not cache_response.is_success:
+            elif not cached_master_values.payload:
+                print("No master dimension values cached, continuing", flush=True)
+            else:
+                try:
+                    cache = loads(cached_master_values.payload)
+                    master_values = pformat(cache, indent=2)
+                except Exception as e:
                     print(
-                        f"Could not get master dimension values due to: {cache_response.message}, continuing",
+                        f"Could not parse master dimension values due to: {e}, continuing",
                         flush=True,
                     )
-                elif not cache_response.payload:
-                    print("No master dimension values cached, continuing", flush=True)
-                else:
-                    try:
-                        cache = loads(cache_response.payload)
-                        pretty_cache = pformat(cache, indent=2)
 
-                        context += (
-                            "\n\nHere are some previously cached master dimension values that you can use instead of having to query again: \n\n"
-                            f"{pretty_cache}\n\n"
-                        )
-                    except Exception as e:
-                        print(
-                            f"Could not parse master dimension values due to: {e}, continuing",
-                            flush=True,
-                        )
-
-            last_qa_response = await self._session_data_manager.get_session_data(
+            # Last question and answer
+            cached_last_qa_response = await self._session_data_manager.get_session_data(
                 f"{session_id}{QueryFlow.SUFFIX_LAST_QA}"
             )
-            if not last_qa_response.is_success:
-                return Response.fail(last_qa_response.message, last_qa_response.code)
-            last_qa = last_qa_response.payload or ""
-
-            session_data = f"{context}\n\n"
-            if last_qa:
-                session_data += (
-                    f"Here is the last question and its answer:\n\n{last_qa}\n\n"
+            if not cached_last_qa_response.is_success:
+                return Response.fail(
+                    cached_last_qa_response.message, cached_last_qa_response.code
                 )
+            last_qa = cached_last_qa_response.payload or "None"
 
-            session_data += (
-                f"We are now trying to answer the following question:\n{question}\n\n"
-            )
-            print(session_data, flush=True)
+            template_map = {
+                self.PLACEHOLDER_METADATA: db_metadata,
+                self.PLACEHOLDER_LAST_QA: last_qa,
+                self.PLACEHOLDER_QUESTION: question,
+                self.PLACEHOLDER_MASTER_VALUES: master_values,
+                self.PLACEHOLDER_THIS_MONTH: datetime.now().strftime("%B %Y"),
+            }
 
-            loop_num = 0
+            next_full_prompt = self._prompt.format_map(template_map)
+            print(next_full_prompt, flush=True)
 
-            print(f"\n\n##### LOOP #{loop_num} #####\n\n", flush=True)
-            loop_num += 1
-
-            query_response = await self._llm.generate_reply(session_data)
+            query_response = await self._llm.generate_reply(next_full_prompt)
             if not query_response.is_success:
                 return Response.fail(query_response.message, query_response.code)
             if query_response.payload is None:
@@ -205,51 +203,13 @@ class QueryFlow(IQueryFlow):
             answer = query_response.payload
             print(answer, flush=True)
 
-            session_data += answer + "\n\n"
-            full_answer = answer + "\n\n"
+            full_answer = next_full_prompt + "\n\n" + answer + "\n\n"
 
-            master_dim_matches = search(self.MASTER_VALUES_SIGNATURE, answer)
-            if not master_dim_matches:
-                print("No master dimension values detected, continuing", flush=True)
-            elif master_dim_matches is not None:
-                dimension = master_dim_matches.group(1).strip()
-                values = master_dim_matches.group(2).strip()
-                print(
-                    f"Detected master dimension values for dimension: {dimension} with values: {values}",
-                    flush=True,
+            # Save updated metadata and last QA
+            if not cached_db_metadata_response.payload:
+                await self._session_data_manager.update_session_data(
+                    f"{session_id}{self.SUFFIX_METADATA}", db_metadata
                 )
-
-                existing = {}
-                cache_get_response = await self._session_data_manager.get_session_data(
-                    f"{dbId}{self.SUFFIX_MASTER_VALUES}"
-                )
-                if cache_get_response.is_success:
-                    if cache_get_response.payload is not None:
-                        try:
-                            existing = loads(cache_get_response.payload)
-                        except Exception as e:
-                            existing = {}
-                            print(
-                                f"Could not parse existing master dimension values due to: {e}, continuing",
-                                flush=True,
-                            )
-
-                    existing[dimension] = values
-                    cache_set_response = (
-                        await self._session_data_manager.update_session_data(
-                            f"{dbId}{self.SUFFIX_MASTER_VALUES}",
-                            dumps(existing),
-                        )
-                    )
-                    if not cache_set_response.is_success:
-                        print(
-                            f"Could not save updated master dimension values due to: {cache_set_response.message}, continuing",
-                            flush=True,
-                        )
-
-            await self._session_data_manager.update_session_data(
-                f"{session_id}{self.SUFFIX_METADATA}", context
-            )
 
             await self._session_data_manager.update_session_data(
                 f"{session_id}{self.SUFFIX_LAST_QA}", f"{question}\n\n{answer}\n\n"
