@@ -289,5 +289,5 @@ class FlowTest(IsolatedAsyncioTestCase):
             f"{self.db_metadata.id}{QueryFlow.SUFFIX_MASTER_VALUES}"
         )
 
-        context = patched_llm_query.call_args_list[0][0][0]
+        (context,) = patched_llm_query.call_args.args
         self.assertIn(pretty_cache, context)
