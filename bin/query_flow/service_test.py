@@ -94,7 +94,7 @@ class Test(IsolatedAsyncioTestCase):
             self.skipTest("Skipping unit test in non-unit test type")
 
         # Arrange
-        prompts_path = Path(getenv(EnvVars.prompts_file, ""))
+        prompts_path = Path(getenv(EnvVars.general_prompts_file, ""))
         assert prompts_path != ""
 
         with patch.object(self.service, "set_flow_prompt") as patched_method:
