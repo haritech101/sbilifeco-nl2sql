@@ -47,14 +47,38 @@ class Test(IsolatedAsyncioTestCase):
         #     await self.service.async_shutdown()
         patch.stopall()
 
-    async def test_get_tables(self) -> None:
+    async def test_get_dbs(self) -> None:
         # Arrange
-        db_id = "nb"
+        ...
 
         # Act
-        response = await self.client.get_tables(db_id)
+        response = await self.client.get_dbs()
 
         # Assert
         self.assertTrue(response.is_success, response.message)
         assert response.payload is not None
         self.assertTrue(response.payload)
+
+    async def test_get_single_db_hierarchy(self) -> None:
+        # Arrange
+        db_id = "nb"
+
+        # Act
+        response = await self.client.get_db(db_id, with_tables=True, with_fields=True)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        assert response.payload is not None
+        self.assertTrue(response.payload)
+
+        db = response.payload
+        self.assertTrue(db.name)
+        self.assertTrue(db.description)
+        assert db.tables is not None
+        self.assertTrue(db.tables)
+
+        table = db.tables[0]
+        self.assertTrue(table.name)
+        self.assertTrue(table.description)
+        assert table.fields is not None
+        self.assertTrue(table.fields)
