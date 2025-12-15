@@ -13,6 +13,11 @@ from faker import Faker
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
 
@@ -61,18 +66,41 @@ class FlowTest(IsolatedAsyncioTestCase):
             AsyncMock(return_value=Response.ok(self.db_metadata)),
         ).start()
 
+        self.external_tool_repo = AsyncMock(spec=IExternalToolRepo)
+        self.external_tool = ExternalTool(
+            name=self.faker.word(),
+            description=self.faker.sentence(),
+            params=[
+                ExternalToolParams(
+                    name=self.faker.word(),
+                    description=self.faker.sentence(),
+                    type="string",
+                    is_required=True,
+                )
+            ],
+        )
+
+        self.fn_fetch_tools = patch.object(
+            self.external_tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[self.external_tool]),
+        ).start()
+
         self.query_flow = QueryFlow()
         (
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
             .set_prompt(self.prompt)
+            .set_external_tool_repo(self.external_tool_repo)
         )
+        await self.query_flow.async_init()
 
         return await super().asyncSetUp()
 
     async def asyncTearDown(self) -> None:
         patch.stopall()
+        await self.query_flow.async_shutdown()
         return await super().asyncTearDown()
 
     async def test_start_session(self) -> None:
@@ -291,3 +319,54 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         (context,) = patched_llm_query.call_args.args
         self.assertIn(pretty_cache, context)
+
+    async def test_tool_repo(self) -> None:
+        # Arrange
+        ...
+
+        # Act
+        ...
+
+        # Assert
+        self.fn_fetch_tools.assert_called_once()
+
+    async def test_tool_call(self) -> None:
+        # Arrange
+        tool_param_value = self.faker.word()
+        tool_call = (
+            f"- Tool name: {self.external_tool.name}\n"
+            f"- Tool input: {dumps({self.external_tool.params[0].name: tool_param_value})}\n"
+        )
+        tool_return_value = {"result": "42"}
+
+        fn_invoke_tool = patch.object(
+            self.external_tool_repo,
+            "invoke_tool",
+            AsyncMock(return_value=tool_return_value),
+        ).start()
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(side_effect=[Response.ok(tool_call), Response.ok(self.answer)]),
+        ).start()
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=self.db_metadata.id, session_id=self.session_id, question=self.question
+        )
+
+        # Assert
+        self.assertTrue(flow_response.is_success, flow_response.message)
+
+        # Tool should have been invoked
+        fn_invoke_tool.assert_called_once_with(
+            self.external_tool.name,
+            **{self.external_tool.params[0].name: tool_param_value},
+        )
+        llm_context_with_tool_result = fn_reply.call_args_list[-1].args[0]
+        self.assertIn(dumps(tool_return_value), llm_context_with_tool_result)

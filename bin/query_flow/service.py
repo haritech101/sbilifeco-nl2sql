@@ -1,6 +1,4 @@
 from asyncio import run, sleep, get_running_loop
-from typing import AsyncGenerator, TextIO
-from webbrowser import get
 from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
@@ -82,7 +80,7 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         # Set up query flow
         self.flow = QueryFlow()
         (
-            self.flow.set_tool_repo(self.tool_repo)
+            self.flow.set_external_tool_repo(self.tool_repo)
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)

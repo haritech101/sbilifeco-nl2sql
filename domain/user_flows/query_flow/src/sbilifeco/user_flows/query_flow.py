@@ -1,12 +1,17 @@
 from __future__ import annotations
 from json import dumps, loads
 from re import search
-from typing import AsyncIterable, AsyncIterator
+from typing import Sequence
 from urllib.parse import quote_plus
 from uuid import uuid4
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
 from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
 from datetime import datetime
@@ -23,15 +28,14 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_MASTER_VALUES = "master_values"
     PLACEHOLDER_THIS_MONTH = "this_month"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n- Tool input:(.*)"
-    MASTER_VALUES_SIGNATURE = (
-        r"- Master dimension values evaluated.\n- Dimension:= (.*)\n- Values:= (.*)\n"
-    )
 
     def __init__(self):
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
         self._prompt: str
+        self._external_tool_repo: IExternalToolRepo
+        self._external_tools: list[ExternalTool] = []
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -50,6 +54,19 @@ class QueryFlow(IQueryFlow):
     def set_prompt(self, prompt: str) -> QueryFlow:
         self._prompt = prompt
         return self
+
+    def set_external_tool_repo(
+        self, external_tool_repo: IExternalToolRepo
+    ) -> QueryFlow:
+        self._external_tool_repo = external_tool_repo
+        return self
+
+    async def async_init(self) -> None:
+        tools = await self._external_tool_repo.fetch_tools()
+        self._external_tools.extend(tools)
+
+    async def async_shutdown(self) -> None:
+        self._external_tools.clear()
 
     async def start_session(self) -> Response[str]:
         return Response.ok(uuid4().hex)
@@ -204,6 +221,40 @@ class QueryFlow(IQueryFlow):
             print(answer, flush=True)
 
             full_answer = next_full_prompt + "\n\n" + answer + "\n\n"
+
+            tool_call_match = search(self.TOOL_CALL_SIGNATURE, answer)
+            while tool_call_match:
+                tool_name, tool_params = tool_call_match.groups()
+                tool_name = tool_name.strip()
+
+                tool_params = tool_params.strip()
+                tool_params = loads(tool_params)
+
+                print(
+                    f"Invoking tool: {tool_name} with params: {tool_params}\n\n",
+                    flush=True,
+                )
+                tool_response = await self._external_tool_repo.invoke_tool(
+                    tool_name, **tool_params
+                )
+
+                print(f"Tool response: {dumps(tool_response)}\n\n", flush=True)
+
+                next_full_prompt += (
+                    f"Tool answer: {dumps(tool_response)}\n\nProceed\n\n"
+                )
+
+                query_response = await self._llm.generate_reply(next_full_prompt)
+                if not query_response.is_success:
+                    return Response.fail(query_response.message, query_response.code)
+                if query_response.payload is None:
+                    return Response.fail("LLM did not return a valid answer", 500)
+                answer = query_response.payload
+                print(answer, flush=True)
+
+                full_answer += answer + "\n\n"
+
+                tool_call_match = search(self.TOOL_CALL_SIGNATURE, answer)
 
             # Save updated metadata and last QA
             if not cached_db_metadata_response.payload:
