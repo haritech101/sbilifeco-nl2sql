@@ -50,10 +50,10 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             getenv(EnvVars.session_data_port, Defaults.session_data_port)
         )
 
-        self.prompts_file = getenv(EnvVars.prompts_file, "")
+        self.prompts_file = getenv(EnvVars.general_prompts_file, "")
         if not self.prompts_file:
             raise ValueError(
-                f"Prompts file path is not set in environment variables: {EnvVars.prompts_file}"
+                f"Prompts file path is not set in environment variables: {EnvVars.general_prompts_file}"
             )
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
