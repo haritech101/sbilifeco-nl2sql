@@ -1,22 +1,27 @@
-from operator import is_
+import sys
 from pprint import pformat
 from random import randint
-import sys
 
 sys.path.append("./src")
 
-from typing import AsyncGenerator
+from json import dumps
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
-from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.metadata_storage import IMetadataStorage
-from sbilifeco.boundaries.llm import ILLM
-from sbilifeco.boundaries.session_data_manager import ISessionDataManager
-from sbilifeco.models.base import Response
-from faker import Faker
 from uuid import uuid4
+
+from faker import Faker
+from sbilifeco.boundaries.llm import ILLM
+from sbilifeco.boundaries.metadata_storage import IMetadataStorage
+from sbilifeco.boundaries.session_data_manager import ISessionDataManager
+from sbilifeco.boundaries.tool_support import (
+    IExternalToolRepo,
+    ExternalTool,
+    ExternalToolParams,
+)
+from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
-from json import dumps
+
+from sbilifeco.user_flows.query_flow import QueryFlow
 
 
 class FlowTest(IsolatedAsyncioTestCase):
@@ -25,7 +30,21 @@ class FlowTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.faker = Faker()
         self.session_id = uuid4().hex
-        self.prompt = self.faker.paragraph()
+        self.prompt = "\n\n".join(
+            [
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_THIS_MONTH}}}",
+                self.faker.paragraph(),
+            ]
+        )
         self.random_session_data = self.faker.paragraph()
         self.question = self.faker.sentence() + "?"
         self.answer = self.faker.paragraph()
@@ -41,10 +60,30 @@ class FlowTest(IsolatedAsyncioTestCase):
             spec=ISessionDataManager
         )
 
-        self.patched_get_db = patch.object(
+        self.fn_get_db = patch.object(
             self.metadata_storage,
             "get_db",
             AsyncMock(return_value=Response.ok(self.db_metadata)),
+        ).start()
+
+        self.external_tool_repo = AsyncMock(spec=IExternalToolRepo)
+        self.external_tool = ExternalTool(
+            name=self.faker.word(),
+            description=self.faker.sentence(),
+            params=[
+                ExternalToolParams(
+                    name=self.faker.word(),
+                    description=self.faker.sentence(),
+                    type="string",
+                    is_required=True,
+                )
+            ],
+        )
+
+        self.fn_fetch_tools = patch.object(
+            self.external_tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[self.external_tool]),
         ).start()
 
         self.query_flow = QueryFlow()
@@ -53,12 +92,15 @@ class FlowTest(IsolatedAsyncioTestCase):
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
             .set_prompt(self.prompt)
+            .set_external_tool_repo(self.external_tool_repo)
         )
+        await self.query_flow.async_init()
 
         return await super().asyncSetUp()
 
     async def asyncTearDown(self) -> None:
         patch.stopall()
+        await self.query_flow.async_shutdown()
         return await super().asyncTearDown()
 
     async def test_start_session(self) -> None:
@@ -92,26 +134,26 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def __test_query(self, initial_session_data: str = "") -> None:
         # Arrange
-        patched_get_session_data = patch.object(
+        fn_get_session_data = patch.object(
             self.session_data_manager,
             "get_session_data",
             AsyncMock(return_value=Response.ok(initial_session_data)),
         ).start()
 
-        patched_update_session_data = patch.object(
+        fn_update_session_data = patch.object(
             self.session_data_manager,
             "update_session_data",
             AsyncMock(return_value=Response.ok(None)),
         ).start()
 
-        patched_llm_query = patch.object(
+        fn_llm_query = patch.object(
             self.llm,
             "generate_reply",
             AsyncMock(return_value=Response.ok(self.answer)),
         ).start()
 
         # Act
-        query_response = await self.query_flow.query(
+        flow_response = await self.query_flow.query(
             dbId=self.db_metadata.id,
             session_id=self.session_id,
             question=self.question,
@@ -119,56 +161,91 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
 
         # Assert
-        # Response should be successful and have a non-None payload
-        self.assertTrue(query_response.is_success, query_response.message)
-        assert query_response.payload is not None
-        # self.assertEqual(query_response.payload, self.answer)
+        # Response should be successful and the payload should be LLM's answer
+        self.assertTrue(flow_response.is_success, flow_response.message)
+        assert flow_response.payload is not None
+        self.assertEqual(flow_response.payload, self.answer)
 
-        # session data manager should have been queried for preamble, metadata and postamble
-        patched_get_session_data.assert_any_call(
+        # session data manager should have been queried for DB metadata
+        fn_get_session_data.assert_any_call(
             f"{self.session_id}{QueryFlow.SUFFIX_METADATA}"
         )
 
+        # session data manager should have been queried for master values
+        fn_get_session_data.assert_any_call(
+            f"{self.db_metadata.id}{QueryFlow.SUFFIX_MASTER_VALUES}"
+        )
+
         if not initial_session_data:
+            # No cached db metadata in session data,
             # db metadata should have been fetched from metadata storage
-            self.patched_get_db.assert_called_once()
+            self.fn_get_db.assert_called_once()
         else:
-            self.patched_get_db.assert_not_called()
+            # Cached db metadata exists in session data,
+            # db metadata should NOT have been fetched from metadata storage
+            self.fn_get_db.assert_not_called()
 
         # session data manager should have been queried for the last question asked and its answer
-        patched_get_session_data.assert_any_call(
+        fn_get_session_data.assert_any_call(
             f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
         )
 
-        # Data should have been sent to LLM with session data parts of it
-        patched_llm_query.assert_called()
+        # LLM should have been invoked
+        fn_llm_query.assert_called_once()
 
-        llm_call_count = patched_llm_query.call_count
+        # Contents of the prompt sent to LLM
+        context_sent_to_llm = fn_llm_query.call_args[0][0]
 
-        # The first call should either build on initial session data or just use prompts and metadata
-        session_data_for_llm = patched_llm_query.call_args[0][0]
+        self.assertIn(self.prompt[:10], context_sent_to_llm)
         if initial_session_data:
-            self.assertIn(initial_session_data, session_data_for_llm)
+            # Cached db metadata, so that should be sent as part of LLM context
+            self.assertIn(initial_session_data, context_sent_to_llm)
         else:
-            self.assertIn(self.prompt, session_data_for_llm)
-            self.assertIn(self.db_metadata.name, session_data_for_llm)
-            self.assertIn(self.db_metadata.description, session_data_for_llm)
-        self.assertIn(self.question, session_data_for_llm)
+            # Fresh db metadata fetched from metadata storage, so that should be sent as part of LLM context
+            self.assertIn(self.db_metadata.name, context_sent_to_llm)
+            self.assertIn(self.db_metadata.description, context_sent_to_llm)
 
-        # session data manager should have been called with updated session data
-        self.assertEqual(2, patched_update_session_data.call_count)
+        # The latest question should be in the context sent to LLM
+        self.assertIn(self.question, context_sent_to_llm)
 
-        # First update should be for metadata, either existing or new
-        updated_metadata = patched_update_session_data.call_args_list[0][0][1]
-        if initial_session_data:
-            self.assertIn(initial_session_data, updated_metadata)
-        else:
-            self.assertIn(self.prompt, updated_metadata)
-            self.assertIn(self.db_metadata.name, updated_metadata)
-            self.assertIn(self.db_metadata.description, updated_metadata)
+        # The context data shouldn't have placeholder strings
+        # Everything should have been replaced with actual data
+        self.assertNotIn(
+            "{" + QueryFlow.PLACEHOLDER_METADATA + "}", context_sent_to_llm
+        )
+        self.assertNotIn("{" + QueryFlow.PLACEHOLDER_LAST_QA + "}", context_sent_to_llm)
+        self.assertNotIn(
+            "{" + QueryFlow.PLACEHOLDER_QUESTION + "}", context_sent_to_llm
+        )
+        self.assertNotIn(
+            "{" + QueryFlow.PLACEHOLDER_MASTER_VALUES + "}", context_sent_to_llm
+        )
+        self.assertNotIn(
+            "{" + QueryFlow.PLACEHOLDER_THIS_MONTH + "}", context_sent_to_llm
+        )
 
-        # Second update call should have been for latest question and answer
-        updated_qa = patched_update_session_data.call_args_list[1][0][1]
+        # There should be at least one call made to update session data manager
+        self.assertGreaterEqual(
+            fn_update_session_data.call_count, 1, "No session data update calls made"
+        )
+
+        # Post query operations
+        # Fetch the calls made to update session data
+        session_data_update_calls = fn_update_session_data.call_args_list
+
+        if not initial_session_data:
+            # No cached db metadata, so that will be updated in session data manager
+            update_db_metadata_call = session_data_update_calls.pop(0)
+            key, db_metadata = update_db_metadata_call.args
+
+            self.assertEqual(key, f"{self.session_id}{QueryFlow.SUFFIX_METADATA}")
+            self.assertIn(self.db_metadata.name, db_metadata)
+            self.assertIn(self.db_metadata.description, db_metadata)
+
+        # There should be an update call for last question and answer
+        update_last_qa_call = session_data_update_calls.pop(0)
+        key, updated_qa = update_last_qa_call.args
+        self.assertEqual(key, f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}")
         self.assertIn(self.question, updated_qa)
         self.assertIn(self.answer, updated_qa)
 
@@ -196,63 +273,6 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
         patched_delete_session_data.assert_any_call(
             f"{self.session_id}{QueryFlow.SUFFIX_LAST_QA}"
-        )
-
-    async def test_master_value_caching(self) -> None:
-        # Arrange
-        session_id = uuid4().hex
-        question = self.faker.sentence() + "?"
-        master_dimension = self.faker.word()
-        master_values = [self.faker.word() for _ in range(10)]
-        master_dimension_detection = (
-            f"- Master dimension values evaluated.\n"
-            f"- Dimension:= {master_dimension}\n"
-            f"- Values:= {','.join(master_values)}\n"
-        )
-        llm_answer = (
-            f"{self.faker.paragraph()}\n\n"
-            f"{master_dimension_detection}\n\n"
-            f"{self.faker.paragraph()}"
-        )
-
-        patched_get_master_values = patch.object(
-            self.session_data_manager,
-            "get_session_data",
-            AsyncMock(return_value=Response.ok("")),
-        ).start()
-
-        patched_save_master_values = patch.object(
-            self.session_data_manager,
-            "update_session_data",
-            AsyncMock(return_value=Response.ok(None)),
-        ).start()
-
-        patched_llm_query = patch.object(
-            self.llm,
-            "generate_reply",
-            AsyncMock(side_effect=[Response.ok(llm_answer)]),
-        ).start()
-
-        # Act
-        response = await self.query_flow.query(
-            dbId=self.db_metadata.id,
-            session_id=session_id,
-            question=question,
-        )
-
-        # Assert
-        self.assertTrue(response.is_success, response.message)
-        assert response.payload is not None
-
-        self.assertEqual(response.payload, llm_answer)
-
-        patched_get_master_values.assert_any_call(
-            f"{self.db_metadata.id}{QueryFlow.SUFFIX_MASTER_VALUES}"
-        )
-
-        patched_save_master_values.assert_any_call(
-            f"{self.db_metadata.id}{QueryFlow.SUFFIX_MASTER_VALUES}",
-            dumps({master_dimension: ",".join(master_values)}),
         )
 
     async def test_master_values_retrieval(self) -> None:
@@ -297,5 +317,56 @@ class FlowTest(IsolatedAsyncioTestCase):
             f"{self.db_metadata.id}{QueryFlow.SUFFIX_MASTER_VALUES}"
         )
 
-        context = patched_llm_query.call_args_list[0][0][0]
+        (context,) = patched_llm_query.call_args.args
         self.assertIn(pretty_cache, context)
+
+    async def test_tool_repo(self) -> None:
+        # Arrange
+        ...
+
+        # Act
+        ...
+
+        # Assert
+        self.fn_fetch_tools.assert_called_once()
+
+    async def test_tool_call(self) -> None:
+        # Arrange
+        tool_param_value = self.faker.word()
+        tool_call = (
+            f"- Tool name: {self.external_tool.name}\n"
+            f"- Tool input: {dumps({self.external_tool.params[0].name: tool_param_value})}\n"
+        )
+        tool_return_value = {"result": "42"}
+
+        fn_invoke_tool = patch.object(
+            self.external_tool_repo,
+            "invoke_tool",
+            AsyncMock(return_value=tool_return_value),
+        ).start()
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(side_effect=[Response.ok(tool_call), Response.ok(self.answer)]),
+        ).start()
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=self.db_metadata.id, session_id=self.session_id, question=self.question
+        )
+
+        # Assert
+        self.assertTrue(flow_response.is_success, flow_response.message)
+
+        # Tool should have been invoked
+        fn_invoke_tool.assert_called_once_with(
+            self.external_tool.name,
+            **{self.external_tool.params[0].name: tool_param_value},
+        )
+        llm_context_with_tool_result = fn_reply.call_args_list[-1].args[0]
+        self.assertIn(dumps(tool_return_value), llm_context_with_tool_result)

@@ -3,13 +3,6 @@ services:
         image: sbilife/metadata-storage:202508.14.1200
         restart: always
         env_file: .local/metadata-storage.env
-    sqlalchemy-gateway:
-        image: sbilife/sqlalchemy-gateway:202512.08.1411
-        restart: always
-        environment:
-            - DEFINITIONS_PATH=/var/lib/alchemy
-        volumes:
-            - ./.local/.alchemy:/var/lib/alchemy
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
     redis-gateway:
@@ -25,11 +18,11 @@ services:
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
     query-flow:
-        image: sbilife/query-flow:202510.13.0829
+        image: sbilife/query-flow:202512.15.0828
         restart: always
         env_file: .local/query-flow.env
         volumes:
-            - ./.local/prompt.txt:/app/prompt.txt
+            - ./.local/.prompts/.catchall/prompt.txt:/app/prompt.txt
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     traefik:
