@@ -12,7 +12,8 @@ class EnvVars:
     session_data_proto = "SESSION_DATA_PROTO"
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
-    prompts_file = "PROMPTS_FILE"
+    general_prompts_file = "GENERAL_PROMPTS_FILE"
+    db_prompts_file = "DB_PROMPTS_FILE"  # Yet to be used. Figuring out how to
     metadata_query = "METADATA_QUERY"
     master_table_query = "MASTER_TABLE_QUERY"
     single_table_query = "SINGLE_TABLE_QUERY"
