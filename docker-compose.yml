@@ -3,6 +3,13 @@ services:
         image: sbilife/metadata-storage:202508.14.1200
         restart: always
         env_file: .local/metadata-storage.env
+    sqlalchmy-gateway:
+        image: sbilife/sqlalchemy-gateway:202512.15.1117
+        restart: always
+        environment:
+            - DEFINITIONS_PATH=/var/lib/metadata
+        volumes:
+            - ./.local/.alchemy:/var/lib/metadata
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
     redis-gateway:
