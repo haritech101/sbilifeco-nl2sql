@@ -84,3 +84,43 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(field0.name)
         self.assertTrue(field0.description)
         self.assertTrue(field0.type)
+
+    async def test_get_table_recursive(self) -> None:
+        # Arrange
+        db_id = "nb"
+        table_id = "piwc_workflow_det"
+
+        # Act
+        response = await self.service.get_table(db_id, table_id, with_fields=True)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        assert response.payload is not None
+        table = response.payload
+        self.assertTrue(table.id)
+        self.assertTrue(table.name)
+        self.assertTrue(table.description)
+        self.assertTrue(table.fields)
+
+    async def test_get_db_recursive(self) -> None:
+        # Arrange
+        db_id = "nb"
+
+        # Act
+        response = await self.service.get_db(db_id, with_tables=True, with_fields=True)
+
+        # Assert
+        self.assertTrue(response.is_success, response.message)
+        assert response.payload is not None
+        db = response.payload
+        self.assertTrue(db.id)
+        self.assertTrue(db.name)
+        self.assertTrue(db.description)
+        assert db.tables is not None
+        self.assertTrue(db.tables)
+
+        table = db.tables[0]
+        self.assertTrue(table.id)
+        self.assertTrue(table.name)
+        self.assertTrue(table.description)
+        self.assertTrue(table.fields)
