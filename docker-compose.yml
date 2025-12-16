@@ -24,6 +24,14 @@ services:
             - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
+    unified-mcp-server:
+        image: sbilife/unified-mcp-server:latest
+        restart: always
+        environment:
+            - POPULATION_COUNTER_HOST=redis-gateway
+            - POPULATION_COUNTER_PORT=81
+        labels:
+            - traefik.http.routers.unified-mcp-server.rule=PathPrefix(`/mcp`)
     query-flow:
         image: sbilife/query-flow:latest
         restart: always
