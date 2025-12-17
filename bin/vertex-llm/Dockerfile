@@ -1,4 +1,4 @@
-# sbilifeco/vertex-llm
+# sbilife/vertex-llm
 # 
 FROM python:3.12
 
