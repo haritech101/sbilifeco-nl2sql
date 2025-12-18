@@ -6,6 +6,7 @@ sys.path.append("./src")
 from os import getenv
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
+from pprint import pprint
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 
@@ -22,6 +23,7 @@ class Test(IsolatedAsyncioTestCase):
         self.test_type = getenv(EnvVars.test_type, Defaults.test_type)
 
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        staging_host = getenv(EnvVars.staging_host, Defaults.staging_host)
         self.db_id = getenv(EnvVars.db_id, "")
 
         if self.test_type == "unit":
@@ -29,7 +31,7 @@ class Test(IsolatedAsyncioTestCase):
             await self.service.run()
 
         self.client = QueryFlowHttpClient()
-        host = "tech101.in" if self.test_type == "staging" else "localhost"
+        host = staging_host if self.test_type == "staging" else "localhost"
         self.client.set_proto("http").set_host(host).set_port(http_port)
 
     async def asyncTearDown(self) -> None: ...
@@ -114,3 +116,22 @@ class Test(IsolatedAsyncioTestCase):
 
         with open(".local/inferred.md", "w") as inference:
             inference.write(llm_reply)
+
+    async def test_tool_call(self) -> None:
+        # Arrange
+        question = "Count the number of policies issued in Mumbai"
+        session_id = uuid4().hex
+
+        # Act
+        service_response = await self.client.query(
+            self.db_id, session_id, question, with_thoughts=True
+        )
+
+        # Assert
+        self.assertTrue(service_response.is_success, service_response.message)
+
+        answer = service_response.payload
+        assert answer is not None
+        self.assertTrue(answer)
+        print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)
+        self.assertIn("count_by_named_division", answer)

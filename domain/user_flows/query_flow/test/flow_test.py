@@ -43,6 +43,8 @@ class FlowTest(IsolatedAsyncioTestCase):
                 self.faker.paragraph(),
                 f"{{{QueryFlow.PLACEHOLDER_THIS_MONTH}}}",
                 self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
+                self.faker.paragraph(),
             ]
         )
         self.random_session_data = self.faker.paragraph()
@@ -322,13 +324,38 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def test_tool_repo(self) -> None:
         # Arrange
-        ...
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
 
         # Act
-        ...
+        flow_response = await self.query_flow.query(
+            dbId=self.db_metadata.id,
+            session_id=self.session_id,
+            question=self.question,
+            with_thoughts=True,
+        )
 
         # Assert
+        self.assertTrue(flow_response.is_success, flow_response.message)
+        answer = flow_response.payload
+
+        assert answer is not None
+        self.assertTrue(answer)
+
         self.fn_fetch_tools.assert_called_once()
+
+        self.assertIn(self.external_tool.name, answer)
+        self.assertIn(self.external_tool.description, answer)
+        self.assertIn(self.external_tool.params[0].name, answer)
+        self.assertIn(self.external_tool.params[0].description, answer)
 
     async def test_tool_call(self) -> None:
         # Arrange

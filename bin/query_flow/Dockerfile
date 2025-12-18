@@ -12,8 +12,8 @@ RUN pip install \
     sbilifeco-http-client-llm==0.1.6 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \
-    sbilifeco-user-flow-generate-query==0.1.28 \
-    sbilifeco-http-server-query-flow==0.1.18 \
+    sbilifeco-user-flow-generate-query==0.1.29 \
+    sbilifeco-http-server-query-flow==0.1.19 \
     sbilifeco-cp-mcp-client==0.1.2
 
 EXPOSE 80
@@ -29,6 +29,7 @@ ENV SESSION_DATA_PROTO=http
 ENV SESSION_DATA_HOST=localhost
 ENV SESSION_DATA_PORT=80
 ENV PROMPTS_FILE=
+ENV ENABLE_TOOL_CALL=false
 
 COPY envvars.py service.py ./
 
