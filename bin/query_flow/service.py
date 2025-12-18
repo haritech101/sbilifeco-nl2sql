@@ -54,6 +54,11 @@ class QueryFlowMicroservice(FileSystemEventHandler):
                 f"Prompts file path is not set in environment variables: {EnvVars.general_prompts_file}"
             )
 
+        is_tool_call_enabled = getenv(
+            EnvVars.enable_tool_call, Defaults.enable_tool_call
+        )
+        is_tool_call_enabled = is_tool_call_enabled.lower() in ("true", "1", "yes")
+
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
         # Set up connection to Tool Repository service, aka MCP
@@ -81,11 +86,13 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         self.flow = QueryFlow()
         (
             self.flow.set_external_tool_repo(self.tool_repo)
+            .set_is_tool_call_enabled(is_tool_call_enabled)
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
         )
         self.set_flow_prompt()
+        await self.flow.async_init()
 
         # Set up http-based listener for query flow
         self.http_service = QueryFlowHttpService()
