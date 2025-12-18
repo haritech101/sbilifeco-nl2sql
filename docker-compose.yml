@@ -1,8 +1,4 @@
 services:
-    metadata-storage:
-        image: sbilife/metadata-storage:latest
-        restart: always
-        env_file: .local/metadata-storage.env
     sqlalchemy-gateway:
         image: sbilife/sqlalchemy-gateway:latest
         restart: always
