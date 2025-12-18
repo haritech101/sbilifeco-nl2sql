@@ -12,7 +12,7 @@ services:
         image: sbilife/redis-gateway:latest
         restart: always
         environment:
-            - REDIS_HOST=redis-for-sessions
+            - REDIS_HOST=redis
         labels:
             - traefik.http.routers.session-data.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.routers.session-data.service=session-data
@@ -58,33 +58,7 @@ services:
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
     redis:
-        image: redis:7.0.0
-        restart: always
-
-    postgres:
-        image: postgres:13
-        restart: always
-        volumes:
-            - ./.local/.pg:/var/lib/postgresql/data
-        env_file: .local/pg.env
-
-    cubestore:
-        image: cubejs/cubestore:v0.35.33
-        restart: always
-        env_file: .local/cube.env
-        volumes:
-            - ./.local/.cube:/cube/data
-
-    synmetrix:
-        image: synmetrix/stack:latest
-        restart: always
-        ports:
-            - 11207:8888
-            - 11208:4000
-            - 11209:8081
-        env_file: .local/synmetrix.env
-    redis-for-sessions:
         image: redis:8.2.0
         restart: always
         volumes:
-            - ./.local/.redis-for-sessions:/data
+            - ./.local/.redis:/data
