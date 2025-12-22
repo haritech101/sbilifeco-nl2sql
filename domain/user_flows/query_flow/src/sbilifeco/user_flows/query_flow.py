@@ -26,7 +26,7 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_LAST_QA = "last_qa"
     PLACEHOLDER_QUESTION = "question"
     PLACEHOLDER_MASTER_VALUES = "master_values"
-    PLACEHOLDER_THIS_MONTH = "this_month"
+    PLACEHOLDER_TODAY = "today"
     PLACEHOLDER_TOOLS = "tools_available"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
 
@@ -227,7 +227,7 @@ class QueryFlow(IQueryFlow):
                 self.PLACEHOLDER_LAST_QA: last_qa,
                 self.PLACEHOLDER_QUESTION: question,
                 self.PLACEHOLDER_MASTER_VALUES: master_values,
-                self.PLACEHOLDER_THIS_MONTH: datetime.now().strftime("%B %Y"),
+                self.PLACEHOLDER_TODAY: datetime.now().strftime("%02d %B %Y"),
                 self.PLACEHOLDER_TOOLS: tools_available,
             }
 

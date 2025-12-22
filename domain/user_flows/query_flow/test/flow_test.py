@@ -41,7 +41,7 @@ class FlowTest(IsolatedAsyncioTestCase):
                 self.faker.paragraph(),
                 f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
                 self.faker.paragraph(),
-                f"{{{QueryFlow.PLACEHOLDER_THIS_MONTH}}}",
+                f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
                 self.faker.paragraph(),
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
@@ -95,6 +95,7 @@ class FlowTest(IsolatedAsyncioTestCase):
             .set_session_data_manager(self.session_data_manager)
             .set_prompt(self.prompt)
             .set_external_tool_repo(self.external_tool_repo)
+            .set_is_tool_call_enabled(True)
         )
         await self.query_flow.async_init()
 
@@ -222,9 +223,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertNotIn(
             "{" + QueryFlow.PLACEHOLDER_MASTER_VALUES + "}", context_sent_to_llm
         )
-        self.assertNotIn(
-            "{" + QueryFlow.PLACEHOLDER_THIS_MONTH + "}", context_sent_to_llm
-        )
+        self.assertNotIn("{" + QueryFlow.PLACEHOLDER_TODAY + "}", context_sent_to_llm)
 
         # There should be at least one call made to update session data manager
         self.assertGreaterEqual(
