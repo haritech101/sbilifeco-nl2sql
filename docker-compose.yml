@@ -29,7 +29,7 @@ services:
         labels:
             - traefik.http.routers.unified-mcp-server.rule=PathPrefix(`/mcp`)
     query-flow:
-        image: sbilife/query-flow:latest
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-flow:latest
         restart: always
         env_file: .local/query-flow.env
         volumes:
