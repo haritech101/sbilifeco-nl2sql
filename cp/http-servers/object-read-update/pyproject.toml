@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-http-server-object-read-update"
+version = "0.1.0"
+description = "HTTP server for microservice to read and update updatable objects"
+dependencies = [
+    "fastapi>=0.116.1",
+    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-cp-http-server>=0.1.1",
+    "sbilifeco-boundary-object-read-update>=0.1.0",
+    "sbilifeco-paths-object-read-update>=0.1.0"
+]
