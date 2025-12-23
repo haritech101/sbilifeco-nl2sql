@@ -1,6 +1,6 @@
 services:
     sqlalchemy-gateway:
-        image: sbilife/sqlalchemy-gateway:latest
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
         environment:
             - DEFINITIONS_PATH=/var/lib/metadata
@@ -9,7 +9,7 @@ services:
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
     redis-gateway:
-        image: sbilife/redis-gateway:latest
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/redis-gateway:latest
         restart: always
         environment:
             - REDIS_HOST=redis
@@ -21,7 +21,7 @@ services:
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
     unified-mcp-server:
-        image: sbilife/unified-mcp-server:latest
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
         environment:
             - POPULATION_COUNTER_HOST=redis-gateway
@@ -59,7 +59,7 @@ services:
             - 11200:80
             - 11201:8080
     query-generator-ui:
-        image: sbilife/query-generator-ui:latest
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
         env_file: .local/query-generator-ui.env
         ports:
