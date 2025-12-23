@@ -28,6 +28,17 @@ services:
             - POPULATION_COUNTER_PORT=81
         labels:
             - traefik.http.routers.unified-mcp-server.rule=PathPrefix(`/mcp`)
+    file-read-update-service:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/file-read-update-service:latest
+        restart: always
+        environment:
+            - CONFIG_PATH=/etc/files.yaml
+        volumes:
+            - ./.local/files.yaml:/etc/files.yaml:ro
+            - ./.local/.prompts:/var/lib/prompts:rw
+            - ./.local/.alchemy:/var/lib/alchemy:rw
+        labels:
+            - traefik.http.routers.file-read-update.rule=PathPrefix(`/api/v1/updatable-objects`)
     query-flow:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-flow:latest
         restart: always
