@@ -1,3 +1,4 @@
+const API_BASE_URL = "http://localhost";
 let currentFileId = "";
 
 const onSelectFile = async (selectedFileId: string) => {
@@ -6,7 +7,7 @@ const onSelectFile = async (selectedFileId: string) => {
     }
 
     currentFileId = selectedFileId;
-    const url = `http://localhost:11200/api/v1/updatable-objects/${selectedFileId}`;
+    const url = `${API_BASE_URL}/api/v1/updatable-objects/${selectedFileId}`;
     const req = new Request(url);
     const response = await fetch(req);
     if (!response.ok) {
@@ -43,7 +44,7 @@ const onSaveFile = async () => {
     ) as HTMLTextAreaElement;
     const updatedContent = textarea.value;
 
-    const url = `http://localhost:11200/api/v1/updatable-objects/${currentFileId}`;
+    const url = `${API_BASE_URL}/api/v1/updatable-objects/${currentFileId}`;
     const req = new Request(url, {
         method: "PUT",
         headers: {
