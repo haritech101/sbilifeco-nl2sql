@@ -68,6 +68,12 @@ services:
             - ./.local/query-generator.vite.config.ts:/usr/local/query-generator-ui/vite.config.ts
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
+    config-editor-ui:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/config-editor-ui:latest
+        restart: always
+        env_file: .local/config-editor-ui.env
+        labels:
+            - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
     redis:
         image: redis:8.2.0
         restart: always
