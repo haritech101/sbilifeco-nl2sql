@@ -48,7 +48,7 @@ services:
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     traefik:
-        image: traefik:3.4.1
+        image: traefik:latest
         restart: always
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
@@ -75,7 +75,7 @@ services:
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
     redis:
-        image: redis:8.2.0
+        image: redis:latest
         restart: always
         volumes:
             - ./.local/.redis:/data
