@@ -1,5 +1,5 @@
 # sbilife/query-flow
-FROM python:3.12
+FROM python:3.14-alpine
 
 WORKDIR /usr/local/query-flow
 
