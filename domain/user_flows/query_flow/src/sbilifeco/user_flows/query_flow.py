@@ -26,16 +26,19 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_LAST_QA = "last_qa"
     PLACEHOLDER_QUESTION = "question"
     PLACEHOLDER_MASTER_VALUES = "master_values"
-    PLACEHOLDER_THIS_MONTH = "this_month"
-    TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n- Tool input:(.*)"
+    PLACEHOLDER_TODAY = "today"
+    PLACEHOLDER_TOOLS = "tools_available"
+    TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
 
     def __init__(self):
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
         self._prompt: str
+        self._prompts_by_db: dict[str, str] = {}
         self._external_tool_repo: IExternalToolRepo
         self._external_tools: list[ExternalTool] = []
+        self._is_tool_call_enabled: bool = False
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -51,8 +54,12 @@ class QueryFlow(IQueryFlow):
         self._session_data_manager = session_data_manager
         return self
 
-    def set_prompt(self, prompt: str) -> QueryFlow:
+    def set_generic_prompt(self, prompt: str) -> QueryFlow:
         self._prompt = prompt
+        return self
+
+    def set_prompt_by_db(self, db_id: str, prompt: str) -> QueryFlow:
+        self._prompts_by_db[db_id] = prompt
         return self
 
     def set_external_tool_repo(
@@ -61,9 +68,14 @@ class QueryFlow(IQueryFlow):
         self._external_tool_repo = external_tool_repo
         return self
 
+    def set_is_tool_call_enabled(self, is_enabled: bool) -> QueryFlow:
+        self._is_tool_call_enabled = is_enabled
+        return self
+
     async def async_init(self) -> None:
-        tools = await self._external_tool_repo.fetch_tools()
-        self._external_tools.extend(tools)
+        if self._is_tool_call_enabled and self._external_tool_repo is not None:
+            tools = await self._external_tool_repo.fetch_tools()
+            self._external_tools.extend(tools)
 
     async def async_shutdown(self) -> None:
         self._external_tools.clear()
@@ -200,15 +212,33 @@ class QueryFlow(IQueryFlow):
                 )
             last_qa = cached_last_qa_response.payload or "None"
 
+            if not self._external_tools:
+                tools_available = "No external tools are available."
+            else:
+                tools_available = "The following external tools are available:\n"
+                for tool in self._external_tools:
+                    tools_available += f"- Tool name: {tool.name}\n"
+                    tools_available += f"  Description: {tool.description}\n"
+                    tools_available += f"  Parameters:\n"
+                    for param in tool.params:
+                        tools_available += (
+                            f"    - Name: {param.name}\n"
+                            f"      Description: {param.description}\n"
+                            f"      Type: {param.type}\n"
+                        )
+
             template_map = {
                 self.PLACEHOLDER_METADATA: db_metadata,
                 self.PLACEHOLDER_LAST_QA: last_qa,
                 self.PLACEHOLDER_QUESTION: question,
                 self.PLACEHOLDER_MASTER_VALUES: master_values,
-                self.PLACEHOLDER_THIS_MONTH: datetime.now().strftime("%B %Y"),
+                self.PLACEHOLDER_TODAY: datetime.now().strftime("%02d %B %Y"),
+                self.PLACEHOLDER_TOOLS: tools_available,
             }
 
-            next_full_prompt = self._prompt.format_map(template_map)
+            prompt_template = self._prompts_by_db.get(dbId, self._prompt)
+
+            next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
 
             query_response = await self._llm.generate_reply(next_full_prompt)
@@ -223,8 +253,10 @@ class QueryFlow(IQueryFlow):
             full_answer = next_full_prompt + "\n\n" + answer + "\n\n"
 
             tool_call_match = search(self.TOOL_CALL_SIGNATURE, answer)
-            while tool_call_match:
-                tool_name, tool_params = tool_call_match.groups()
+            while (
+                self._is_tool_call_enabled and self._external_tools and tool_call_match
+            ):
+                tool_name, _, tool_params = tool_call_match.groups()
                 tool_name = tool_name.strip()
 
                 tool_params = tool_params.strip()

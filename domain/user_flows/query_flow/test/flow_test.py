@@ -41,7 +41,9 @@ class FlowTest(IsolatedAsyncioTestCase):
                 self.faker.paragraph(),
                 f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
                 self.faker.paragraph(),
-                f"{{{QueryFlow.PLACEHOLDER_THIS_MONTH}}}",
+                f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
             ]
         )
@@ -52,6 +54,25 @@ class FlowTest(IsolatedAsyncioTestCase):
             id=uuid4().hex,
             name=self.faker.word(),
             description=self.faker.sentence(),
+        )
+
+        self.db_id_with_prompt = uuid4().hex
+        self.db_specific_prompt = "\n\n".join(
+            [
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
+                self.faker.paragraph(),
+            ]
         )
 
         self.metadata_storage: IMetadataStorage = AsyncMock(spec=IMetadataStorage)
@@ -91,8 +112,10 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
-            .set_prompt(self.prompt)
+            .set_generic_prompt(self.prompt)
+            .set_prompt_by_db(self.db_id_with_prompt, self.db_specific_prompt)
             .set_external_tool_repo(self.external_tool_repo)
+            .set_is_tool_call_enabled(True)
         )
         await self.query_flow.async_init()
 
@@ -220,9 +243,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertNotIn(
             "{" + QueryFlow.PLACEHOLDER_MASTER_VALUES + "}", context_sent_to_llm
         )
-        self.assertNotIn(
-            "{" + QueryFlow.PLACEHOLDER_THIS_MONTH + "}", context_sent_to_llm
-        )
+        self.assertNotIn("{" + QueryFlow.PLACEHOLDER_TODAY + "}", context_sent_to_llm)
 
         # There should be at least one call made to update session data manager
         self.assertGreaterEqual(
@@ -322,13 +343,38 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def test_tool_repo(self) -> None:
         # Arrange
-        ...
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
 
         # Act
-        ...
+        flow_response = await self.query_flow.query(
+            dbId=self.db_metadata.id,
+            session_id=self.session_id,
+            question=self.question,
+            with_thoughts=True,
+        )
 
         # Assert
+        self.assertTrue(flow_response.is_success, flow_response.message)
+        answer = flow_response.payload
+
+        assert answer is not None
+        self.assertTrue(answer)
+
         self.fn_fetch_tools.assert_called_once()
+
+        self.assertIn(self.external_tool.name, answer)
+        self.assertIn(self.external_tool.description, answer)
+        self.assertIn(self.external_tool.params[0].name, answer)
+        self.assertIn(self.external_tool.params[0].description, answer)
 
     async def test_tool_call(self) -> None:
         # Arrange
@@ -370,3 +416,60 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
         llm_context_with_tool_result = fn_reply.call_args_list[-1].args[0]
         self.assertIn(dumps(tool_return_value), llm_context_with_tool_result)
+
+    async def test_prompt_selection__not_available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        db_id = self.faker.word()
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=db_id,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.prompt[:10], input_query[:10])
+
+    async def test_prompt_selection__available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=self.db_id_with_prompt,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.db_specific_prompt[:10], input_query[:10])

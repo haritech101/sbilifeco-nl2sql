@@ -1,7 +1,7 @@
 class EnvVars:
     test_type = "TEST_TYPE"
     http_port = "HTTP_PORT"
-    http_port_unittest = "HTTP_PORT_UNITTEST"
+    staging_host = "STAGING_HOST"
     mcp_server_url = "MCP_SERVER_URL"
     llm_proto = "LLM_PROTO"
     llm_host = "LLM_HOST"
@@ -13,7 +13,8 @@ class EnvVars:
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
     general_prompts_file = "GENERAL_PROMPTS_FILE"
-    db_prompts_file = "DB_PROMPTS_FILE"  # Yet to be used. Figuring out how to
+    db_prompts_file = "DB_PROMPTS_FILE"
+    enable_tool_call = "ENABLE_TOOL_CALL"
     metadata_query = "METADATA_QUERY"
     master_table_query = "MASTER_TABLE_QUERY"
     single_table_query = "SINGLE_TABLE_QUERY"
@@ -24,7 +25,7 @@ class EnvVars:
 class Defaults:
     test_type = "unit"
     http_port = "80"
-    http_port_unittest = "80"
+    staging_host = "localhost"
     mcp_server_url = "http://localhost/mcp"
     llm_proto = "http"
     llm_host = "localhost"
@@ -35,3 +36,4 @@ class Defaults:
     session_data_proto = "http"
     session_data_host = "localhost"
     session_data_port = "80"
+    enable_tool_call = "false"

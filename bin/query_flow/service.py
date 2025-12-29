@@ -6,6 +6,7 @@ from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttp
 from sbilifeco.user_flows.query_flow import QueryFlow
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from os import getenv
+from pathlib import Path
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 from watchdog.events import FileSystemEventHandler
@@ -13,7 +14,7 @@ from watchdog.observers import Observer
 
 
 class QueryFlowMicroservice(FileSystemEventHandler):
-    prompts_file: str
+    generic_prompt_file: str
     tool_repo: MCPClient
     llm: LLMHttpClient
     storage: MetadataStorageHttpClient
@@ -48,11 +49,16 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             getenv(EnvVars.session_data_port, Defaults.session_data_port)
         )
 
-        self.prompts_file = getenv(EnvVars.general_prompts_file, "")
-        if not self.prompts_file:
+        self.generic_prompt_file = getenv(EnvVars.general_prompts_file, "")
+        if not self.generic_prompt_file:
             raise ValueError(
                 f"Prompts file path is not set in environment variables: {EnvVars.general_prompts_file}"
             )
+
+        is_tool_call_enabled = getenv(
+            EnvVars.enable_tool_call, Defaults.enable_tool_call
+        )
+        is_tool_call_enabled = is_tool_call_enabled.lower() in ("true", "1", "yes")
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
@@ -81,11 +87,14 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         self.flow = QueryFlow()
         (
             self.flow.set_external_tool_repo(self.tool_repo)
+            .set_is_tool_call_enabled(is_tool_call_enabled)
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
         )
         self.set_flow_prompt()
+        self.set_db_specific_prompts()
+        await self.flow.async_init()
 
         # Set up http-based listener for query flow
         self.http_service = QueryFlowHttpService()
@@ -93,7 +102,7 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         await self.http_service.listen()
 
         self.observer = Observer()
-        self.observer.schedule(self, path=self.prompts_file, recursive=False)
+        self.observer.schedule(self, path=self.generic_prompt_file, recursive=False)
         get_running_loop().run_in_executor(None, self.observer.start)
 
     async def run_forever(self) -> None:
@@ -103,11 +112,54 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             await sleep(10000)
 
     def set_flow_prompt(self) -> None:
-        with open(self.prompts_file) as prompts_stream:
-            self.flow.set_prompt(prompts_stream.read())
+        with open(self.generic_prompt_file) as prompts_stream:
+            self.flow.set_generic_prompt(prompts_stream.read())
+
+    def set_db_specific_prompts(self) -> None:
+        db_prompt_template = getenv(EnvVars.db_prompts_file, "")
+        if not db_prompt_template:
+            print("No DB-specific prompts file template set", flush=True)
+            return
+
+        path_components = db_prompt_template.split("{db_id}/")
+        if len(path_components) != 2:
+            print(
+                "DB-specific prompts file template is not valid, missing {db_id}/ placeholder",
+                flush=True,
+            )
+            return
+
+        parent_folder, within_db_path = path_components
+        parent_folder = Path(parent_folder)
+        print(
+            f"Looping inside folder {parent_folder}, to find subpath {within_db_path} in each subfolder",
+            flush=True,
+        )
+        for db_folder in parent_folder.iterdir():
+            if not db_folder.is_dir():
+                continue
+            elif db_folder.name.startswith("."):
+                continue
+
+            db_id = db_folder.name
+            prompt_file_path = parent_folder / db_id / within_db_path
+            if not prompt_file_path.exists():
+                print(
+                    f"Prompt file for DB ID {db_id} does not exist at {prompt_file_path}",
+                    flush=True,
+                )
+                continue
+
+            with open(prompt_file_path) as prompt_file:
+                prompt_content = prompt_file.read()
+                self.flow.set_prompt_by_db(db_id, prompt_content)
+                print(
+                    f"Loaded DB-specific prompts for DB ID {db_id} from {prompt_file_path}",
+                    flush=True,
+                )
 
     def on_modified(self, event) -> None:
-        if event.src_path == self.prompts_file:
+        if event.src_path == self.generic_prompt_file:
             print(f"Prompts file changed: {event.src_path}", flush=True)
             self.set_flow_prompt()
             print("Prompts reloaded", flush=True)

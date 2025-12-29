@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-mcp-server-unified"
+version = "0.1.0"
+description = "Unified MCP server for all gateways and flows"
+dependencies = [
+    "sbilifeco-cp-mcp-server>=0.1.0",
+    "sbilifeco-boundary-population-counter>=0.1.0",
+]

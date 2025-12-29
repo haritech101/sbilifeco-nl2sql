@@ -1,11 +1,9 @@
 services:
-    metadata-storage:
-        image: sbilife/metadata-storage:202508.14.1200
+    sqlalchemy-gateway:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
-        env_file: .local/metadata-storage.env
-    sqlalchmy-gateway:
-        image: sbilife/sqlalchemy-gateway:202512.15.1117
-        restart: always
+        networks:
+            - nl2sql
         environment:
             - DEFINITIONS_PATH=/var/lib/metadata
         volumes:
@@ -13,10 +11,12 @@ services:
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
     redis-gateway:
-        image: sbilife/redis-gateway:202512.09.1416
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/redis-gateway:latest
         restart: always
+        networks:
+            - nl2sql
         environment:
-            - REDIS_HOST=redis-for-sessions
+            - REDIS_HOST=redis
         labels:
             - traefik.http.routers.session-data.rule=PathPrefix(`/api/v1/session-data`)
             - traefik.http.routers.session-data.service=session-data
@@ -24,17 +24,44 @@ services:
             - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
-    query-flow:
-        image: sbilife/query-flow:202512.15.0828
+    unified-mcp-server:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
+        networks:
+            - nl2sql
+        environment:
+            - POPULATION_COUNTER_HOST=redis-gateway
+            - POPULATION_COUNTER_PORT=81
+        labels:
+            - traefik.http.routers.unified-mcp-server.rule=PathPrefix(`/mcp`)
+    file-read-update-service:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/file-read-update-service:latest
+        restart: always
+        networks:
+            - nl2sql
+        environment:
+            - CONFIG_PATH=/etc/files.yaml
+        volumes:
+            - ./.local/files.yaml:/etc/files.yaml:ro
+            - ./.local/.prompts:/var/lib/prompts:rw
+            - ./.local/.alchemy:/var/lib/alchemy:rw
+        labels:
+            - traefik.http.routers.file-read-update.rule=PathPrefix(`/api/v1/updatable-objects`)
+    query-flow:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-flow:latest
+        restart: always
+        networks:
+            - nl2sql
         env_file: .local/query-flow.env
         volumes:
-            - ./.local/.prompts/.catchall/prompt.txt:/app/prompt.txt
+            - ./.local/.prompts:/app/.prompts
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     traefik:
-        image: traefik:3.4.1
+        image: traefik:latest
         restart: always
+        networks:
+            - nl2sql
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
         command:
@@ -44,8 +71,10 @@ services:
             - 11200:80
             - 11201:8080
     query-generator-ui:
-        image: sbilife/query-generator-ui:202510.28.1001
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
+        networks:
+            - nl2sql
         env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
@@ -53,34 +82,24 @@ services:
             - ./.local/query-generator.vite.config.ts:/usr/local/query-generator-ui/vite.config.ts
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
+    config-editor-ui:
+        image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/config-editor-ui:latest
+        restart: always
+        networks:
+            - nl2sql
+        env_file: .local/config-editor-ui.env
+        labels:
+            - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
     redis:
-        image: redis:7.0.0
+        image: redis:latest
         restart: always
-
-    postgres:
-        image: postgres:13
-        restart: always
+        networks:
+            - nl2sql
         volumes:
-            - ./.local/.pg:/var/lib/postgresql/data
-        env_file: .local/pg.env
+            - ./.local/.redis:/data
 
-    cubestore:
-        image: cubejs/cubestore:v0.35.33
-        restart: always
-        env_file: .local/cube.env
-        volumes:
-            - ./.local/.cube:/cube/data
-
-    synmetrix:
-        image: synmetrix/stack:latest
-        restart: always
-        ports:
-            - 11207:8888
-            - 11208:4000
-            - 11209:8081
-        env_file: .local/synmetrix.env
-    redis-for-sessions:
-        image: redis:8.2.0
-        restart: always
-        volumes:
-            - ./.local/.redis-for-sessions:/data
+networks:
+    nl2sql:
+        ipam:
+            config:
+                - subnet: 192.168.11.0/24
