@@ -56,6 +56,25 @@ class FlowTest(IsolatedAsyncioTestCase):
             description=self.faker.sentence(),
         )
 
+        self.db_id_with_prompt = uuid4().hex
+        self.db_specific_prompt = "\n\n".join(
+            [
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
+                self.faker.paragraph(),
+                f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
+                self.faker.paragraph(),
+            ]
+        )
+
         self.metadata_storage: IMetadataStorage = AsyncMock(spec=IMetadataStorage)
         self.llm: ILLM = AsyncMock(spec=ILLM)
         self.session_data_manager: ISessionDataManager = AsyncMock(
@@ -93,7 +112,8 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
-            .set_prompt(self.prompt)
+            .set_generic_prompt(self.prompt)
+            .set_prompt_by_db(self.db_id_with_prompt, self.db_specific_prompt)
             .set_external_tool_repo(self.external_tool_repo)
             .set_is_tool_call_enabled(True)
         )
@@ -396,3 +416,60 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
         llm_context_with_tool_result = fn_reply.call_args_list[-1].args[0]
         self.assertIn(dumps(tool_return_value), llm_context_with_tool_result)
+
+    async def test_prompt_selection__not_available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        db_id = self.faker.word()
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=db_id,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.prompt[:10], input_query[:10])
+
+    async def test_prompt_selection__available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=self.db_id_with_prompt,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.db_specific_prompt[:10], input_query[:10])
