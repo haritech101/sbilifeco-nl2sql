@@ -44,7 +44,7 @@ services:
         restart: always
         env_file: .local/query-flow.env
         volumes:
-            - ./.local/.prompts/.catchall/prompt.txt:/app/prompt.txt
+            - ./.local/.prompts:/app/.prompts
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     traefik:

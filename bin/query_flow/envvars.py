@@ -13,7 +13,7 @@ class EnvVars:
     session_data_host = "SESSION_DATA_HOST"
     session_data_port = "SESSION_DATA_PORT"
     general_prompts_file = "GENERAL_PROMPTS_FILE"
-    db_prompts_file = "DB_PROMPTS_FILE"  # Yet to be used. Figuring out how to
+    db_prompts_file = "DB_PROMPTS_FILE"
     enable_tool_call = "ENABLE_TOOL_CALL"
     metadata_query = "METADATA_QUERY"
     master_table_query = "MASTER_TABLE_QUERY"
