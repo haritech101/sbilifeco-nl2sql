@@ -1,5 +1,5 @@
 # sbilife/redis-gateway
-FROM python:3.12
+FROM python:3.14-alpine
 
 WORKDIR /usr/local/redis-gateway
 

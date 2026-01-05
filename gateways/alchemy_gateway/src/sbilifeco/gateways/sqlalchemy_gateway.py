@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import cast
 from sbilifeco.models.base import Response
 from sys import path, modules
+from pprint import pprint
 
 # Import other required contracts/modules here
 from pathlib import Path
@@ -68,6 +69,7 @@ class SQLAlchemyGateway(IMetadataStorage):
             modules.pop(db_id)
             return Response.ok(tables)
         except Exception as e:
+            pprint(e)
             return Response.error(e)
 
     async def get_fields(self, db_id: str, table_id: str) -> Response[list[Field]]:

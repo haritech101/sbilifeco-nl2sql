@@ -1,5 +1,5 @@
 # sbilife/query-flow
-FROM python:3.12
+FROM python:3.14-alpine
 
 WORKDIR /usr/local/query-flow
 
@@ -12,8 +12,8 @@ RUN pip install \
     sbilifeco-http-client-llm==0.1.6 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \
-    sbilifeco-user-flow-generate-query==0.1.30 \
-    sbilifeco-http-server-query-flow==0.1.20 \
+    sbilifeco-user-flow-generate-query==0.1.31 \
+    sbilifeco-http-server-query-flow==0.1.21 \
     sbilifeco-cp-mcp-client==0.1.2
 
 EXPOSE 80

@@ -1,5 +1,5 @@
 # sbilife/query-generator-ui
-FROM node:22.16
+FROM node:lts-alpine
 
 WORKDIR /usr/local/query-generator-ui
 COPY package*.json ./

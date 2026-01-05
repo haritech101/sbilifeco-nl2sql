@@ -2,6 +2,8 @@ services:
     sqlalchemy-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
+        networks:
+            - nl2sql
         environment:
             - DEFINITIONS_PATH=/var/lib/metadata
         volumes:
@@ -11,6 +13,8 @@ services:
     redis-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/redis-gateway:latest
         restart: always
+        networks:
+            - nl2sql
         environment:
             - REDIS_HOST=redis
         labels:
@@ -23,6 +27,8 @@ services:
     unified-mcp-server:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
+        networks:
+            - nl2sql
         environment:
             - POPULATION_COUNTER_HOST=redis-gateway
             - POPULATION_COUNTER_PORT=81
@@ -31,6 +37,8 @@ services:
     file-read-update-service:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/file-read-update-service:latest
         restart: always
+        networks:
+            - nl2sql
         environment:
             - CONFIG_PATH=/etc/files.yaml
         volumes:
@@ -42,14 +50,18 @@ services:
     query-flow:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-flow:latest
         restart: always
+        networks:
+            - nl2sql
         env_file: .local/query-flow.env
         volumes:
-            - ./.local/.prompts/.catchall/prompt.txt:/app/prompt.txt
+            - ./.local/.prompts:/app/.prompts
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     traefik:
-        image: traefik:3.4.1
+        image: traefik:latest
         restart: always
+        networks:
+            - nl2sql
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
         command:
@@ -61,6 +73,8 @@ services:
     query-generator-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
+        networks:
+            - nl2sql
         env_file: .local/query-generator-ui.env
         ports:
             - 11206:80
@@ -71,11 +85,21 @@ services:
     config-editor-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/config-editor-ui:latest
         restart: always
+        networks:
+            - nl2sql
         env_file: .local/config-editor-ui.env
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
     redis:
-        image: redis:8.2.0
+        image: redis:latest
         restart: always
+        networks:
+            - nl2sql
         volumes:
             - ./.local/.redis:/data
+
+networks:
+    nl2sql:
+        ipam:
+            config:
+                - subnet: 192.168.11.0/24
