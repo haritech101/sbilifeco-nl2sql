@@ -35,6 +35,7 @@ class QueryFlow(IQueryFlow):
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
         self._prompt: str
+        self._prompts_by_db: dict[str, str] = {}
         self._external_tool_repo: IExternalToolRepo
         self._external_tools: list[ExternalTool] = []
         self._is_tool_call_enabled: bool = False
@@ -53,8 +54,12 @@ class QueryFlow(IQueryFlow):
         self._session_data_manager = session_data_manager
         return self
 
-    def set_prompt(self, prompt: str) -> QueryFlow:
+    def set_generic_prompt(self, prompt: str) -> QueryFlow:
         self._prompt = prompt
+        return self
+
+    def set_prompt_by_db(self, db_id: str, prompt: str) -> QueryFlow:
+        self._prompts_by_db[db_id] = prompt
         return self
 
     def set_external_tool_repo(
@@ -231,7 +236,9 @@ class QueryFlow(IQueryFlow):
                 self.PLACEHOLDER_TOOLS: tools_available,
             }
 
-            next_full_prompt = self._prompt.format_map(template_map)
+            prompt_template = self._prompts_by_db.get(dbId, self._prompt)
+
+            next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
 
             query_response = await self._llm.generate_reply(next_full_prompt)

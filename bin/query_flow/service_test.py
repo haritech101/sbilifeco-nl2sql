@@ -63,6 +63,8 @@ class Test(IsolatedAsyncioTestCase):
 
         return query_response.payload
 
+    async def test_starts_fine(self) -> None: ...
+
     async def test_metadata_query(self) -> None:
         # Arrange
         question = getenv(EnvVars.metadata_query, "")
