@@ -16,6 +16,7 @@ from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.models.base import Response
 from datetime import datetime
 from pprint import pformat
+from io import TextIOBase, RawIOBase, BufferedIOBase
 
 
 class QueryFlow(IQueryFlow):
@@ -34,8 +35,10 @@ class QueryFlow(IQueryFlow):
         self._metadata_storage: IMetadataStorage
         self._llm: ILLM
         self._session_data_manager: ISessionDataManager
-        self._prompt: str
-        self._prompts_by_db: dict[str, str] = {}
+        self._prompt: str | TextIOBase | RawIOBase | BufferedIOBase = ""
+        self._prompts_by_db: dict[
+            str, str | TextIOBase | RawIOBase | BufferedIOBase
+        ] = {}
         self._external_tool_repo: IExternalToolRepo
         self._external_tools: list[ExternalTool] = []
         self._is_tool_call_enabled: bool = False
@@ -54,11 +57,15 @@ class QueryFlow(IQueryFlow):
         self._session_data_manager = session_data_manager
         return self
 
-    def set_generic_prompt(self, prompt: str) -> QueryFlow:
+    def set_generic_prompt(
+        self, prompt: str | TextIOBase | RawIOBase | BufferedIOBase
+    ) -> QueryFlow:
         self._prompt = prompt
         return self
 
-    def set_prompt_by_db(self, db_id: str, prompt: str) -> QueryFlow:
+    def set_prompt_by_db(
+        self, db_id: str, prompt: str | TextIOBase | RawIOBase | BufferedIOBase
+    ) -> QueryFlow:
         self._prompts_by_db[db_id] = prompt
         return self
 
@@ -253,7 +260,36 @@ class QueryFlow(IQueryFlow):
                 self.PLACEHOLDER_TOOLS: tools_available,
             }
 
-            prompt_template = self._prompts_by_db.get(dbId, self._prompt)
+            # Prompt template
+            print(f"Preparing prompt template for DB ID {dbId}", flush=True)
+            prompt_template: str = ""
+            prompt_source = self._prompts_by_db.get(dbId, self._prompt)
+            if isinstance(prompt_source, str):
+                if prompt_source.startswith("file://"):
+                    print(
+                        f"Prompt template is inside the file {prompt_source}",
+                        flush=True,
+                    )
+                    file_path = prompt_source[7:]
+                    with open(file_path, "r", encoding="utf-8") as prompt_template_file:
+                        prompt_template = prompt_template_file.read()
+                else:
+                    print("Prompt template is a raw string", flush=True)
+                    prompt_template = prompt_source
+            elif isinstance(prompt_source, (RawIOBase, BufferedIOBase)):
+                print(
+                    "Prompt template is an open binary stream, seeking to start",
+                    flush=True,
+                )
+                prompt_source.seek(0)
+                prompt_template = prompt_source.read().decode("utf-8")
+            elif isinstance(prompt_source, TextIOBase):
+                print(
+                    "Prompt template is an open text stream, seeking to start",
+                    flush=True,
+                )
+                prompt_source.seek(0)
+                prompt_template = prompt_source.read()
 
             next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
