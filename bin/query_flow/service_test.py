@@ -93,22 +93,6 @@ class Test(IsolatedAsyncioTestCase):
         # Act and assert
         await self._test_with(question, with_thoughts=False)
 
-    async def test_prompt_file_change(self) -> None:
-        if self.test_type != "unit":
-            self.skipTest("Skipping unit test in non-unit test type")
-
-        # Arrange
-        prompts_path = Path(getenv(EnvVars.general_prompts_file, ""))
-        assert prompts_path != ""
-
-        with patch.object(self.service, "set_flow_prompt") as patched_method:
-            # Act
-            prompts_path.touch()
-            await sleep(1)
-
-            # Assert
-            patched_method.assert_called_once()
-
     async def test_infer_schema(self) -> None:
         # Arrange
         question = "Please tell me what you have inferred."

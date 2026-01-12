@@ -1,4 +1,4 @@
-from asyncio import run, sleep, get_running_loop
+from asyncio import run, sleep
 from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
@@ -9,11 +9,9 @@ from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 
-class QueryFlowMicroservice(FileSystemEventHandler):
+class QueryFlowMicroservice:
     generic_prompt_file: str
     tool_repo: MCPClient
     llm: LLMHttpClient
@@ -92,7 +90,7 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
         )
-        self.set_flow_prompt()
+        self.flow.set_generic_prompt(f"file://{self.generic_prompt_file}")
         self.set_db_specific_prompts()
         await self.flow.async_init()
 
@@ -101,19 +99,11 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         self.http_service.set_query_flow(self.flow).set_http_port(flow_port)
         await self.http_service.listen()
 
-        self.observer = Observer()
-        self.observer.schedule(self, path=self.generic_prompt_file, recursive=False)
-        get_running_loop().run_in_executor(None, self.observer.start)
-
     async def run_forever(self) -> None:
         await self.run()
 
         while True:
             await sleep(10000)
-
-    def set_flow_prompt(self) -> None:
-        with open(self.generic_prompt_file) as prompts_stream:
-            self.flow.set_generic_prompt(prompts_stream.read())
 
     def set_db_specific_prompts(self) -> None:
         db_prompt_template = getenv(EnvVars.db_prompts_file, "")
@@ -145,24 +135,16 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             prompt_file_path = parent_folder / db_id / within_db_path
             if not prompt_file_path.exists():
                 print(
-                    f"Prompt file for DB ID {db_id} does not exist at {prompt_file_path}",
+                    f"Prompt file for DB ID {db_id} does not exist at {prompt_file_path}, using the catchall prompt",
                     flush=True,
                 )
                 continue
 
-            with open(prompt_file_path) as prompt_file:
-                prompt_content = prompt_file.read()
-                self.flow.set_prompt_by_db(db_id, prompt_content)
-                print(
-                    f"Loaded DB-specific prompts for DB ID {db_id} from {prompt_file_path}",
-                    flush=True,
-                )
-
-    def on_modified(self, event) -> None:
-        if event.src_path == self.generic_prompt_file:
-            print(f"Prompts file changed: {event.src_path}", flush=True)
-            self.set_flow_prompt()
-            print("Prompts reloaded", flush=True)
+            self.flow.set_prompt_by_db(db_id, f"file://{prompt_file_path}")
+            print(
+                f"Assigned DB-specific prompt for DB ID {db_id} from {prompt_file_path}",
+                flush=True,
+            )
 
 
 if __name__ == "__main__":
