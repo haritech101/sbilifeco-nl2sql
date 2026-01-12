@@ -473,3 +473,97 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         input_query = fn_generate_reply.call_args.args[0]
         self.assertEqual(self.db_specific_prompt[:10], input_query[:10])
+
+    async def test_appended_context(self) -> None:
+        # Arrange
+        question = self.faker.sentence() + "?"
+        sql_reply = "```sql\nselect * from users;\n```"
+        non_sql_reply_first = self.faker.sentence()
+        non_sql_reply_second = self.faker.sentence()
+
+        session_id = uuid4().hex
+        db_id = self.faker.word()
+
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(
+                side_effect=[
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(""),
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(non_sql_reply_first),
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(non_sql_reply_second),
+                ]
+            ),
+        ).start()
+        patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(
+                side_effect=[
+                    Response.ok(non_sql_reply_first),
+                    Response.ok(non_sql_reply_second),
+                    Response.ok(sql_reply),
+                ]
+            ),
+        ).start()
+        patch.object(
+            self.external_tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[]),
+        )
+        fn_set_session_data = patch.object(
+            self.session_data_manager,
+            "update_session_data",
+            AsyncMock(return_value=Response.ok(None)),
+        ).start()
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(non_sql_reply_first, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertIn(non_sql_reply_first, fn_args[1])
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(non_sql_reply_second, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertIn(non_sql_reply_first, fn_args[1])
+        self.assertIn(non_sql_reply_second, fn_args[1])
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(sql_reply, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertNotIn(non_sql_reply_first, fn_args[1])
+        self.assertNotIn(non_sql_reply_second, fn_args[1])
+        self.assertIn(sql_reply, fn_args[1])

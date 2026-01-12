@@ -121,3 +121,27 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(answer)
         print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)
         self.assertIn("count_by_named_division", answer)
+
+    async def test_conversation(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+
+        questions = [
+            "Give me the list of policies issued in Mumbai",
+            "August 2025",
+            "Narrow down to independence day",
+            "What about Diwali of the same year?",
+        ]
+
+        # Act & Assert
+        for question in questions:
+            service_response = await self.client.query(
+                self.db_id, session_id, question, with_thoughts=True
+            )
+
+            self.assertTrue(service_response.is_success, service_response.message)
+
+            answer = service_response.payload
+            assert answer is not None
+            self.assertTrue(answer)
+            print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)

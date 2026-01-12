@@ -30,6 +30,7 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_TODAY = "today"
     PLACEHOLDER_TOOLS = "tools_available"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
+    SQL_SIGNATURE = "```sql"
 
     def __init__(self):
         self._metadata_storage: IMetadataStorage
@@ -355,8 +356,12 @@ class QueryFlow(IQueryFlow):
                 f"Caching this question and answer for use in the next prompt during session {session_id}",
                 flush=True,
             )
+            last_qa_to_cache = ""
+            if self.SQL_SIGNATURE not in answer and last_qa != "None":
+                last_qa_to_cache = f"{last_qa}\n\n"
+            last_qa_to_cache += f"Q: {question}\nA: {answer}\n\n"
             await self._session_data_manager.update_session_data(
-                f"{session_id}{self.SUFFIX_LAST_QA}", f"{question}\n\n{answer}\n\n"
+                f"{session_id}{self.SUFFIX_LAST_QA}", last_qa_to_cache
             )
 
             return Response.ok(with_thoughts and full_answer.strip() or answer.strip())
