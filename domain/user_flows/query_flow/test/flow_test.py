@@ -32,17 +32,17 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.session_id = uuid4().hex
         self.prompt = "\n\n".join(
             [
-                self.faker.paragraph(),
+                "Metadata:",
                 f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
-                self.faker.paragraph(),
+                "Last QA:",
                 f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
-                self.faker.paragraph(),
+                "Question:",
                 f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
-                self.faker.paragraph(),
+                "Master Values:",
                 f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
-                self.faker.paragraph(),
+                "Today's Date:",
                 f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
-                self.faker.paragraph(),
+                "Tools:",
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
             ]
@@ -59,17 +59,17 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.db_id_with_prompt = uuid4().hex
         self.db_specific_prompt = "\n\n".join(
             [
-                self.faker.paragraph(),
+                "Metadata:",
                 f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
-                self.faker.paragraph(),
+                "Last QA:",
                 f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
-                self.faker.paragraph(),
+                "Question:",
                 f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
-                self.faker.paragraph(),
+                "Master Values:",
                 f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
-                self.faker.paragraph(),
+                "Today's Date:",
                 f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
-                self.faker.paragraph(),
+                "Tools:",
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
             ]
