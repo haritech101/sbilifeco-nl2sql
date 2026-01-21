@@ -3,12 +3,30 @@ from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
+from sbilifeco.models.base import Response
 from sbilifeco.user_flows.query_flow import QueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
+
+
+class PoCQueryFlowListener(IQueryFlowListener):
+    async def on_fail(
+        self, session_id: str, db_id: str, question: str, failure_response: Response
+    ) -> None:
+        print(
+            f"Breaking news: {session_id} failed to get an answer for question: {question}. Reason: {failure_response.message}",
+            flush=True,
+        )
+
+    async def on_no_sql(self, non_sql_answer: NonSqlAnswer) -> None:
+        print(
+            f"Breaking news: {non_sql_answer.model_dump()}",
+            flush=True,
+        )
 
 
 class QueryFlowMicroservice:
@@ -89,6 +107,7 @@ class QueryFlowMicroservice:
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
+            .add_listener(PoCQueryFlowListener())
         )
         self.flow.set_generic_prompt(f"file://{self.generic_prompt_file}")
         self.set_db_specific_prompts()
