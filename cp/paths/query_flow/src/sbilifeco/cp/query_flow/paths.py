@@ -12,4 +12,5 @@ class Paths:
 class QueryRequest(BaseModel):
     db_id: str
     question: str
+    is_pii_allowed: bool = False
     with_thoughts: bool = False

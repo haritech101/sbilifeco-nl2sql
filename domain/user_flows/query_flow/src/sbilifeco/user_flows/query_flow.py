@@ -28,6 +28,7 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_QUESTION = "question"
     PLACEHOLDER_MASTER_VALUES = "master_values"
     PLACEHOLDER_TODAY = "today"
+    PLACEHOLDER_IS_PII_ALLOWED = "is_pii_allowed"
     PLACEHOLDER_TOOLS = "tools_available"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
     SQL_SIGNATURE = "```sql"
@@ -119,7 +120,12 @@ class QueryFlow(IQueryFlow):
             return Response.error(e)
 
     async def query(
-        self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
+        self,
+        dbId: str,
+        session_id: str,
+        question: str,
+        is_pii_allowed: bool = False,
+        with_thoughts: bool = False,
     ) -> Response[str]:
         try:
             print(f"Fetching cached db metadata for session: {session_id}", flush=True)
@@ -258,6 +264,7 @@ class QueryFlow(IQueryFlow):
                 self.PLACEHOLDER_QUESTION: question,
                 self.PLACEHOLDER_MASTER_VALUES: master_values,
                 self.PLACEHOLDER_TODAY: datetime.now().strftime("%02d %B %Y"),
+                self.PLACEHOLDER_IS_PII_ALLOWED: "Yes" if is_pii_allowed else "No",
                 self.PLACEHOLDER_TOOLS: tools_available,
             }
 
@@ -294,6 +301,7 @@ class QueryFlow(IQueryFlow):
 
             next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
+            print(f"Sending {len(next_full_prompt)} characters to LLM", flush=True)
 
             query_response = await self._llm.generate_reply(next_full_prompt)
             if not query_response.is_success:
