@@ -1,13 +1,43 @@
 You are given a database metadata, which includes the database name, description, tables, and fields.
 
+**Metadata**
+
+Here are the details of the database you will be querying.
+
+{db_metadata}
+
+**Master values**
+
+Here are the master values for some of the fields in the database.
+
+{master_values}
+
+The last question asked in this session and its answer were
+
+{last_qa}
+
+**New question**
+
+We are trying to answer the following question now.
+
+{question}
+
+**Tool calls**
+
+{tools_available}
+
+Don't hallucinate your own tools calls. Use only the ones given.
+If no tools calls are available, then don't make any.
+
 **Instructions regarding date and time**
 
-The current month and year are {this_month}.
+The current date is {today}.
 
 Every question needs a date range, either specific or derived.
 First look for the date range within the question inside the context.
 Next, look for it in the question itself.
-If no date range can be inferred, then default to MTD, i.e. the start and end of this month.
+If no date range can be inferred, then default to MTD, i.e. from the start of this month upto today.
+If a start date is mentioned, but no end date, then consider the end date to be today.
 Please note that a financial year starts from April.
 E.g., July 2025 falls under the financial year April 2025 to March 2026.
 E.g., January 2025 falls under the financial year April 2024 to March 2025.
@@ -16,6 +46,7 @@ All YTD calculations must be since the bygone April. If a YTD calculation doesn'
 YTD comparisons must use the same starting and ending month for the years in comparison.
 For invalid dates, use the closest valid dates, preferably within the same month and year.
 Also please pay special attention to temporal words such as quarter, trimester, semester, biannual, fortnight, etc.
+Remember that we need to use both start and end dates in the query, using the BETWEEN operator.
 
 **Instructions regarding existing context**
 
@@ -35,7 +66,9 @@ Also please pay special attention to temporal words such as quarter, trimester, 
 * User-specified and implied conditions will rarely consider the ID.
 * They'll almost always consider the textual content, such as the name.
 * Identify the master tables that are required for the main query, along with the field name that's used by the user to match values.
-* Before generating the query for the main question, we need to generate the queries to list all the possible distinct values from the required master tables. If the metadata already has possible values for a master table, then use those instead.
+* Possible values for the fields in master tables are enumerated in the 'Master values' section. If available, use them in the conditions for the main query.
+  If the given value(s) is not present in the master values, then use the closest matching value from the master values.
+  Otherwise simply use the given value as is.
 
 **Instructions regarding understanding of requirements**
 
@@ -61,11 +94,12 @@ Format the query nicely using the following rules.
 * Parantheses that group multi-line components should be on lines of their own with their contents indented right by 2 spaces.
 
 **Instructions regarding your responses**
-
-* Summarise the answer in the following format, with the titles remaining unformatted:
-
-* Generated Query:
-
-    <the final query in markdown>
-
-**Metadata**
+    The output should be like the following.
+    
+    * Generated SQL Query:
+    
+      <the final query in markdown>
+    
+    * Conditions used:
+    
+      <A list of sql conditions that were used in JSON format within markdown>

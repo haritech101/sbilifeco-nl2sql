@@ -41,14 +41,22 @@ class QueryFlowHttpClient(HttpClient, IQueryFlow):
             return Response.error(e)
 
     async def query(
-        self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
+        self,
+        dbId: str,
+        session_id: str,
+        question: str,
+        is_pii_allowed: bool = False,
+        with_thoughts: bool = False,
     ) -> Response[str]:
         try:
             req = Request(
                 method="POST",
                 url=f"{self.url_base}{Paths.QUERIES.format(session_id=session_id)}",
                 json=QueryRequest(
-                    db_id=dbId, question=question, with_thoughts=with_thoughts
+                    db_id=dbId,
+                    question=question,
+                    is_pii_allowed=is_pii_allowed,
+                    with_thoughts=with_thoughts,
                 ).model_dump(),
             )
             return await self.request_as_model(req)
