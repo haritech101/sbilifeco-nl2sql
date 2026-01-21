@@ -294,6 +294,7 @@ class QueryFlow(IQueryFlow):
 
             next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
+            print(f"Sending {len(next_full_prompt)} characters to LLM", flush=True)
 
             query_response = await self._llm.generate_reply(next_full_prompt)
             if not query_response.is_success:
