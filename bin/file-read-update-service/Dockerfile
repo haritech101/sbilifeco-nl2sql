@@ -1,5 +1,5 @@
 # sbilife/file-read-update-service
-FROM python:3.12
+FROM python:3.12-slim
 
 WORKDIR /usr/local/file-read-update-service
 
