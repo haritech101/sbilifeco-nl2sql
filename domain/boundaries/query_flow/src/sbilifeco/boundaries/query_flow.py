@@ -13,6 +13,11 @@ class IQueryFlow(Protocol):
         raise NotImplementedError()
 
     async def query(
-        self, dbId: str, session_id: str, question: str, with_thoughts: bool = False
+        self,
+        dbId: str,
+        session_id: str,
+        question: str,
+        is_pii_allowed=False,
+        with_thoughts: bool = False,
     ) -> Response[str]:
         raise NotImplementedError()

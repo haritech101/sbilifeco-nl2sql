@@ -1,3 +1,4 @@
+from operator import is_
 from random import randint
 import sys
 
@@ -81,6 +82,7 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         session_id = uuid4().hex
         question = self.faker.sentence()
         answer = self.faker.sentence()
+        is_pii_allowed = True if randint(0, 1) == 1 else False
         with_thoughts = randint(0, 1) == 1
 
         patched_query_method = patch.object(
@@ -88,12 +90,14 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         ).start()
 
         # Act
-        response = await self.client.query(db_id, session_id, question, with_thoughts)
+        response = await self.client.query(
+            db_id, session_id, question, is_pii_allowed, with_thoughts
+        )
 
         # Assert
         self.assertTrue(response.is_success, response.message)
         self.assertEqual(response.payload, answer)
 
         patched_query_method.assert_called_once_with(
-            db_id, session_id, question, with_thoughts
+            db_id, session_id, question, is_pii_allowed, with_thoughts
         )
