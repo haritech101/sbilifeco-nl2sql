@@ -12,7 +12,7 @@ from sbilifeco.boundaries.tool_support import (
     ExternalTool,
     ExternalToolParams,
 )
-from sbilifeco.boundaries.query_flow import IQueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlow, NonSqlAnswer, IQueryFlowListener
 from sbilifeco.models.base import Response
 from datetime import datetime
 from pprint import pformat
@@ -44,6 +44,7 @@ class QueryFlow(IQueryFlow):
         self._external_tool_repo: IExternalToolRepo
         self._external_tools: list[ExternalTool] = []
         self._is_tool_call_enabled: bool = False
+        self.listeners: list[IQueryFlowListener] = []
 
     def set_metadata_storage(self, metadata_storage: IMetadataStorage) -> QueryFlow:
         self._metadata_storage = metadata_storage
@@ -79,6 +80,10 @@ class QueryFlow(IQueryFlow):
 
     def set_is_tool_call_enabled(self, is_enabled: bool) -> QueryFlow:
         self._is_tool_call_enabled = is_enabled
+        return self
+
+    def add_listener(self, listener: IQueryFlowListener) -> QueryFlow:
+        self.listeners.append(listener)
         return self
 
     async def async_init(self) -> None:
@@ -139,6 +144,10 @@ class QueryFlow(IQueryFlow):
                     f"Could not get cached metadata: {cached_db_metadata_response.message}",
                     flush=True,
                 )
+                for listener in self.listeners:
+                    await listener.on_fail(
+                        session_id, dbId, question, cached_db_metadata_response
+                    )
                 return Response.fail(
                     cached_db_metadata_response.message,
                     cached_db_metadata_response.code,
@@ -160,6 +169,11 @@ class QueryFlow(IQueryFlow):
                     with_additional_info=True,
                 )
                 if not db_response.is_success:
+                    print(
+                        f"Could not get DB metadata: {db_response.message}", flush=True
+                    )
+                    for listener in self.listeners:
+                        await listener.on_fail(session_id, dbId, question, db_response)
                     return Response.fail(db_response.message, db_response.code)
                 db = db_response.payload
                 if db is None:
@@ -236,6 +250,10 @@ class QueryFlow(IQueryFlow):
                     f"Could not get cached last QA: {cached_last_qa_response.message}",
                     flush=True,
                 )
+                for listener in self.listeners:
+                    await listener.on_fail(
+                        session_id, dbId, question, cached_last_qa_response
+                    )
                 return Response.fail(
                     cached_last_qa_response.message, cached_last_qa_response.code
                 )
@@ -308,6 +326,8 @@ class QueryFlow(IQueryFlow):
                 print(
                     f"LLM generate_reply failed: {query_response.message}", flush=True
                 )
+                for listener in self.listeners:
+                    await listener.on_fail(session_id, dbId, question, query_response)
                 return Response.fail(query_response.message, query_response.code)
             if query_response.payload is None:
                 return Response.fail("LLM did not return a valid answer", 500)
@@ -353,6 +373,21 @@ class QueryFlow(IQueryFlow):
 
                 tool_call_match = search(self.TOOL_CALL_SIGNATURE, answer)
 
+            # If the response does not contain a SQL, notify listeners
+            if self.SQL_SIGNATURE not in answer:
+                print(
+                    "The answer does not contain a SQL statement, notifying listeners",
+                    flush=True,
+                )
+                non_sql_answer = NonSqlAnswer(
+                    session_id=session_id,
+                    db_id=dbId,
+                    question=question,
+                    answer=answer,
+                )
+                for listener in self.listeners:
+                    await listener.on_no_sql(non_sql_answer)
+
             # Save updated metadata and last QA
             if not cached_db_metadata_response.payload:
                 print(f"Caching DB metadata for DB ID {dbId}", flush=True)
@@ -375,4 +410,7 @@ class QueryFlow(IQueryFlow):
             return Response.ok(with_thoughts and full_answer.strip() or answer.strip())
         except Exception as e:
             print(f"Exception during query flow: {e}", flush=True)
-            return Response.error(e)
+            rsp = Response.error(e)
+            for listener in self.listeners:
+                await listener.on_fail(session_id, dbId, question, rsp)
+            return rsp
