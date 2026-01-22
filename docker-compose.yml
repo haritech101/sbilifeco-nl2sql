@@ -19,6 +19,12 @@ services:
             - nl2sql
         volumes:
             - ./.local/.redis:/data
+    kafka:
+        image: apache/kafka:latest
+        restart: always
+        ports:
+            - 11202:9094
+        env_file: .local/kafka.env
     sqlalchemy-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
