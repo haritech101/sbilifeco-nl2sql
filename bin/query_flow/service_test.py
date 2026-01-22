@@ -145,3 +145,21 @@ class Test(IsolatedAsyncioTestCase):
             assert answer is not None
             self.assertTrue(answer)
             print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)
+
+    async def test_non_sql_answer(self) -> None:
+        # Arrange
+        question = "What is the meaning of life, the universe and everything?"
+        session_id = uuid4().hex
+
+        # Act
+        service_response = await self.client.query(
+            self.db_id, session_id, question, with_thoughts=True
+        )
+
+        # Assert
+        self.assertTrue(service_response.is_success, service_response.message)
+
+        answer = service_response.payload
+        assert answer is not None
+        self.assertTrue(answer)
+        self.assertNotIn("```sql", answer)
