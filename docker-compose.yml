@@ -1,4 +1,30 @@
 services:
+    traefik:
+        image: traefik:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        command:
+            - --api.insecure=true
+            - --providers.docker=true
+        ports:
+            - 11200:80
+            - 11201:8080
+    redis:
+        image: redis:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - ./.local/.redis:/data
+    kafka:
+        image: apache/kafka:latest
+        restart: always
+        ports:
+            - 11202:9094
+        env_file: .local/kafka.env
     sqlalchemy-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
@@ -57,19 +83,6 @@ services:
             - ./.local/.prompts:/app/.prompts
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
-    traefik:
-        image: traefik:latest
-        restart: always
-        networks:
-            - nl2sql
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-        command:
-            - --api.insecure=true
-            - --providers.docker=true
-        ports:
-            - 11200:80
-            - 11201:8080
     query-generator-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
@@ -90,13 +103,6 @@ services:
         env_file: .local/config-editor-ui.env
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
-    redis:
-        image: redis:latest
-        restart: always
-        networks:
-            - nl2sql
-        volumes:
-            - ./.local/.redis:/data
 
 networks:
     nl2sql:
