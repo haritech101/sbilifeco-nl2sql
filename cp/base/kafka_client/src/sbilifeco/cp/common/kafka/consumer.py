@@ -73,15 +73,18 @@ class PubsubConsumer:
         except Exception as e:
             return Response.error(e)
 
-    async def consume_forever(self) -> AsyncGenerator[Response[str]]:
+    async def consume_forever(
+        self, interval: float = 1.0
+    ) -> AsyncGenerator[Response[str]]:
         print(f"Consuming forever from topics {self.subscriptions}", flush=True)
         self.should_keep_consuming = True
 
         while self.should_keep_consuming:
             try:
-                result = await to_thread(partial(self.consumer.poll, timeout=1.0))
+                result = await to_thread(partial(self.consumer.poll, timeout=interval))
 
                 if result is None:
+                    yield Response.ok(None)
                     continue
 
                 err = result.error()
@@ -90,16 +93,21 @@ class PubsubConsumer:
                         print(
                             f"One or more of topics {self.subscriptions} do not exist yet."
                         )
+                        yield Response.ok(None)
                         continue
+
                     yield Response.fail(f"Consumer error: {err}")
+                    continue
 
                 result_payload = result.value()
                 if result_payload is None:
+                    yield Response.ok(None)
                     continue
 
                 print(f"Message consumed from topics {result.topic()}", flush=True)
                 yield Response.ok(result_payload.decode())
             except Exception as e:
+                print(f"Error while consuming: {e}", flush=True)
                 yield Response.error(e)
 
         yield Response.ok(None)
