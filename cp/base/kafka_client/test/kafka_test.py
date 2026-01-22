@@ -15,8 +15,8 @@ from sbilifeco.models.base import Response
 from asyncio import create_task, gather, sleep
 
 # Import the necessary service(s) here
-from sbilifeco.cp.kafka.producer import PubsubProducer
-from sbilifeco.cp.kafka.consumer import PubsubConsumer
+from sbilifeco.cp.common.kafka.producer import PubsubProducer
+from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
 
 
 class Test(IsolatedAsyncioTestCase):
