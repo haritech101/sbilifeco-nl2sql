@@ -5,28 +5,13 @@ from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
 from sbilifeco.models.base import Response
 from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
+from sbilifeco.boundaries.query_flow import NonSqlAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
+from sbilifeco.cp.query_flow_listener.kafka_producer import QueryFlowEventKafkaProducer
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
-
-
-class PoCQueryFlowListener(IQueryFlowListener):
-    async def on_fail(
-        self, session_id: str, db_id: str, question: str, failure_response: Response
-    ) -> None:
-        print(
-            f"Breaking news: {session_id} failed to get an answer for question: {question}. Reason: {failure_response.message}",
-            flush=True,
-        )
-
-    async def on_no_sql(self, non_sql_answer: NonSqlAnswer) -> None:
-        print(
-            f"Breaking news: {non_sql_answer.model_dump()}",
-            flush=True,
-        )
 
 
 class QueryFlowMicroservice:
@@ -76,6 +61,8 @@ class QueryFlowMicroservice:
         )
         is_tool_call_enabled = is_tool_call_enabled.lower() in ("true", "1", "yes")
 
+        kafka_url = getenv(EnvVars.kafka_url, Defaults.kafka_url)
+
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
         # Set up connection to Tool Repository service, aka MCP
@@ -99,6 +86,11 @@ class QueryFlowMicroservice:
             session_data_host
         ).set_port(session_data_port)
 
+        # Set up kafka producer for query flow events
+        kafka_producer = QueryFlowEventKafkaProducer()
+        kafka_producer.add_host(kafka_url)
+        await kafka_producer.async_init()
+
         # Set up query flow
         self.flow = QueryFlow()
         (
@@ -107,7 +99,7 @@ class QueryFlowMicroservice:
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
-            .add_listener(PoCQueryFlowListener())
+            .add_listener(kafka_producer)
         )
         self.flow.set_generic_prompt(f"file://{self.generic_prompt_file}")
         self.set_db_specific_prompts()
