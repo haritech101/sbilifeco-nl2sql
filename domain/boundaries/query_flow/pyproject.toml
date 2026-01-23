@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundary-query-flow"
-version = "0.1.7"
+version = "0.1.9"
 description = "Contract for query flow"
 dependencies = [
     "sbilifeco-models-base>=0.1.3"

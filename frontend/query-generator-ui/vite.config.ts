@@ -11,5 +11,8 @@ export default defineConfig({
         allowedHosts: ["all"],
         host: "0.0.0.0",
         port: parseInt(theEnv?.VITE_APP_PORT || "80"),
+        headers: {
+            "Content-Security-Policy": "script-src 'self' 'unsafe-inline';",
+        },
     },
 });

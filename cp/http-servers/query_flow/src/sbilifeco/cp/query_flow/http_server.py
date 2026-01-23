@@ -1,6 +1,6 @@
 from __future__ import annotations
 from sbilifeco.cp.common.http.server import HttpServer
-from sbilifeco.user_flows.query_flow import IQueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.cp.query_flow.paths import Paths, QueryRequest
 from sbilifeco.models.base import Response
 
@@ -47,7 +47,11 @@ class QueryFlowHttpService(HttpServer):
         async def query(session_id: str, req: QueryRequest) -> Response[str]:
             try:
                 return await self.query_flow.query(
-                    req.db_id, session_id, req.question, req.with_thoughts
+                    req.db_id,
+                    session_id,
+                    req.question,
+                    req.is_pii_allowed,
+                    req.with_thoughts,
                 )
             except Exception as e:
                 return Response.error(e)

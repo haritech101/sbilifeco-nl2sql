@@ -63,6 +63,8 @@ class Test(IsolatedAsyncioTestCase):
 
         return query_response.payload
 
+    async def test_starts_fine(self) -> None: ...
+
     async def test_metadata_query(self) -> None:
         # Arrange
         question = getenv(EnvVars.metadata_query, "")
@@ -90,22 +92,6 @@ class Test(IsolatedAsyncioTestCase):
 
         # Act and assert
         await self._test_with(question, with_thoughts=False)
-
-    async def test_prompt_file_change(self) -> None:
-        if self.test_type != "unit":
-            self.skipTest("Skipping unit test in non-unit test type")
-
-        # Arrange
-        prompts_path = Path(getenv(EnvVars.general_prompts_file, ""))
-        assert prompts_path != ""
-
-        with patch.object(self.service, "set_flow_prompt") as patched_method:
-            # Act
-            prompts_path.touch()
-            await sleep(1)
-
-            # Assert
-            patched_method.assert_called_once()
 
     async def test_infer_schema(self) -> None:
         # Arrange
@@ -135,3 +121,27 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(answer)
         print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)
         self.assertIn("count_by_named_division", answer)
+
+    async def test_conversation(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+
+        questions = [
+            "Give me the list of policies issued in Mumbai",
+            "August 2025",
+            "Narrow down to independence day",
+            "What about Diwali of the same year?",
+        ]
+
+        # Act & Assert
+        for question in questions:
+            service_response = await self.client.query(
+                self.db_id, session_id, question, with_thoughts=True
+            )
+
+            self.assertTrue(service_response.is_success, service_response.message)
+
+            answer = service_response.payload
+            assert answer is not None
+            self.assertTrue(answer)
+            print(f"LLM's reply follows: ***\n\n{answer}\n\n***\n", flush=True)

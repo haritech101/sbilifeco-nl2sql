@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from faker import Faker
+from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -20,7 +21,6 @@ from sbilifeco.boundaries.tool_support import (
 )
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
-
 from sbilifeco.user_flows.query_flow import QueryFlow
 
 
@@ -32,17 +32,19 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.session_id = uuid4().hex
         self.prompt = "\n\n".join(
             [
-                self.faker.paragraph(),
+                "Metadata:",
                 f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
-                self.faker.paragraph(),
+                "Last QA:",
                 f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
-                self.faker.paragraph(),
+                "Question:",
                 f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
-                self.faker.paragraph(),
+                "Master Values:",
                 f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
-                self.faker.paragraph(),
+                "Today's Date:",
                 f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
-                self.faker.paragraph(),
+                "Is Personally Identifiable Information Allowed:",
+                f"{{{QueryFlow.PLACEHOLDER_IS_PII_ALLOWED}}}",
+                "Tools:",
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
             ]
@@ -54,6 +56,27 @@ class FlowTest(IsolatedAsyncioTestCase):
             id=uuid4().hex,
             name=self.faker.word(),
             description=self.faker.sentence(),
+        )
+
+        self.db_id_with_prompt = uuid4().hex
+        self.db_specific_prompt = "\n\n".join(
+            [
+                "Metadata:",
+                f"{{{QueryFlow.PLACEHOLDER_METADATA}}}",
+                "Last QA:",
+                f"{{{QueryFlow.PLACEHOLDER_LAST_QA}}}",
+                "Question:",
+                f"{{{QueryFlow.PLACEHOLDER_QUESTION}}}",
+                "Master Values:",
+                f"{{{QueryFlow.PLACEHOLDER_MASTER_VALUES}}}",
+                "Today's Date:",
+                f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
+                "Is Personally Identifiable Information Allowed:",
+                f"{{{QueryFlow.PLACEHOLDER_IS_PII_ALLOWED}}}",
+                "Tools:",
+                f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
+                self.faker.paragraph(),
+            ]
         )
 
         self.metadata_storage: IMetadataStorage = AsyncMock(spec=IMetadataStorage)
@@ -88,14 +111,18 @@ class FlowTest(IsolatedAsyncioTestCase):
             AsyncMock(return_value=[self.external_tool]),
         ).start()
 
+        self.listener = AsyncMock(spec=IQueryFlowListener)
+
         self.query_flow = QueryFlow()
         (
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
-            .set_prompt(self.prompt)
+            .set_generic_prompt(self.prompt)
+            .set_prompt_by_db(self.db_id_with_prompt, self.db_specific_prompt)
             .set_external_tool_repo(self.external_tool_repo)
             .set_is_tool_call_enabled(True)
+            .add_listener(self.listener)
         )
         await self.query_flow.async_init()
 
@@ -396,3 +423,162 @@ class FlowTest(IsolatedAsyncioTestCase):
         )
         llm_context_with_tool_result = fn_reply.call_args_list[-1].args[0]
         self.assertIn(dumps(tool_return_value), llm_context_with_tool_result)
+
+    async def test_prompt_selection__not_available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        db_id = self.faker.word()
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=db_id,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.prompt[:10], input_query[:10])
+
+    async def test_prompt_selection__available(self) -> None:
+        # Arrange
+        session_id = uuid4().hex
+        question = self.faker.sentence() + "?"
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+        fn_generate_reply = patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(return_value=Response.ok(self.answer)),
+        ).start()
+
+        # Act
+        response = await self.query_flow.query(
+            dbId=self.db_id_with_prompt,
+            session_id=session_id,
+            question=question,
+        )
+
+        # Assert
+        self.assertTrue(response.is_success)
+
+        input_query = fn_generate_reply.call_args.args[0]
+        self.assertEqual(self.db_specific_prompt[:10], input_query[:10])
+
+    async def test_appended_context(self) -> None:
+        # Arrange
+        question = self.faker.sentence() + "?"
+        sql_reply = "```sql\nselect * from users;\n```"
+        non_sql_reply_first = self.faker.sentence()
+        non_sql_reply_second = self.faker.sentence()
+
+        session_id = uuid4().hex
+        db_id = self.faker.word()
+
+        patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(
+                side_effect=[
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(""),
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(non_sql_reply_first),
+                    Response.ok("metadata"),
+                    Response.ok(""),
+                    Response.ok(non_sql_reply_second),
+                ]
+            ),
+        ).start()
+        patch.object(
+            self.llm,
+            "generate_reply",
+            AsyncMock(
+                side_effect=[
+                    Response.ok(non_sql_reply_first),
+                    Response.ok(non_sql_reply_second),
+                    Response.ok(sql_reply),
+                ]
+            ),
+        ).start()
+        patch.object(
+            self.external_tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[]),
+        )
+        fn_set_session_data = patch.object(
+            self.session_data_manager,
+            "update_session_data",
+            AsyncMock(return_value=Response.ok(None)),
+        ).start()
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(non_sql_reply_first, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertIn(non_sql_reply_first, fn_args[1])
+
+        self.listener.on_no_sql.assert_called()
+        listener_args = self.listener.on_no_sql.call_args.args
+        non_sql_answer: NonSqlAnswer = listener_args[0]
+        self.assertEqual(non_sql_answer.session_id, session_id)
+        self.assertEqual(non_sql_answer.db_id, db_id)
+        self.assertEqual(non_sql_answer.question, question)
+        self.assertEqual(non_sql_answer.answer, non_sql_reply_first)
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(non_sql_reply_second, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertIn(non_sql_reply_first, fn_args[1])
+        self.assertIn(non_sql_reply_second, fn_args[1])
+
+        # Act
+        flow_response = await self.query_flow.query(
+            dbId=db_id, session_id=session_id, question=question
+        )
+
+        # Assert
+        assert flow_response.payload is not None
+        self.assertIn(sql_reply, flow_response.payload)
+
+        fn_set_session_data.assert_called()
+        fn_args = fn_set_session_data.call_args.args
+        self.assertIn(question, fn_args[1])
+        self.assertNotIn(non_sql_reply_first, fn_args[1])
+        self.assertNotIn(non_sql_reply_second, fn_args[1])
+        self.assertIn(sql_reply, fn_args[1])
