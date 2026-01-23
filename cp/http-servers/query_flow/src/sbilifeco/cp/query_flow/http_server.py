@@ -1,6 +1,6 @@
 from __future__ import annotations
 from sbilifeco.cp.common.http.server import HttpServer
-from sbilifeco.user_flows.query_flow import IQueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlow
 from sbilifeco.cp.query_flow.paths import Paths, QueryRequest
 from sbilifeco.models.base import Response
 

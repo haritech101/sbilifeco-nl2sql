@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from faker import Faker
+from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -20,7 +21,6 @@ from sbilifeco.boundaries.tool_support import (
 )
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
-
 from sbilifeco.user_flows.query_flow import QueryFlow
 
 
@@ -111,6 +111,8 @@ class FlowTest(IsolatedAsyncioTestCase):
             AsyncMock(return_value=[self.external_tool]),
         ).start()
 
+        self.listener = AsyncMock(spec=IQueryFlowListener)
+
         self.query_flow = QueryFlow()
         (
             self.query_flow.set_metadata_storage(self.metadata_storage)
@@ -120,6 +122,7 @@ class FlowTest(IsolatedAsyncioTestCase):
             .set_prompt_by_db(self.db_id_with_prompt, self.db_specific_prompt)
             .set_external_tool_repo(self.external_tool_repo)
             .set_is_tool_call_enabled(True)
+            .add_listener(self.listener)
         )
         await self.query_flow.async_init()
 
@@ -540,6 +543,14 @@ class FlowTest(IsolatedAsyncioTestCase):
         fn_args = fn_set_session_data.call_args.args
         self.assertIn(question, fn_args[1])
         self.assertIn(non_sql_reply_first, fn_args[1])
+
+        self.listener.on_no_sql.assert_called()
+        listener_args = self.listener.on_no_sql.call_args.args
+        non_sql_answer: NonSqlAnswer = listener_args[0]
+        self.assertEqual(non_sql_answer.session_id, session_id)
+        self.assertEqual(non_sql_answer.db_id, db_id)
+        self.assertEqual(non_sql_answer.question, question)
+        self.assertEqual(non_sql_answer.answer, non_sql_reply_first)
 
         # Act
         flow_response = await self.query_flow.query(
