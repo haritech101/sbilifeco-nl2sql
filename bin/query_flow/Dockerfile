@@ -1,5 +1,5 @@
 # sbilife/query-flow
-FROM python:3.14-alpine
+FROM python:3.12-slim
 
 WORKDIR /usr/local/query-flow
 
@@ -30,6 +30,7 @@ ENV SESSION_DATA_HOST=localhost
 ENV SESSION_DATA_PORT=80
 ENV PROMPTS_FILE=
 ENV ENABLE_TOOL_CALL=false
+ENV KAFKA_URL=localhost:9092
 
 COPY envvars.py service.py ./
 
