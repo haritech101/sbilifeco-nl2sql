@@ -1,4 +1,4 @@
-from asyncio import sleep
+from __future__ import annotations
 import sys
 
 sys.path.append("./src")
@@ -9,12 +9,17 @@ from unittest.mock import patch
 from pprint import pprint
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
+from sbilifeco.models.base import Response
 
 # Import the necessary service(s) here
+from asyncio import gather, sleep
 from service import QueryFlowMicroservice
+from sbilifeco.boundaries.query_flow import NonSqlAnswer
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
 from pathlib import Path
+from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
+from sbilifeco.cp.query_flow.paths import Paths
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -25,6 +30,7 @@ class Test(IsolatedAsyncioTestCase):
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
         staging_host = getenv(EnvVars.staging_host, Defaults.staging_host)
         self.db_id = getenv(EnvVars.db_id, "")
+        kafka_url = getenv(EnvVars.kafka_url, Defaults.kafka_url)
 
         if self.test_type == "unit":
             self.service = QueryFlowMicroservice()
@@ -33,6 +39,11 @@ class Test(IsolatedAsyncioTestCase):
         self.client = QueryFlowHttpClient()
         host = staging_host if self.test_type == "staging" else "localhost"
         self.client.set_proto("http").set_host(host).set_port(http_port)
+
+        self.consumer = PubsubConsumer()
+        self.consumer.add_host(kafka_url)
+        self.consumer.add_subscription(Paths.NON_SQLS.replace("/", ".")[1:])
+        await self.consumer.async_init()
 
     async def asyncTearDown(self) -> None: ...
 
@@ -148,18 +159,53 @@ class Test(IsolatedAsyncioTestCase):
 
     async def test_non_sql_answer(self) -> None:
         # Arrange
+        async def __check_for_event(test_case: Test) -> Response[str]:
+            attempts = 5
+            source = test_case.consumer.consume_forever(interval=5.0)
+            async for response in source:
+                if response.payload is not None:
+                    pprint(response.payload)
+                    return response
+                attempts -= 1
+
+                if attempts > 0:
+                    print(f"We have {attempts} attempts left", flush=True)
+                else:
+                    print("We have run out of attempts", flush=True)
+                    break
+
+            return Response.ok(None)
+
+        async def __fire_question(
+            test_case: Test, session_id: str, db_id: str, question: str
+        ) -> Response[str]:
+            return await test_case.client.query(
+                db_id, session_id, question, with_thoughts=True
+            )
+
         question = "What is the meaning of life, the universe and everything?"
         session_id = uuid4().hex
 
         # Act
-        service_response = await self.client.query(
-            self.db_id, session_id, question, with_thoughts=True
+        service_response, fetched_response = await gather(
+            __fire_question(self, session_id, self.db_id, question),
+            __check_for_event(self),
         )
 
-        # Assert
+        # Assert response
         self.assertTrue(service_response.is_success, service_response.message)
 
         answer = service_response.payload
         assert answer is not None
         self.assertTrue(answer)
         self.assertNotIn("```sql", answer)
+
+        # Assert kafka entry
+        self.assertTrue(fetched_response.is_success, fetched_response.message)
+        event = fetched_response.payload
+        assert event is not None
+
+        non_sql_answer = NonSqlAnswer.model_validate_json(event)
+        self.assertEqual(non_sql_answer.session_id, session_id)
+        self.assertEqual(non_sql_answer.db_id, self.db_id)
+        self.assertEqual(non_sql_answer.question, question)
