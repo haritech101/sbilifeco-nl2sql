@@ -13,7 +13,8 @@ RUN pip install \
     sbilifeco-http-client-session-data-manager==0.1.1 \
     sbilifeco-user-flow-generate-query==0.1.34 \
     sbilifeco-http-server-query-flow==0.1.24 \
-    sbilifeco-cp-mcp-client==0.1.2
+    sbilifeco-cp-mcp-client==0.1.2 \
+    sbilifeco-kafka-producer-query-flow-listener==0.1.0
 
 EXPOSE 80
 
