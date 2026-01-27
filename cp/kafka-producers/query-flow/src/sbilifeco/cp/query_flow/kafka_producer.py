@@ -7,7 +7,7 @@ from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
 from sbilifeco.cp.query_flow.paths import Paths, QueryFailure
 
 
-class QueryFlowEventKafkaProducer(PubsubProducer, IQueryFlowListener):
+class QueryFlowEventProducer(PubsubProducer, IQueryFlowListener):
     def __init__(self):
         super().__init__()
 

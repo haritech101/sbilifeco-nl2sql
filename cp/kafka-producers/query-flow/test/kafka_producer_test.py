@@ -17,7 +17,7 @@ from pprint import pprint
 # Import the necessary service(s) here
 from asyncio import gather, sleep
 from sbilifeco.boundaries.query_flow import NonSqlAnswer
-from sbilifeco.cp.query_flow_listener.kafka_producer import QueryFlowEventKafkaProducer
+from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
 from sbilifeco.cp.query_flow.paths import Paths
 
@@ -37,7 +37,7 @@ class Test(IsolatedAsyncioTestCase):
         self.faker = Faker()
 
         if self.test_type == "unit":
-            self.service = QueryFlowEventKafkaProducer()
+            self.service = QueryFlowEventProducer()
             self.service.add_host(kafka_url)
             await self.service.async_init()
 
@@ -71,18 +71,11 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(response.payload)
 
         fetched_answer = NonSqlAnswer.model_validate_json(response.payload)
-        pprint(non_sql_answer)
-        pprint(fetched_answer)
         self.assertEqual(non_sql_answer, fetched_answer)
 
     async def __consume(self) -> Response[str]:
-        print("Starting to consume in test case", flush=True)
         attempts = 3
         payload = None
-        print(
-            f"Attempting consumption {attempts} times on topic {self.topic_non_sql}",
-            flush=True,
-        )
         source = self.client.consume_forever(interval=2.0)
         async for response in source:
             payload = response.payload
@@ -97,5 +90,4 @@ class Test(IsolatedAsyncioTestCase):
         return Response.ok(None)
 
     async def __produce(self, non_sql_answer: NonSqlAnswer) -> None:
-        # await sleep(0.5)
         await self.service.on_no_sql(non_sql_answer)

@@ -7,7 +7,7 @@ from sbilifeco.models.base import Response
 from sbilifeco.user_flows.query_flow import QueryFlow
 from sbilifeco.boundaries.query_flow import NonSqlAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
-from sbilifeco.cp.query_flow_listener.kafka_producer import QueryFlowEventKafkaProducer
+from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
@@ -87,7 +87,7 @@ class QueryFlowMicroservice:
         ).set_port(session_data_port)
 
         # Set up kafka producer for query flow events
-        kafka_producer = QueryFlowEventKafkaProducer()
+        kafka_producer = QueryFlowEventProducer()
         kafka_producer.add_host(kafka_url)
         await kafka_producer.async_init()
 
