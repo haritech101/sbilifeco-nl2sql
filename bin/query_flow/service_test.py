@@ -164,7 +164,6 @@ class Test(IsolatedAsyncioTestCase):
             source = test_case.consumer.consume_forever(interval=5.0)
             async for response in source:
                 if response.payload is not None:
-                    pprint(response.payload)
                     return response
                 attempts -= 1
 
@@ -179,9 +178,7 @@ class Test(IsolatedAsyncioTestCase):
         async def __fire_question(
             test_case: Test, session_id: str, db_id: str, question: str
         ) -> Response[str]:
-            return await test_case.client.query(
-                db_id, session_id, question, with_thoughts=True
-            )
+            return await test_case.client.query(db_id, session_id, question)
 
         question = "What is the meaning of life, the universe and everything?"
         session_id = uuid4().hex
@@ -196,6 +193,7 @@ class Test(IsolatedAsyncioTestCase):
         self.assertTrue(service_response.is_success, service_response.message)
 
         answer = service_response.payload
+        pprint(answer)
         assert answer is not None
         self.assertTrue(answer)
         self.assertNotIn("```sql", answer)
