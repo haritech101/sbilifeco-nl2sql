@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-http-server-non-sql-answer-repo"
+version = "0.1.0"
+description = "description"
+dependencies = [
+    "fastapi>=0.116.1",
+    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-boundary-query-flow>=0.2.0",
+    "sbilifeco-paths-non-sql-answer-repo>=0.1.0",
+    "sbilifeco-cp-http-server>=0.1.1",
+]

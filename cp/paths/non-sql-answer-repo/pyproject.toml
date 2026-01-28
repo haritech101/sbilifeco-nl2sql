@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-paths-non-sql-answer-repo"
+version = "0.1.0"
+description = "REST API paths for non-SQL answer repository"
+dependencies = []
