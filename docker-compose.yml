@@ -52,6 +52,16 @@ services:
             - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
+    kafka-as-repo:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/kafka-as-repo:latest
+        restart: always
+        networks:
+            - nl2sql
+        environment:
+            - KAFKA_URL=kafka:9092
+            - ANSWER_TIMEOUT=2
+        labels:
+            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/non-sql-answers`)
     unified-mcp-server:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always

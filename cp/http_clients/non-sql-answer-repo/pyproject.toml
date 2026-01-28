@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-http-client-non-sql-answer-repo"
+version = "0.1.0"
+description = "HTTP client to access non-SQL answer repository"
+dependencies = [
+    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-cp-http-client>=0.1.2",
+    "sbilifeco-boundary-query-flow>=0.2.0",
+    "sbilifeco-paths-non-sql-answer-repo>=0.1.0",
+]

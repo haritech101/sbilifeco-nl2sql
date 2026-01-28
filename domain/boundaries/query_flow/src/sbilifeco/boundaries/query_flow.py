@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, Sequence
 from sbilifeco.models.base import Response, BaseModel
 
 
@@ -7,6 +7,10 @@ class NonSqlAnswer(BaseModel):
     db_id: str
     question: str
     answer: str
+
+
+class GetNonSqlAnswersRequest(BaseModel):
+    page_size: int = 10  # Get the next n non-sql answers, 10 by default
 
 
 class IQueryFlow(Protocol):
@@ -37,4 +41,11 @@ class IQueryFlowListener(Protocol):
         raise NotImplementedError()
 
     async def on_no_sql(self, non_sql_answer: NonSqlAnswer) -> None:
+        raise NotImplementedError()
+
+
+class INonSqlAnswerRepo(Protocol):
+    async def get_non_sql_answers(
+        self, request: GetNonSqlAnswersRequest
+    ) -> Response[Sequence[NonSqlAnswer]]:
         raise NotImplementedError()
