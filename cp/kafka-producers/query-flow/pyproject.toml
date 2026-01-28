@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-http-server-query-flow"
-version = "0.1.24"
-description = "HTTP service on top of query flow"
+name = "sbilifeco-kafka-producer-query-flow-events"
+version = "0.1.1"
+description = "Kafka producer that relays events produced by query flow as kafka messages"
 dependencies = [
     "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-cp-kafka>=0.2.1",
     "sbilifeco-boundary-query-flow>=0.1.9",
-    "sbilifeco-paths-query-flow>=0.1.6",
-    "sbilifeco-cp-http-server>=0.1.1",
+    "sbilifeco-paths-query-flow>=0.1.6"
 ]

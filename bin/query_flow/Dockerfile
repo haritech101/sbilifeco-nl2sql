@@ -1,5 +1,5 @@
 # sbilife/query-flow
-FROM python:3.14-alpine
+FROM python:3.12-slim
 
 WORKDIR /usr/local/query-flow
 
@@ -13,7 +13,8 @@ RUN pip install \
     sbilifeco-http-client-session-data-manager==0.1.1 \
     sbilifeco-user-flow-generate-query==0.1.34 \
     sbilifeco-http-server-query-flow==0.1.24 \
-    sbilifeco-cp-mcp-client==0.1.2
+    sbilifeco-cp-mcp-client==0.1.2 \
+    sbilifeco-kafka-producer-query-flow-events==0.1.1
 
 EXPOSE 80
 
@@ -29,6 +30,7 @@ ENV SESSION_DATA_HOST=localhost
 ENV SESSION_DATA_PORT=80
 ENV PROMPTS_FILE=
 ENV ENABLE_TOOL_CALL=false
+ENV KAFKA_URL=localhost:9092
 
 COPY envvars.py service.py ./
 

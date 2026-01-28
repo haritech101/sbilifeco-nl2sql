@@ -1,4 +1,5 @@
 import sys
+import time
 
 sys.path.append("./src")
 
@@ -15,8 +16,8 @@ from sbilifeco.models.base import Response
 from asyncio import create_task, gather, sleep
 
 # Import the necessary service(s) here
-from sbilifeco.cp.kafka.producer import PubsubProducer
-from sbilifeco.cp.kafka.consumer import PubsubConsumer
+from sbilifeco.cp.common.kafka.producer import PubsubProducer
+from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -32,10 +33,15 @@ class Test(IsolatedAsyncioTestCase):
         (self.producer.add_host(kafka_url))
         await self.producer.async_init()
 
+        self.topic = self.faker.word()
+        await self.producer.publish(self.topic, "", right_now=True)
+
         # Initialise the client(s) here
         self.consumer = PubsubConsumer()
         (self.consumer.add_host(kafka_url))
         await self.consumer.async_init()
+
+        await self.consumer.subscribe(self.topic)
 
     async def asyncTearDown(self) -> None:
         await self.consumer.async_shutdown()
@@ -53,18 +59,17 @@ class Test(IsolatedAsyncioTestCase):
 
     async def test_consume_once(self) -> None:
         # Arrange
-        topic = self.faker.word()
         content = self.faker.sentence()
-        await self.consumer.subscribe(topic)
 
         # Act
-        publish_response = await self.producer.publish(topic, content)
-
+        publish_response = await self.producer.publish(
+            self.topic, content, right_now=True
+        )
         # Assert
         self.assertTrue(publish_response.is_success, publish_response.message)
 
         # Act
-        consume_response = await self.consumer.consume()
+        consume_response = await self.consumer.consume(2)
 
         # Assert
         self.assertTrue(consume_response.is_success, consume_response.message)
@@ -73,12 +78,11 @@ class Test(IsolatedAsyncioTestCase):
 
     async def test_consume_forever(self) -> None:
         # Arrange
-        topic = self.faker.word()
         content = self.faker.sentence()
-        await self.consumer.subscribe(topic)
 
         task_consume = create_task(self.consume_and_leave(content))
-        task_publish = create_task(self.producer.publish(topic, content))
+        task_publish = create_task(self.producer.publish(self.topic, content))
 
         # Act and assert
-        await gather(task_consume, task_publish)
+        await task_consume
+        await task_publish

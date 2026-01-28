@@ -22,6 +22,8 @@ services:
     kafka:
         image: apache/kafka:latest
         restart: always
+        networks:
+            - nl2sql
         ports:
             - 11202:9094
         env_file: .local/kafka.env
