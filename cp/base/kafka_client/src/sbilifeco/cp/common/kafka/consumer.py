@@ -76,25 +76,34 @@ class PubsubConsumer:
 
     async def consume(self, timeout: Optional[int] = None) -> Response[str]:
         try:
-            print(f"Consuming once from topics {self.subscriptions}", flush=True)
-            timeout = timeout or self.default_timeout
+            attempts_left = 3
+            timeout_overall = timeout or self.default_timeout
+            timeout_per_attempt = timeout_overall / attempts_left
+            while attempts_left > 0:
+                try:
+                    print(
+                        f"Consuming once from topics {self.subscriptions}", flush=True
+                    )
 
-            task_to_fetch_one = create_task(self.consumer.getone())
-            result = await wait_for(task_to_fetch_one, timeout=timeout)
+                    task_to_fetch_one = create_task(self.consumer.getone())
+                    result = await wait_for(
+                        task_to_fetch_one, timeout=timeout_per_attempt
+                    )
 
-            # Return the actual message content
-            message_content = result.value.decode("utf-8")
+                    # Return the actual message content
+                    message_content = result.value.decode("utf-8")
 
-            # Commit to Kafka that the message has been processed
-            await self.consumer.commit()
+                    # Commit to Kafka that the message has been processed
+                    await self.consumer.commit()
 
-            return Response.ok(message_content)
+                    return Response.ok(message_content)
+                except TimeoutError:
+                    print(
+                        f"Received no data on {self.subscriptions} in {timeout_per_attempt} seconds",
+                        flush=True,
+                    )
+                    attempts_left -= 1
 
-        except TimeoutError:
-            print(
-                f"Received no data on {self.subscriptions} in {timeout} seconds",
-                flush=True,
-            )
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)
