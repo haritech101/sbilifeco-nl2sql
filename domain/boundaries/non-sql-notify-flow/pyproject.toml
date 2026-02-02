@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-boundary-non-sql-notify-flow"
+version = "0.1.0"
+description = "Contract for a flow that fetches non-SQL answers and notifies about them"
+dependencies = [
+    "sbilifeco-boundary-query-flow>=0.2.0"
+]
