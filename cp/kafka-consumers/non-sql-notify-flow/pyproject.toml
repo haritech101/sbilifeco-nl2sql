@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-kafka-consumer-non-sql-notify-trigger"
+version = "0.1.2"
+description = "Kafka consumer for requests to trigger the Non-SQL notification flow "
+dependencies = [
+    "sbilifeco-boundary-non-sql-notify-flow>=0.1.0",
+    "sbilifeco-cp-kafka>=0.2.2",
+    "sbilifeco-paths-non-sql-notify-flow>=0.1.0",
+]
