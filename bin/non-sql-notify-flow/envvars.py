@@ -8,6 +8,8 @@ class EnvVars:
     non_sql_answer_repo_proto = "NON_SQL_ANSWER_REPO_PROTO"
     non_sql_answer_repo_host = "NON_SQL_ANSWER_REPO_HOST"
     non_sql_answer_repo_port = "NON_SQL_ANSWER_REPO_PORT"
+    web_page_path = "WEB_PAGE_PATH"
+    template_path = "TEMPLATE_PATH"
 
 
 class Defaults:
@@ -20,3 +22,5 @@ class Defaults:
     non_sql_answer_repo_proto = "http"
     non_sql_answer_repo_host = "localhost"
     non_sql_answer_repo_port = "80"
+    web_page_path = "/var/lib/sbilifeco/analytics/non-sql-answers.html"
+    template_path = "/var/lib/sbilifeco/templates/non-sql-answers-template.html"

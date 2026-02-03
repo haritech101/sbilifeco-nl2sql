@@ -104,6 +104,11 @@ services:
             - KAFKA_URL=kafka:9092
             - NON_SQL_ANSWER_REPO_HOST=kafka-as-repo
             - MAX_ITEMS=25
+            - WEB_PAGE_PATH=/var/lib/sbilifeco/analytics/non-sql-answers/index.html
+            - TEMPLATE_PATH=/var/lib/sbilifeco/templates/template.html
+        volumes:
+            - ./.local/analytics:/var/lib/sbilifeco/analytics:rw
+            - ./.local/.jinja-templates:/var/lib/sbilifeco/templates:ro
         labels:
             - traefik.http.routers.non-sql-notify-flow.rule=PathPrefix(`/api/v1/non-sql-notify-requests`)
     query-generator-ui:

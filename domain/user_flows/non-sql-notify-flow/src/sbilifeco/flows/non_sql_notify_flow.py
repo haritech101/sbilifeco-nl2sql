@@ -3,7 +3,10 @@ from __future__ import annotations
 from pprint import pprint
 
 # Import other required contracts/modules here
-from sbilifeco.boundaries.non_sql_notify_flow import AbstractNonSqlNotifyFlow
+from sbilifeco.boundaries.non_sql_notify_flow import (
+    AbstractNonSqlNotifyFlow,
+    INonSqlPresenter,
+)
 from sbilifeco.boundaries.query_flow import (
     GetNonSqlAnswersRequest,
     INonSqlAnswerRepo,
@@ -23,6 +26,10 @@ class NonSqlNotifyFlow(AbstractNonSqlNotifyFlow):
     def set_max_items(self, max_items: int) -> NonSqlNotifyFlow:
         self.max_items = max_items
         return self
+
+    def add_presenter(self, presenter: INonSqlPresenter) -> AbstractNonSqlNotifyFlow:
+        print(f"Adding {presenter} to {self}", flush=True)
+        return super().add_presenter(presenter)
 
     async def async_init(self) -> None: ...
 
