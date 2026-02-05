@@ -50,4 +50,6 @@ class NonSqlHtmlPresenter(INonSqlPresenter):
                 f"{self.web_page_path} now has the latest non-SQL answers.", flush=True
             )
         except Exception as e:
-            pprint(f"Error while presenting non SQL answers in a web page: {e}")
+            print(
+                f"Error while presenting non SQL answers in a web page: {e}", flush=True
+            )
