@@ -9,7 +9,7 @@ RUN pip install \
     sbilifeco-flow-non-sql-notify==0.1.2 \
     sbilifeco-kafka-consumer-non-sql-notify-trigger==0.1.2 \
     sbilifeco-http-client-non-sql-answer-repo==0.1.0 \
-    sbilifeco-presenter-html-non-sql-answers==0.1.2
+    sbilifeco-presenter-html-non-sql-answers==0.1.3
 
 EXPOSE 80
 
