@@ -39,9 +39,13 @@ class NonSqlHtmlPresenter(INonSqlPresenter):
         try:
             print("Creating HTML from template", flush=True)
             html = self.jinja_template.render(answers=answers)
-            print(f"Writing HTML to {self.web_page_path}", flush=True)
-            with open(self.web_page_path, "w") as f:
-                f.write(html)
+            print(
+                f"Writing generated HTML of {len(html)} characters to {self.web_page_path}",
+                flush=True,
+            )
+            with open(self.web_page_path, "w") as html_file:
+                html_file.write(html)
+                html_file.flush()
             print(
                 f"{self.web_page_path} now has the latest non-SQL answers.", flush=True
             )
