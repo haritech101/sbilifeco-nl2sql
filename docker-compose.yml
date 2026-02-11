@@ -132,6 +132,16 @@ services:
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
 
+    query-flow-batch-test:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/query-flow-batch-test:latest
+        networks:
+            - nl2sql
+        environment:
+            - QUERY_FLOW_HOST=query-flow
+            - DB_ID=nb
+        volumes:
+            - ./.local/.query-flow-batch-test:/var/lib/query-flow-batch-test:rw
+
 networks:
     nl2sql:
         ipam:
