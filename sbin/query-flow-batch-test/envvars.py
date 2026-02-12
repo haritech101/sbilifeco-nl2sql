@@ -17,4 +17,4 @@ class Defaults:
     staging_host = "localhost"
     questions_file = "./questions.yaml"
     db_id = "nb"
-    answers_file = "./answers.md"
+    answers_file = "./answers.pdf"
