@@ -62,6 +62,17 @@ services:
             - ANSWER_TIMEOUT=2
         labels:
             - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/non-sql-answers`)
+    static-web-server:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/static-web-server:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - ./.local/analytics:/var/www/html/analytics:ro
+            - ./.local/.query-flow-batch-test:/var/www/html/test-results/query-flow:ro
+        labels:
+            - traefik.http.routers.analytics.rule=PathPrefix(`/analytics`)
+            - traefik.http.routers.test-results.rule=PathPrefix(`/test-results`)
     unified-mcp-server:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
