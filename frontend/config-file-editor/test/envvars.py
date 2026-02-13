@@ -2,6 +2,7 @@ class EnvVars:
     test_type = "TEST_TYPE"
     http_port = "HTTP_PORT"
     staging_host = "STAGING_HOST"
+    login_page = "LOGIN_PAGE"
 
 
 class Defaults:
