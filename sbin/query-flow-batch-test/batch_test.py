@@ -109,65 +109,93 @@ class QueryFlowBatchTest:
 
         questions = _yaml.get("questions", [])
 
-        for i, question in enumerate(questions):
-            print(f"Processing question {i+1}/{len(questions)}...")
+        batch_size = 24
+        batch_offset = 0
+        question_num = 1
 
-            response = await self.http_client.query(self.db_id, uuid4().hex, question)
-            answer = response.payload or response.message
-            correctness = (
-                "✅" if (response.payload and "```sql" in response.payload) else "❌"
-            )
-            print(f"Able to generate SQL: {correctness}")
-
-            q_para = Paragraph(f"{i+1}. {question}", self.question_style)
-            a_para = Paragraph(self.format_answer_text(answer), self.answer_style)
-
-            self.table_data.append([q_para, a_para])
-
-            table = Table(self.table_data, colWidths=[2.5 * inch, 5.0 * inch])
-
-            table.setStyle(
-                TableStyle(
-                    [
-                        # Header row styling
-                        ("BACKGROUND", (0, 0), (-1, 0), colors.white),
-                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-                        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                        ("FONTSIZE", (0, 0), (-1, 0), 12),
-                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                        # Data rows styling
-                        ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                        ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                        ("FONTSIZE", (0, 1), (-1, -1), 9),
-                        ("LEFTPADDING", (0, 1), (-1, -1), 8),
-                        ("RIGHTPADDING", (0, 1), (-1, -1), 8),
-                        ("TOPPADDING", (0, 1), (-1, -1), 10),
-                        ("BOTTOMPADDING", (0, 1), (-1, -1), 10),
-                        # Grid and borders
-                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                        ("LINEBELOW", (0, 0), (-1, 0), 2, colors.black),
-                        # Alternating row colors
-                        (
-                            "ROWBACKGROUNDS",
-                            (0, 1),
-                            (-1, -1),
-                            [colors.white, colors.white],
-                        ),
-                    ]
-                )
-            )
-
-            # Build the PDF
-            elements = [table]
-            self.doc.build(elements)
-
+        while batch_offset < len(questions):
             print(
-                f"Finished processing question {i+1}/{len(questions)}. Updated PDF report with latest results of question {i+1}.\n"
+                f"Processing questions {batch_offset + 1} to {min(batch_offset + batch_size, len(questions))}/{len(questions)}..."
             )
+
+            batch = questions[batch_offset : batch_offset + batch_size]
+            tasks = [
+                create_task(self.http_client.query(self.db_id, uuid4().hex, q))
+                for q in batch
+            ]
+            async for completed_task in as_completed(tasks):
+                try:
+                    response = await completed_task
+                    answer = response.payload or response.message
+                    correctness = (
+                        "✅"
+                        if (response.payload and "```sql" in response.payload)
+                        else "❌"
+                    )
+
+                    idx = tasks.index(completed_task)
+                    question = batch[idx]
+                    print(
+                        f"Able to generate SQL for\n{question}: {correctness}",
+                        flush=True,
+                    )
+
+                    q_para = Paragraph(
+                        f"{question_num}. {question}", self.question_style
+                    )
+                    a_para = Paragraph(
+                        self.format_answer_text(answer), self.answer_style
+                    )
+
+                    self.table_data.append([q_para, a_para])
+
+                    table = Table(self.table_data, colWidths=[2.5 * inch, 5.0 * inch])
+
+                    table.setStyle(
+                        TableStyle(
+                            [
+                                # Header row styling
+                                ("BACKGROUND", (0, 0), (-1, 0), colors.white),
+                                ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                                ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+                                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                                ("FONTSIZE", (0, 0), (-1, 0), 12),
+                                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                                # Data rows styling
+                                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
+                                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                                ("FONTSIZE", (0, 1), (-1, -1), 9),
+                                ("LEFTPADDING", (0, 1), (-1, -1), 8),
+                                ("RIGHTPADDING", (0, 1), (-1, -1), 8),
+                                ("TOPPADDING", (0, 1), (-1, -1), 10),
+                                ("BOTTOMPADDING", (0, 1), (-1, -1), 10),
+                                # Grid and borders
+                                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                                ("LINEBELOW", (0, 0), (-1, 0), 2, colors.black),
+                                # Alternating row colors
+                                (
+                                    "ROWBACKGROUNDS",
+                                    (0, 1),
+                                    (-1, -1),
+                                    [colors.white, colors.white],
+                                ),
+                            ]
+                        )
+                    )
+
+                    # Build the PDF
+                    elements = [table]
+                    self.doc.build(elements)
+
+                    print("Updated PDF report with latest results\n")
+                    question_num += 1
+                except Exception as e:
+                    print(f"Error processing question: {e}")
+
+            batch_offset += batch_size
 
     def format_answer_text(self, answer):
         """
