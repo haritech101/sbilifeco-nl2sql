@@ -5,7 +5,7 @@ from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
 from sbilifeco.models.base import Response
 from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.query_flow import NonSqlAnswer
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 from os import getenv

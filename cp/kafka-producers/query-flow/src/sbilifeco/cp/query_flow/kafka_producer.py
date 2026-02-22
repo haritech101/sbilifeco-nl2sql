@@ -3,7 +3,7 @@ from sbilifeco.models.base import Response
 
 # Import other required contracts/modules here
 from sbilifeco.cp.common.kafka.producer import PubsubProducer
-from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
+from sbilifeco.boundaries.query_flow import IQueryFlowListener, QueryFlowAnswer
 from sbilifeco.cp.query_flow.paths import Paths, QueryFailure
 
 
@@ -17,10 +17,10 @@ class QueryFlowEventProducer(PubsubProducer, IQueryFlowListener):
     async def async_shutdown(self, **kwargs) -> None:
         await super().async_shutdown(**kwargs)
 
-    async def on_no_sql(self, non_sql_answer: NonSqlAnswer) -> None:
+    async def on_answer(self, query_flow_answer: QueryFlowAnswer) -> None:
         await self.publish(
-            topic=Paths.NON_SQLS.replace("/", ".")[1:],
-            content=non_sql_answer.model_dump_json(),
+            topic=Paths.ANSWERS.replace("/", ".")[1:],
+            content=query_flow_answer.model_dump_json(),
         )
 
     async def on_fail(

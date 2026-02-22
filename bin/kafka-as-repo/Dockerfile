@@ -6,8 +6,8 @@ WORKDIR /usr/local/kafka-as-repo
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
-    sbilifeco-http-server-non-sql-answer-repo==0.1.0 \
-    sbilifeco-gateway-kafka-as-repo==0.1.0
+    sbilifeco-http-server-query-flow-answer-repo==0.2.0 \
+    sbilifeco-gateway-kafka-as-repo==0.1.1
 
 EXPOSE 80
 

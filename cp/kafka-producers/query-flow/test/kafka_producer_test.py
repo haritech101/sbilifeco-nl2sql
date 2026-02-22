@@ -16,7 +16,7 @@ from pprint import pprint
 
 # Import the necessary service(s) here
 from asyncio import gather, sleep
-from sbilifeco.boundaries.query_flow import NonSqlAnswer
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
 from sbilifeco.cp.query_flow.paths import Paths
@@ -30,7 +30,7 @@ class Test(IsolatedAsyncioTestCase):
         http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
         staging_host = getenv(EnvVars.staging_host, Defaults.staging_host)
         kafka_url = getenv(EnvVars.kafka_url, Defaults.kafka_url)
-        self.topic_non_sql = Paths.NON_SQLS.replace("/", ".")[1:]
+        self.topic_non_sql = Paths.ANSWERS.replace("/", ".")[1:]
         self.topic_failures = Paths.FAILURES.replace("/", ".")[1:]
 
         # Initialise the service(s) here
@@ -52,9 +52,9 @@ class Test(IsolatedAsyncioTestCase):
             await self.service.async_shutdown()
         patch.stopall()
 
-    async def test_non_sql(self) -> None:
+    async def test_answer(self) -> None:
         # Arrange
-        non_sql_answer = NonSqlAnswer(
+        query_flow_answer = QueryFlowAnswer(
             session_id=str(uuid4()),
             db_id=str(uuid4()),
             question=self.faker.sentence(),
@@ -62,7 +62,7 @@ class Test(IsolatedAsyncioTestCase):
         )
 
         # Act
-        gathered = await gather(self.__produce(non_sql_answer), self.__consume())
+        gathered = await gather(self.__produce(query_flow_answer), self.__consume())
 
         # Assert
         response = gathered[1]
@@ -70,8 +70,8 @@ class Test(IsolatedAsyncioTestCase):
         assert response.payload is not None
         self.assertTrue(response.payload)
 
-        fetched_answer = NonSqlAnswer.model_validate_json(response.payload)
-        self.assertEqual(non_sql_answer, fetched_answer)
+        fetched_answer = QueryFlowAnswer.model_validate_json(response.payload)
+        self.assertEqual(query_flow_answer, fetched_answer)
 
     async def __consume(self) -> Response[str]:
         attempts = 3
@@ -89,5 +89,5 @@ class Test(IsolatedAsyncioTestCase):
 
         return Response.ok(None)
 
-    async def __produce(self, non_sql_answer: NonSqlAnswer) -> None:
-        await self.service.on_no_sql(non_sql_answer)
+    async def __produce(self, query_flow_answer: QueryFlowAnswer) -> None:
+        await self.service.on_answer(query_flow_answer)

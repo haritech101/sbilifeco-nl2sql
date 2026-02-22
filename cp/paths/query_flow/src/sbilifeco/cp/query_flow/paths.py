@@ -8,7 +8,7 @@ class Paths:
     SESSION_BY_ID = BASE + "/sessions/{session_id}"
     SESSION_RESET = SESSION_BY_ID + "/reset"
     QUERIES = SESSION_BY_ID + "/queries"
-    NON_SQLS = BASE + "/non-sqls"
+    ANSWERS = BASE + "/answers"
     FAILURES = BASE + "/failures"
 
 

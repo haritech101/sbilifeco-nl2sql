@@ -120,22 +120,22 @@ services:
             - ./.local/.prompts:/app/.prompts
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
-    non-sql-notify-flow:
-        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/non-sql-notify-flow:latest
+    answer-notify-flow:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/answer-notify-flow:latest
         restart: always
         networks:
             - nl2sql
         environment:
             - KAFKA_URL=kafka:9092
-            - NON_SQL_ANSWER_REPO_HOST=kafka-as-repo
+            - ANSWER_REPO_HOST=kafka-as-repo
             - MAX_ITEMS=25
-            - WEB_PAGE_PATH=/var/lib/sbilifeco/analytics/non-sql-answers/index.html
+            - WEB_PAGE_PATH=/var/lib/sbilifeco/analytics/query-flow-answers/index.html
             - TEMPLATE_PATH=/var/lib/sbilifeco/templates/template.html
         volumes:
             - ./.local/analytics:/var/lib/sbilifeco/analytics:rw
             - ./.local/.jinja-templates:/var/lib/sbilifeco/templates:ro
         labels:
-            - traefik.http.routers.non-sql-notify-flow.rule=PathPrefix(`/api/v1/non-sql-notify-requests`)
+            - traefik.http.routers.answer-notify-flow.rule=PathPrefix(`/api/v1/answer-notify-requests`)
     query-generator-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always

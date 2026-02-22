@@ -1,0 +1,26 @@
+class EnvVars:
+    test_type = "TEST_TYPE"
+    http_port = "HTTP_PORT"
+    staging_host = "STAGING_HOST"
+    kafka_url = "KAFKA_URL"
+    query_flow_port = "QUERY_FLOW_PORT"
+    max_items = "MAX_ITEMS"
+    answer_repo_proto = "ANSWER_REPO_PROTO"
+    answer_repo_host = "ANSWER_REPO_HOST"
+    answer_repo_port = "ANSWER_REPO_PORT"
+    web_page_path = "WEB_PAGE_PATH"
+    template_path = "TEMPLATE_PATH"
+
+
+class Defaults:
+    test_type = "unit"  # or "integration" or "staging"
+    http_port = "80"
+    staging_host = "localhost"
+    kafka_url = "localhost:9092"
+    query_flow_port = "80"
+    max_items = "25"
+    answer_repo_proto = "http"
+    answer_repo_host = "localhost"
+    answer_repo_port = "80"
+    web_page_path = "/var/lib/sbilifeco/analytics/answers.html"
+    template_path = "/var/lib/sbilifeco/templates/answers-template.html"

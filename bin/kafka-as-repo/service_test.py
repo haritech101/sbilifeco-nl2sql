@@ -18,8 +18,10 @@ from sbilifeco.models.base import Response
 # Import the necessary service(s) here
 from service import KafkaAsRepoMicroservice
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
-from sbilifeco.cp.non_sql_answer_repo.http_client import NonSQLAnswerRepoHttpClient
-from sbilifeco.boundaries.query_flow import NonSqlAnswer, GetNonSqlAnswersRequest
+from sbilifeco.cp.query_flow_answer_repo.http_client import (
+    QueryFlowAnswerRepoHttpClient,
+)
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer, GetQueryFlowAnswersRequest
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -39,7 +41,7 @@ class Test(IsolatedAsyncioTestCase):
             await self.service.run()
 
         # Initialise the client(s) here
-        self.http_client = NonSQLAnswerRepoHttpClient()
+        self.http_client = QueryFlowAnswerRepoHttpClient()
         (
             self.http_client.set_proto("http")
             .set_host(staging_host if self.test_type == "staging" else "localhost")
@@ -57,10 +59,10 @@ class Test(IsolatedAsyncioTestCase):
         await self.kafka_producer.async_shutdown()
         patch.stopall()
 
-    async def test_get_non_sql_answers(self) -> None:
+    async def test_get_query_flow_answers(self) -> None:
         # Arrange
         answers = [
-            NonSqlAnswer(
+            QueryFlowAnswer(
                 session_id=uuid4().hex,
                 db_id=uuid4().hex,
                 question=self.faker.sentence(),
@@ -69,10 +71,12 @@ class Test(IsolatedAsyncioTestCase):
             for _ in range(randint(2, 5))
         ]
         for answer in answers:
-            await self.kafka_producer.on_no_sql(answer)
+            await self.kafka_producer.on_answer(answer)
 
         # Act
-        response = await self.http_client.get_non_sql_answers(GetNonSqlAnswersRequest())
+        response = await self.http_client.get_query_flow_answers(
+            GetQueryFlowAnswersRequest()
+        )
 
         # Assert
         self.assertTrue(response.is_success, response.message)

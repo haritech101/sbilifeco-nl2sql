@@ -16,7 +16,7 @@ from pprint import pprint, pformat
 from sbilifeco.models.base import Response
 
 # Import the necessary service(s) here
-from sbilifeco.boundaries.query_flow import GetNonSqlAnswersRequest, NonSqlAnswer
+from sbilifeco.boundaries.query_flow import GetQueryFlowAnswersRequest, QueryFlowAnswer
 from sbilifeco.gateways.kafka_as_repo import KafkaAsRepo
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 
@@ -54,10 +54,10 @@ class Test(IsolatedAsyncioTestCase):
             await self.service.async_shutdown()
         patch.stopall()
 
-    async def test_get_non_sql_answers(self) -> None:
+    async def test_get_query_flow_answers(self) -> None:
         # Arrange
-        non_sql_answers = [
-            NonSqlAnswer(
+        query_flow_answers = [
+            QueryFlowAnswer(
                 session_id=uuid4().hex,
                 db_id=uuid4().hex,
                 question=self.faker.sentence(),
@@ -65,16 +65,16 @@ class Test(IsolatedAsyncioTestCase):
             )
             for _ in range(2, 5)
         ]
-        for non_sql_answer in non_sql_answers:
-            await self.producer.on_no_sql(non_sql_answer)
+        for query_flow_answer in query_flow_answers:
+            await self.producer.on_answer(query_flow_answer)
 
-        request = GetNonSqlAnswersRequest()
+        request = GetQueryFlowAnswersRequest()
 
         # Act
-        response = await self.service.get_non_sql_answers(request)
+        response = await self.service.get_query_flow_answers(request)
 
         # Assert
         self.assertTrue(response.is_success, response.message)
         assert response.payload is not None
         self.assertTrue(response.payload)
-        self.assertEqual(non_sql_answers, response.payload)
+        self.assertEqual(query_flow_answers, response.payload)

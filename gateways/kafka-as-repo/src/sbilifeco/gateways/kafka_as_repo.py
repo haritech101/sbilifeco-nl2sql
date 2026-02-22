@@ -4,15 +4,15 @@ from sbilifeco.models.base import Response
 
 # Import other required contracts/modules here
 from sbilifeco.boundaries.query_flow import (
-    GetNonSqlAnswersRequest,
-    INonSqlAnswerRepo,
-    NonSqlAnswer,
+    GetQueryFlowAnswersRequest,
+    IQueryFlowAnswerRepo,
+    QueryFlowAnswer,
 )
 from sbilifeco.cp.query_flow.paths import Paths
 from sbilifeco.cp.common.kafka.consumer import PubsubConsumer
 
 
-class KafkaAsRepo(INonSqlAnswerRepo):
+class KafkaAsRepo(IQueryFlowAnswerRepo):
     def __init__(self):
         self.kafka_url: str
         self.consumer_name: str
@@ -35,18 +35,18 @@ class KafkaAsRepo(INonSqlAnswerRepo):
             PubsubConsumer()
             .add_host(self.kafka_url)
             .set_consumer_name(self.consumer_name)
-            .add_subscription(Paths.NON_SQLS.replace("/", ".")[1:])
+            .add_subscription(Paths.ANSWERS.replace("/", ".")[1:])
         )
         await self.consumer.async_init()
 
     async def async_shutdown(self, **kwargs) -> None:
         await self.consumer.async_shutdown()
 
-    async def get_non_sql_answers(
-        self, request: GetNonSqlAnswersRequest
-    ) -> Response[Sequence[NonSqlAnswer]]:
+    async def get_query_flow_answers(
+        self, request: GetQueryFlowAnswersRequest
+    ) -> Response[Sequence[QueryFlowAnswer]]:
         try:
-            non_sql_answers: list[NonSqlAnswer] = []
+            query_flow_answers: list[QueryFlowAnswer] = []
             required_num_answers = request.page_size
 
             while required_num_answers > 0:
@@ -60,17 +60,19 @@ class KafkaAsRepo(INonSqlAnswerRepo):
                         continue
                     if output.payload is None:
                         print("Output is blank, so we are probably out of data")
-                        return Response.ok(non_sql_answers)
+                        return Response.ok(query_flow_answers)
 
                     answer_as_str = output.payload
-                    non_sql_answer = NonSqlAnswer.model_validate_json(answer_as_str)
-                    non_sql_answers.append(non_sql_answer)
+                    query_flow_answer = QueryFlowAnswer.model_validate_json(
+                        answer_as_str
+                    )
+                    query_flow_answers.append(query_flow_answer)
 
                     required_num_answers -= 1
                 except Exception as e:
-                    print(f"Error processing non-SQL answer message: {e}")
+                    print(f"Error processing query flow answer message: {e}")
                     continue
 
-            return Response.ok(non_sql_answers)
+            return Response.ok(query_flow_answers)
         except Exception as e:
             return Response.error(e)

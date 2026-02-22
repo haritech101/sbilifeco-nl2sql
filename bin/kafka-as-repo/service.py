@@ -4,7 +4,9 @@ from os import getenv
 from envvars import EnvVars, Defaults
 
 # import required modules here
-from sbilifeco.cp.non_sql_answer_repo.http_server import NonSQLAnswerRepoHTTPServer
+from sbilifeco.cp.query_flow_answer_repo.http_server import (
+    QueryFlowAnswerRepoHTTPServer,
+)
 from sbilifeco.gateways.kafka_as_repo import KafkaAsRepo
 
 
@@ -31,7 +33,7 @@ class KafkaAsRepoMicroservice:
             await self.repo.async_init()
 
             # initiate controllers/presenters
-            self.http_server = NonSQLAnswerRepoHTTPServer()
+            self.http_server = QueryFlowAnswerRepoHTTPServer()
             (self.http_server.set_repo(self.repo).set_http_port(http_port))
             await self.http_server.listen()
         except InterruptedError | KeyboardInterrupt:
