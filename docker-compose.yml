@@ -61,7 +61,7 @@ services:
             - KAFKA_URL=kafka:9092
             - ANSWER_TIMEOUT=2
         labels:
-            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/non-sql-answers`)
+            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/query-flow-answers`)
     static-web-server:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/static-web-server:latest
         restart: always
@@ -118,6 +118,7 @@ services:
         env_file: .local/query-flow.env
         volumes:
             - ./.local/.prompts:/app/.prompts
+            - ./.local/analytics/query-flow:/var/log/nl2sql/query-flow:rw
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
     answer-notify-flow:

@@ -8,6 +8,9 @@ from sbilifeco.user_flows.query_flow import QueryFlow
 from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
+from sbilifeco.cp.query_flow_listener.log_directory_presenter import (
+    LogDirectoryPresenter,
+)
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
@@ -62,6 +65,7 @@ class QueryFlowMicroservice:
         is_tool_call_enabled = is_tool_call_enabled.lower() in ("true", "1", "yes")
 
         kafka_url = getenv(EnvVars.kafka_url, Defaults.kafka_url)
+        log_dir = getenv(EnvVars.log_dir, Defaults.log_dir)
 
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
@@ -91,6 +95,9 @@ class QueryFlowMicroservice:
         kafka_producer.add_host(kafka_url)
         await kafka_producer.async_init()
 
+        # Set up log directory presenter
+        log_directory_presenter = LogDirectoryPresenter().set_log_directory(log_dir)
+
         # Set up query flow
         self.flow = QueryFlow()
         (
@@ -100,6 +107,7 @@ class QueryFlowMicroservice:
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
             .add_listener(kafka_producer)
+            .add_listener(log_directory_presenter)
         )
         self.flow.set_generic_prompt(f"file://{self.generic_prompt_file}")
         self.set_db_specific_prompts()
