@@ -12,7 +12,11 @@ from sbilifeco.boundaries.tool_support import (
     ExternalTool,
     ExternalToolParams,
 )
-from sbilifeco.boundaries.query_flow import IQueryFlow, NonSqlAnswer, IQueryFlowListener
+from sbilifeco.boundaries.query_flow import (
+    IQueryFlow,
+    QueryFlowAnswer,
+    IQueryFlowListener,
+)
 from sbilifeco.models.base import Response
 from datetime import datetime
 from pprint import pformat
@@ -373,20 +377,20 @@ class QueryFlow(IQueryFlow):
 
                 tool_call_match = search(self.TOOL_CALL_SIGNATURE, answer)
 
-            # If the response does not contain a SQL, notify listeners
-            if self.SQL_SIGNATURE not in answer:
-                print(
-                    "The answer does not contain a SQL statement, notifying listeners",
-                    flush=True,
-                )
-                non_sql_answer = NonSqlAnswer(
-                    session_id=session_id,
-                    db_id=dbId,
-                    question=question,
-                    answer=answer,
-                )
-                for listener in self.listeners:
-                    await listener.on_no_sql(non_sql_answer)
+            # notify listeners about the answer
+            query_flow_answer = QueryFlowAnswer(
+                session_id=session_id,
+                db_id=dbId,
+                question=question,
+                answer=answer,
+            )
+
+            print(
+                "Notifying listeners about the answer to the question in the query flow",
+                flush=True,
+            )
+            for listener in self.listeners:
+                await listener.on_answer(query_flow_answer)
 
             # Save updated metadata and last QA
             if not cached_db_metadata_response.payload:

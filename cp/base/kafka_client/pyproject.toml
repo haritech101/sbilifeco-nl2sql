@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-cp-kafka"
-version = "0.2.1"
+version = "0.2.2"
 description = "Generic Kafka client that can be used to build controllers and presenters based on Kafka"
 dependencies = [
     "aiokafka>=0.13.0",

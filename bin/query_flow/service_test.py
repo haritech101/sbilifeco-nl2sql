@@ -14,7 +14,7 @@ from sbilifeco.models.base import Response
 # Import the necessary service(s) here
 from asyncio import gather, sleep
 from service import QueryFlowMicroservice
-from sbilifeco.boundaries.query_flow import NonSqlAnswer
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
 from pathlib import Path
@@ -42,7 +42,7 @@ class Test(IsolatedAsyncioTestCase):
 
         self.consumer = PubsubConsumer()
         self.consumer.add_host(kafka_url)
-        self.consumer.add_subscription(Paths.NON_SQLS.replace("/", ".")[1:])
+        self.consumer.add_subscription(Paths.ANSWERS.replace("/", ".")[1:])
         await self.consumer.async_init()
 
     async def asyncTearDown(self) -> None: ...
@@ -203,7 +203,7 @@ class Test(IsolatedAsyncioTestCase):
         event = fetched_response.payload
         assert event is not None
 
-        non_sql_answer = NonSqlAnswer.model_validate_json(event)
-        self.assertEqual(non_sql_answer.session_id, session_id)
-        self.assertEqual(non_sql_answer.db_id, self.db_id)
-        self.assertEqual(non_sql_answer.question, question)
+        query_flow_answer = QueryFlowAnswer.model_validate_json(event)
+        self.assertEqual(query_flow_answer.session_id, session_id)
+        self.assertEqual(query_flow_answer.db_id, self.db_id)
+        self.assertEqual(query_flow_answer.question, question)

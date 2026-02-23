@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from faker import Faker
-from sbilifeco.boundaries.query_flow import IQueryFlowListener, NonSqlAnswer
+from sbilifeco.boundaries.query_flow import IQueryFlowListener, QueryFlowAnswer
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -544,9 +544,9 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertIn(question, fn_args[1])
         self.assertIn(non_sql_reply_first, fn_args[1])
 
-        self.listener.on_no_sql.assert_called()
-        listener_args = self.listener.on_no_sql.call_args.args
-        non_sql_answer: NonSqlAnswer = listener_args[0]
+        self.listener.on_answer.assert_called()
+        listener_args = self.listener.on_answer.call_args.args
+        non_sql_answer: QueryFlowAnswer = listener_args[0]
         self.assertEqual(non_sql_answer.session_id, session_id)
         self.assertEqual(non_sql_answer.db_id, db_id)
         self.assertEqual(non_sql_answer.question, question)

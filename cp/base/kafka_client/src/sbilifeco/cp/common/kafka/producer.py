@@ -56,4 +56,5 @@ class PubsubProducer:
 
             return Response.ok(None)
         except Exception as e:
+            print(f"Error publishing message: {e}", flush=True)
             return Response.error(e)

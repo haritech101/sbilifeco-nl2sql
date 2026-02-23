@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from pathlib import Path
+from pprint import pprint
+from typing import Sequence
+
+# Import other required contracts/modules here
+from jinja2 import Environment, FileSystemLoader, Template
+from sbilifeco.boundaries.answer_notify_flow import IAnswerPresenter
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
+
+
+class AnswerHtmlPresenter(IAnswerPresenter):
+    def __init__(self):
+        self.web_page_path: str
+        self.template_path: str
+        self.jinja_env: Environment
+        self.jinja_template: Template
+
+    def set_web_page_path(self, path: str) -> AnswerHtmlPresenter:
+        self.web_page_path = path
+        return self
+
+    def set_template_path(self, path: str) -> AnswerHtmlPresenter:
+        self.template_path = path
+        return self
+
+    async def async_init(self) -> None:
+        full_path = Path(self.template_path)
+        folder = full_path.parent
+        file = full_path.name
+
+        self.jinja_env = Environment(loader=FileSystemLoader(folder), autoescape=True)
+        self.jinja_template = self.jinja_env.get_template(file)
+
+    async def async_shutdown(self) -> None: ...
+
+    async def present(self, answers: Sequence[QueryFlowAnswer]) -> None:
+        try:
+            print("Creating HTML from template", flush=True)
+            html = self.jinja_template.render(answers=answers)
+            print(
+                f"Writing generated HTML of {len(html)} characters to {self.web_page_path}",
+                flush=True,
+            )
+            with open(self.web_page_path, "w") as html_file:
+                html_file.write(html)
+                html_file.flush()
+            print(
+                f"{self.web_page_path} now has the latest query flow answers.",
+                flush=True,
+            )
+        except Exception as e:
+            print(
+                f"Error while presenting query flow answers in a web page: {e}",
+                flush=True,
+            )
