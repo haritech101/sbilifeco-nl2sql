@@ -61,7 +61,7 @@ services:
             - KAFKA_URL=kafka:9092
             - ANSWER_TIMEOUT=2
         labels:
-            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/non-sql-answers`)
+            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/query-flow-answers`)
     static-web-server:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/static-web-server:latest
         restart: always
