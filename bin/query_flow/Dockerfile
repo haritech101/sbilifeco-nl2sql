@@ -14,7 +14,8 @@ RUN pip install \
     sbilifeco-user-flow-generate-query==0.1.35 \
     sbilifeco-http-server-query-flow==0.1.25 \
     sbilifeco-cp-mcp-client==0.1.2 \
-    sbilifeco-kafka-producer-query-flow-events==0.1.3
+    sbilifeco-kafka-producer-query-flow-events==0.1.3 \
+    sbilifeco-presenter-logdir-query-flow-answers==0.1.1
 
 EXPOSE 80
 
@@ -31,6 +32,7 @@ ENV SESSION_DATA_PORT=80
 ENV PROMPTS_FILE=
 ENV ENABLE_TOOL_CALL=false
 ENV KAFKA_URL=localhost:9092
+ENV LOG_DIR=/var/log/nl2sql/query-flow
 
 COPY envvars.py service.py ./
 
