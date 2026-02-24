@@ -15,7 +15,7 @@ from datetime import datetime, date
 from sbilifeco.models.base import Response
 
 # Import the necessary service(s) here
-from playwright.async_api import async_playwright, Route
+from playwright.async_api import async_playwright, Route, expect
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -23,11 +23,12 @@ class Test(IsolatedAsyncioTestCase):
         load_dotenv()
 
         self.http_port = int(getenv(EnvVars.http_port, Defaults.http_port))
+        self.login_page = getenv(EnvVars.login_page, "")
 
         # Initialise the service(s) here
         self.faker = Faker()
 
-        self.home_url = f"http://localhost:{self.http_port}/editor-ui/index.html"
+        self.home_url = f"http://localhost:{self.http_port}/editor-ui/"
         self.pw = await async_playwright().start()
         self.browser = await self.pw.chromium.launch(headless=False, timeout=5000)
         self.page = await self.browser.new_page()
@@ -41,8 +42,35 @@ class Test(IsolatedAsyncioTestCase):
         await self.browser.close()
         await self.pw.stop()
 
-    async def test_that_home_loads_fine(self):
+    async def __login(self):
         await self.page.goto(self.home_url)
+        await self.page.wait_for_load_state("networkidle")
+
+        username_input = await self.page.wait_for_selector(
+            "#input-username", timeout=5000
+        )
+        assert username_input is not None
+        await username_input.fill(getenv("TEST_USERNAME", ""))
+
+        password_input = await self.page.wait_for_selector(
+            "#input-password", timeout=5000
+        )
+        assert password_input is not None
+        await password_input.fill(getenv("TEST_PASSWORD", ""))
+
+        submit_button = await self.page.wait_for_selector(
+            "#action-submit", timeout=5000
+        )
+        assert submit_button is not None
+        await submit_button.click()
+
+        await self.page.wait_for_load_state("networkidle")
+        self.assertIn(self.home_url, self.page.url)
+
+    async def test_that_home_loads_login_page(self):
+        await self.page.goto(self.home_url)
+        await self.page.wait_for_load_state("networkidle")
+        self.assertIn(self.login_page, self.page.url)
 
     async def test_that_selected_file_loads(self) -> None:
         # Arrange
@@ -62,7 +90,7 @@ class Test(IsolatedAsyncioTestCase):
         #     f"**/api/v1/updatable-objects/{selected_file}", handle_get_file
         # )
 
-        await self.page.goto(self.home_url)
+        await self.__login()
 
         # Act
         await self.page.select_option("#which-file", selected_file)

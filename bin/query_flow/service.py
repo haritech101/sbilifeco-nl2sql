@@ -1,19 +1,23 @@
-from asyncio import run, sleep, get_running_loop
+from asyncio import run, sleep
 from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
+from sbilifeco.models.base import Response
 from sbilifeco.user_flows.query_flow import QueryFlow
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
+from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
+from sbilifeco.cp.query_flow_listener.log_directory_presenter import (
+    LogDirectoryPresenter,
+)
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 
-class QueryFlowMicroservice(FileSystemEventHandler):
+class QueryFlowMicroservice:
     generic_prompt_file: str
     tool_repo: MCPClient
     llm: LLMHttpClient
@@ -60,6 +64,9 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         )
         is_tool_call_enabled = is_tool_call_enabled.lower() in ("true", "1", "yes")
 
+        kafka_url = getenv(EnvVars.kafka_url, Defaults.kafka_url)
+        log_dir = getenv(EnvVars.log_dir, Defaults.log_dir)
+
         flow_port = int(getenv(EnvVars.http_port, Defaults.http_port))
 
         # Set up connection to Tool Repository service, aka MCP
@@ -83,6 +90,14 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             session_data_host
         ).set_port(session_data_port)
 
+        # Set up kafka producer for query flow events
+        kafka_producer = QueryFlowEventProducer()
+        kafka_producer.add_host(kafka_url)
+        await kafka_producer.async_init()
+
+        # Set up log directory presenter
+        log_directory_presenter = LogDirectoryPresenter().set_log_directory(log_dir)
+
         # Set up query flow
         self.flow = QueryFlow()
         (
@@ -91,8 +106,10 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             .set_llm(self.llm)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
+            .add_listener(kafka_producer)
+            .add_listener(log_directory_presenter)
         )
-        self.set_flow_prompt()
+        self.flow.set_generic_prompt(f"file://{self.generic_prompt_file}")
         self.set_db_specific_prompts()
         await self.flow.async_init()
 
@@ -101,19 +118,11 @@ class QueryFlowMicroservice(FileSystemEventHandler):
         self.http_service.set_query_flow(self.flow).set_http_port(flow_port)
         await self.http_service.listen()
 
-        self.observer = Observer()
-        self.observer.schedule(self, path=self.generic_prompt_file, recursive=False)
-        get_running_loop().run_in_executor(None, self.observer.start)
-
     async def run_forever(self) -> None:
         await self.run()
 
         while True:
             await sleep(10000)
-
-    def set_flow_prompt(self) -> None:
-        with open(self.generic_prompt_file) as prompts_stream:
-            self.flow.set_generic_prompt(prompts_stream.read())
 
     def set_db_specific_prompts(self) -> None:
         db_prompt_template = getenv(EnvVars.db_prompts_file, "")
@@ -145,24 +154,16 @@ class QueryFlowMicroservice(FileSystemEventHandler):
             prompt_file_path = parent_folder / db_id / within_db_path
             if not prompt_file_path.exists():
                 print(
-                    f"Prompt file for DB ID {db_id} does not exist at {prompt_file_path}",
+                    f"Prompt file for DB ID {db_id} does not exist at {prompt_file_path}, using the catchall prompt",
                     flush=True,
                 )
                 continue
 
-            with open(prompt_file_path) as prompt_file:
-                prompt_content = prompt_file.read()
-                self.flow.set_prompt_by_db(db_id, prompt_content)
-                print(
-                    f"Loaded DB-specific prompts for DB ID {db_id} from {prompt_file_path}",
-                    flush=True,
-                )
-
-    def on_modified(self, event) -> None:
-        if event.src_path == self.generic_prompt_file:
-            print(f"Prompts file changed: {event.src_path}", flush=True)
-            self.set_flow_prompt()
-            print("Prompts reloaded", flush=True)
+            self.flow.set_prompt_by_db(db_id, f"file://{prompt_file_path}")
+            print(
+                f"Assigned DB-specific prompt for DB ID {db_id} from {prompt_file_path}",
+                flush=True,
+            )
 
 
 if __name__ == "__main__":

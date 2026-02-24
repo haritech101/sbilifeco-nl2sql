@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-cp-kafka"
+version = "0.2.2"
+description = "Generic Kafka client that can be used to build controllers and presenters based on Kafka"
+dependencies = [
+    "aiokafka>=0.13.0",
+    "uuid>=1.30",
+    "sbilifeco-models-base>=0.1.3",
+]

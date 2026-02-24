@@ -1,4 +1,32 @@
 services:
+    traefik:
+        image: traefik:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        command:
+            - --api.insecure=true
+            - --providers.docker=true
+        ports:
+            - 11200:80
+            - 11201:8080
+    redis:
+        image: redis:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - ./.local/.redis:/data
+    kafka:
+        image: apache/kafka:latest
+        restart: always
+        networks:
+            - nl2sql
+        ports:
+            - 11202:9094
+        env_file: .local/kafka.env
     sqlalchemy-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/sqlalchemy-gateway:latest
         restart: always
@@ -24,6 +52,41 @@ services:
             - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
+    kafka-as-repo:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/kafka-as-repo:latest
+        restart: always
+        networks:
+            - nl2sql
+        environment:
+            - KAFKA_URL=kafka:9092
+            - ANSWER_TIMEOUT=2
+        labels:
+            - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/query-flow-answers`)
+    static-web-server:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/static-web-server:latest
+        restart: always
+        networks:
+            - nl2sql
+        volumes:
+            - ./.local/analytics:/var/www/html/analytics:ro
+            - ./.local/.query-flow-batch-test:/var/www/html/test-results/query-flow:ro
+            - ./.local/.auth-pages/auth:/var/www/html/auth:ro
+        labels:
+            - traefik.http.routers.analytics.rule=PathPrefix(`/analytics`)
+            - traefik.http.routers.test-results.rule=PathPrefix(`/test-results`)
+            - traefik.http.routers.auth-pages.rule=PathPrefix(`/auth/pages`) || PathPrefix(`/auth/js`) || PathPrefix(`/auth/css`)
+    forward-auth-server:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/forwardauth-auth-service:latest
+        restart: always
+        networks:
+            - nl2sql
+        env_file: .local/forward-auth-server.env
+        volumes:
+            - ./.local/.auth-users/users.yaml:/etc/auth-service/users.yaml:ro
+        labels:
+            - traefik.http.routers.forward-auth.rule=PathPrefix(`/auth/step`)
+            - traefik.http.middlewares.forward-auth.forwardauth.address=http://forward-auth-server:80/auth/step/validate
+            - traefik.http.middlewares.forward-auth.forwardauth.trustForwardHeader=true
     unified-mcp-server:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
@@ -55,21 +118,25 @@ services:
         env_file: .local/query-flow.env
         volumes:
             - ./.local/.prompts:/app/.prompts
+            - ./.local/analytics/query-flow:/var/log/nl2sql/query-flow:rw
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
-    traefik:
-        image: traefik:latest
+    answer-notify-flow:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/answer-notify-flow:latest
         restart: always
         networks:
             - nl2sql
+        environment:
+            - KAFKA_URL=kafka:9092
+            - ANSWER_REPO_HOST=kafka-as-repo
+            - MAX_ITEMS=25
+            - WEB_PAGE_PATH=/var/lib/sbilifeco/analytics/query-flow-answers/index.html
+            - TEMPLATE_PATH=/var/lib/sbilifeco/templates/template.html
         volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-        command:
-            - --api.insecure=true
-            - --providers.docker=true
-        ports:
-            - 11200:80
-            - 11201:8080
+            - ./.local/analytics:/var/lib/sbilifeco/analytics:rw
+            - ./.local/.jinja-templates:/var/lib/sbilifeco/templates:ro
+        labels:
+            - traefik.http.routers.answer-notify-flow.rule=PathPrefix(`/api/v1/answer-notify-requests`)
     query-generator-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
@@ -82,6 +149,7 @@ services:
             - ./.local/query-generator.vite.config.ts:/usr/local/query-generator-ui/vite.config.ts
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
+            - traefik.http.routers.query-ui.middlewares=forward-auth
     config-editor-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/config-editor-ui:latest
         restart: always
@@ -90,13 +158,16 @@ services:
         env_file: .local/config-editor-ui.env
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
-    redis:
-        image: redis:latest
-        restart: always
+            - traefik.http.routers.file-editor-ui.middlewares=forward-auth
+    query-flow-batch-test:
+        image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/query-flow-batch-test:latest
         networks:
             - nl2sql
+        environment:
+            - QUERY_FLOW_HOST=query-flow
+            - DB_ID=nb
         volumes:
-            - ./.local/.redis:/data
+            - ./.local/.query-flow-batch-test:/var/lib/query-flow-batch-test:rw
 
 networks:
     nl2sql:

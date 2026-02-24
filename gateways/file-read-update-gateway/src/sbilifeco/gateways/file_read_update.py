@@ -49,6 +49,7 @@ class FileReadUpdateGateway(IObjectReadUpdate):
 
             with open(file_path, "wb") as f:
                 f.write(content)
+                f.flush()
             return Response.ok(None)
         except Exception as e:
             return Response.error(e)

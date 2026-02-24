@@ -1,20 +1,21 @@
 # sbilife/query-flow
-FROM python:3.14-alpine
+FROM python:3.12-slim
 
 WORKDIR /usr/local/query-flow
 
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
-    watchdog==6.0.0 \
     sbilifeco-models-base==0.1.3 \
     sbilifeco-models-db-metadata==0.1.6 \
     sbilifeco-http-client-llm==0.1.6 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \
-    sbilifeco-user-flow-generate-query==0.1.31 \
-    sbilifeco-http-server-query-flow==0.1.21 \
-    sbilifeco-cp-mcp-client==0.1.2
+    sbilifeco-user-flow-generate-query==0.1.35 \
+    sbilifeco-http-server-query-flow==0.1.25 \
+    sbilifeco-cp-mcp-client==0.1.2 \
+    sbilifeco-kafka-producer-query-flow-events==0.1.3 \
+    sbilifeco-presenter-logdir-query-flow-answers==0.1.1
 
 EXPOSE 80
 
@@ -30,6 +31,8 @@ ENV SESSION_DATA_HOST=localhost
 ENV SESSION_DATA_PORT=80
 ENV PROMPTS_FILE=
 ENV ENABLE_TOOL_CALL=false
+ENV KAFKA_URL=localhost:9092
+ENV LOG_DIR=/var/log/nl2sql/query-flow
 
 COPY envvars.py service.py ./
 

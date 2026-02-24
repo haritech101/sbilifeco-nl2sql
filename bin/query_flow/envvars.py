@@ -20,6 +20,8 @@ class EnvVars:
     single_table_query = "SINGLE_TABLE_QUERY"
     joined_tables_query = "JOINED_TABLES_QUERY"
     db_id = "DB_ID"
+    kafka_url = "KAFKA_URL"
+    log_dir = "LOG_DIR"
 
 
 class Defaults:
@@ -37,3 +39,5 @@ class Defaults:
     session_data_host = "localhost"
     session_data_port = "80"
     enable_tool_call = "false"
+    kafka_url = "localhost:9092"
+    log_dir = "/var/log/nl2sql/query-flow"
