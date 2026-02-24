@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TypeVar
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from os.path import basename
 
 T = TypeVar("T")
@@ -11,6 +11,8 @@ class Response[T](BaseModel):
     code: int = 200
     message: str = "OK"
     payload: T | None = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
     def ok(cls, payload: T | None = None) -> Response[T]:
