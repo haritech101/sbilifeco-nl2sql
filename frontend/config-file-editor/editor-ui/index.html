@@ -6,14 +6,45 @@
         <link
             href="/editor-ui/css/bootstrap.min.css"
             rel="stylesheet"
-            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
             crossorigin="anonymous"
         />
+        <script type="importmap">
+            {
+                "imports": {
+                    "@codemirror/state": "./scripts/codemirror/state/dist/index.js",
+                    "@codemirror/view": "./scripts/codemirror/view/dist/index.js",
+                    "@codemirror/basic-setup": "./scripts/codemirror/basic-setup/dist/index.js",
+                    "@codemirror/lang-javascript": "./scripts/codemirror/lang-javascript/dist/index.js",
+                    "@codemirror/theme-one-dark": "./scripts/codemirror/theme-one-dark/dist/index.js",
+                    "@codemirror/language": "./scripts/codemirror/language/dist/index.js",
+                    "@codemirror/commands": "./scripts/codemirror/commands/dist/index.js",
+                    "@codemirror/search": "./scripts/codemirror/search/dist/index.js",
+                    "@codemirror/autocomplete": "./scripts/codemirror/autocomplete/dist/index.js",
+                    "@codemirror/lint": "./scripts/codemirror/lint/dist/index.js",
+                    "@codemirror/gutter": "./scripts/codemirror/gutter/dist/index.js",
+                    "@codemirror/history": "./scripts/codemirror/history/dist/index.js",
+                    "@codemirror/text": "./scripts/codemirror/text/dist/index.js",
+                    "@codemirror/rangeset": "./scripts/codemirror/rangeset/dist/index.js",
+                    "@codemirror/stream-syntax": "./scripts/codemirror/stream-syntax/dist/index.js",
+                    "@codemirror/matchbrackets": "./scripts/codemirror/matchbrackets/dist/index.js",
+                    "@codemirror/highlight": "./scripts/codemirror/highlight/dist/index.js",
+                    "@codemirror/fold": "./scripts/codemirror/fold/dist/index.js",
+                    "@lezer/highlight": "./scripts/codemirror/lezer-highlight/dist/index.js",
+                    "@lezer/lr": "./scripts/codemirror/lezer-lr/dist/index.js",
+                    "@lezer/common": "./scripts/codemirror/lezer-common/dist/index.js",
+                    "@lezer/javascript": "./scripts/codemirror/lezer-javascript/dist/index.js",
+                    "style-mod": "./scripts/codemirror/style-mod/dist/style-mod.js",
+                    "w3c-keyname": "./scripts/codemirror/w3c-keyname/index.js",
+                    "crelt": "./scripts/codemirror/crelt/dist/index.js",
+                    "@marijn/find-cluster-break": "./scripts/codemirror/find-cluster-break/dist/index.js"
+                }
+            }
+        </script>
         <script type="module" src="/editor-ui/scripts/home.js"></script>
         <title>File Editor</title>
     </head>
     <body>
-        <div class="container">
+        <div class="container d-flex flex-column vh-100 gap-2 p-3">
             <h1>File editor</h1>
             <p>Select a file to edit</p>
             <select class="form-control" id="which-file">
@@ -23,12 +54,16 @@
                 <option value="generic_prompt">Generic Prompt</option>
                 <option value="nb_prompt">NB Prompt</option>
             </select>
-            <textarea
+            <!-- <textarea
                 id="file-content"
                 class="form-control mt-3"
                 rows="20"
                 placeholder="File content will appear here..."
-            ></textarea>
+            ></textarea> -->
+            <div
+                id="file-content"
+                class="flex-grow-1 border container-fluid overflow-auto"
+            ></div>
             <div id="feedback-panel" class="mt-3"></div>
             <button id="save-file" class="btn btn-primary mt-3 form-control">
                 Save

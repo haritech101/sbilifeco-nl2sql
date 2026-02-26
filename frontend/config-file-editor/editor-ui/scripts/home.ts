@@ -1,5 +1,9 @@
-const API_BASE_URL = "http://localhost";
+import { basicSetup } from "./codemirror/basic-setup/dist/index.js";
+import { EditorView } from "./codemirror/view/dist/index.js";
+
+const API_BASE_URL = "http://localhost:11200";
 let currentFileId = "";
+let editor: EditorView | null = null;
 
 const onSelectFile = async (selectedFileId: string) => {
     if (!selectedFileId) {
@@ -22,10 +26,19 @@ const onSelectFile = async (selectedFileId: string) => {
     }
 
     const fileContent = apiResponse.payload;
-    const textarea = document.getElementById(
-        "file-content"
-    ) as HTMLTextAreaElement;
-    textarea.value = fileContent;
+    // const textarea = document.getElementById(
+    //     "file-content",
+    // ) as HTMLTextAreaElement;
+    // textarea.value = fileContent;
+    if (editor) {
+        editor.dispatch({
+            changes: {
+                from: 0,
+                to: editor.state.doc.length,
+                insert: fileContent,
+            },
+        });
+    }
 };
 
 const onSaveFile = async () => {
@@ -35,20 +48,26 @@ const onSaveFile = async () => {
     }
 
     const feedbackPanel = document.getElementById(
-        "feedback-panel"
+        "feedback-panel",
     ) as HTMLDivElement;
     feedbackPanel.innerText = "Saving...";
 
-    const textarea = document.getElementById(
-        "file-content"
-    ) as HTMLTextAreaElement;
-    const updatedContent = textarea.value;
+    // const textarea = document.getElementById(
+    //     "file-content",
+    // ) as HTMLTextAreaElement;
+    if (!editor) {
+        console.log("Editor not initialized.");
+        feedbackPanel.innerText = "Error: Editor not initialized.";
+        return;
+    }
+
+    const updatedContent = editor.state.doc.toString() ?? "";
 
     const url = `${API_BASE_URL}/api/v1/updatable-objects/${currentFileId}`;
     const req = new Request(url, {
         method: "PUT",
         headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "text/plain",
         },
         body: updatedContent,
     });
@@ -70,13 +89,24 @@ const onSaveFile = async () => {
     feedbackPanel.innerText = "File saved successfully.";
 };
 
-document
-    .getElementById("which-file")
-    ?.addEventListener("change", async (event) => {
-        const selectElement = event.target as HTMLSelectElement;
-        await onSelectFile(selectElement.value);
-    });
+const init = async () => {
+    document
+        .getElementById("which-file")
+        ?.addEventListener("change", async (event) => {
+            const selectElement = event.target as HTMLSelectElement;
+            await onSelectFile(selectElement.value);
+        });
 
-document.getElementById("save-file")?.addEventListener("click", async () => {
-    await onSaveFile();
-});
+    document
+        .getElementById("save-file")
+        ?.addEventListener("click", async () => {
+            await onSaveFile();
+        });
+
+    editor = new EditorView({
+        extensions: [basicSetup],
+        parent: document.getElementById("file-content")!,
+    });
+};
+
+await init();
