@@ -9,6 +9,7 @@ services:
         command:
             - --api.insecure=true
             - --providers.docker=true
+            - --providers.docker.constraints=Label(`application`, `nl2sql`)
         ports:
             - 11200:80
             - 11201:8080
@@ -38,6 +39,7 @@ services:
             - ./.local/.alchemy:/var/lib/metadata
         labels:
             - traefik.http.routers.metadata-storage.rule=PathPrefix(`/api/v1/db-metadata`)
+            - application=nl2sql
     redis-gateway:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/redis-gateway:latest
         restart: always
@@ -52,6 +54,7 @@ services:
             - traefik.http.routers.population-counter.rule=PathPrefix(`/api/v1/population-counter`)
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
+            - application=nl2sql
     kafka-as-repo:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/kafka-as-repo:latest
         restart: always
@@ -62,6 +65,7 @@ services:
             - ANSWER_TIMEOUT=2
         labels:
             - traefik.http.routers.non-sql-answer-repo.rule=PathPrefix(`/api/v1/query-flow-answers`)
+            - application=nl2sql
     static-web-server:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/static-web-server:latest
         restart: always
@@ -75,6 +79,7 @@ services:
             - traefik.http.routers.analytics.rule=PathPrefix(`/analytics`)
             - traefik.http.routers.test-results.rule=PathPrefix(`/test-results`)
             - traefik.http.routers.auth-pages.rule=PathPrefix(`/auth/pages`) || PathPrefix(`/auth/js`) || PathPrefix(`/auth/css`)
+            - application=nl2sql
     forward-auth-server:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/forwardauth-auth-service:latest
         restart: always
@@ -87,6 +92,7 @@ services:
             - traefik.http.routers.forward-auth.rule=PathPrefix(`/auth/step`)
             - traefik.http.middlewares.forward-auth.forwardauth.address=http://forward-auth-server:80/auth/step/validate
             - traefik.http.middlewares.forward-auth.forwardauth.trustForwardHeader=true
+            - application=nl2sql
     unified-mcp-server:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/unified-mcp-server:latest
         restart: always
@@ -97,6 +103,7 @@ services:
             - POPULATION_COUNTER_PORT=81
         labels:
             - traefik.http.routers.unified-mcp-server.rule=PathPrefix(`/mcp`)
+            - application=nl2sql
     file-read-update-service:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/file-read-update-service:latest
         restart: always
@@ -110,6 +117,7 @@ services:
             - ./.local/.alchemy:/var/lib/alchemy:rw
         labels:
             - traefik.http.routers.file-read-update.rule=PathPrefix(`/api/v1/updatable-objects`)
+            - application=nl2sql
     query-flow:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-flow:latest
         restart: always
@@ -121,6 +129,7 @@ services:
             - ./.local/analytics/query-flow:/var/log/nl2sql/query-flow:rw
         labels:
             - traefik.http.routers.query-flow.rule=PathPrefix(`/api/v1/query-flow`)
+            - application=nl2sql
     answer-notify-flow:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/answer-notify-flow:latest
         restart: always
@@ -137,6 +146,7 @@ services:
             - ./.local/.jinja-templates:/var/lib/sbilifeco/templates:ro
         labels:
             - traefik.http.routers.answer-notify-flow.rule=PathPrefix(`/api/v1/answer-notify-requests`)
+            - application=nl2sql
     query-generator-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/query-generator-ui:latest
         restart: always
@@ -150,6 +160,7 @@ services:
         labels:
             - traefik.http.routers.query-ui.rule=PathPrefix(`/query-ui`)
             - traefik.http.routers.query-ui.middlewares=forward-auth
+            - application=nl2sql
     config-editor-ui:
         image: asia-south1-docker.pkg.dev/prj-uat-di-website-agent/sbilife/config-editor-ui:latest
         restart: always
@@ -159,6 +170,7 @@ services:
         labels:
             - traefik.http.routers.file-editor-ui.rule=PathPrefix(`/editor-ui`)
             - traefik.http.routers.file-editor-ui.middlewares=forward-auth
+            - application=nl2sql
     query-flow-batch-test:
         image: asia-south1-docker.pkg.dev/sbilifeco-nl2sql/sbilife/query-flow-batch-test:latest
         networks:
