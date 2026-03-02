@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 from dotenv import load_dotenv
 from envvars import EnvVars, Defaults
 from uuid import uuid4
-from random import randint
+from random import randint, random
 from faker import Faker
 from datetime import datetime, date
 from pprint import pprint, pformat
@@ -58,6 +58,7 @@ class Test(IsolatedAsyncioTestCase):
             db_id=uuid4().hex,
             question=self.faker.sentence(),
             answer=self.faker.paragraph(),
+            response_time_seconds=random() * 5,
         )
 
         # Act

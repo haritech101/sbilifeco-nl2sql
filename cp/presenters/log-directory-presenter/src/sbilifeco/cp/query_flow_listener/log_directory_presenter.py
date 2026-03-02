@@ -36,6 +36,7 @@ class LogDirectoryPresenter(IQueryFlowListener):
                         datetime.now().isoformat(),
                         query_flow_answer.question,
                         query_flow_answer.answer,
+                        query_flow_answer.response_time_seconds,
                     ]
                 )
                 f.flush()

@@ -21,6 +21,7 @@ from sbilifeco.models.base import Response
 from datetime import datetime
 from pprint import pformat
 from io import TextIOBase, RawIOBase, BufferedIOBase
+from time import perf_counter
 
 
 class QueryFlow(IQueryFlow):
@@ -325,7 +326,13 @@ class QueryFlow(IQueryFlow):
             print(next_full_prompt, flush=True)
             print(f"Sending {len(next_full_prompt)} characters to LLM", flush=True)
 
+            time_before = perf_counter()
+
             query_response = await self._llm.generate_reply(next_full_prompt)
+            time_after = perf_counter()
+            print(
+                f"LLM responded in {time_after - time_before:.2f} seconds", flush=True
+            )
             if not query_response.is_success:
                 print(
                     f"LLM generate_reply failed: {query_response.message}", flush=True
@@ -383,6 +390,7 @@ class QueryFlow(IQueryFlow):
                 db_id=dbId,
                 question=question,
                 answer=answer,
+                response_time_seconds=time_after - time_before,
             )
 
             print(
