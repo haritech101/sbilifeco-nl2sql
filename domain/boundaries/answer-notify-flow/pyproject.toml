@@ -7,8 +7,8 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundary-answer-notify-flow"
-version = "0.2.0"
+version = "0.2.1"
 description = "Contract for a flow that fetches answers and notifies about them"
 dependencies = [
-    "sbilifeco-boundary-query-flow>=0.3.0"
+    "sbilifeco-boundary-query-flow>=0.3.1"
 ]
