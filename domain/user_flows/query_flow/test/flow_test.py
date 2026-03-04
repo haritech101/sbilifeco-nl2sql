@@ -164,6 +164,13 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def __test_query(self, initial_session_data: str = "") -> None:
         # Arrange
+        answer_chunks = [self.faker.sentence() for _ in range(5)]
+        self.answer = "".join(answer_chunks)
+
+        async def stream_answer_chunks(*args, **kwargs):
+            for chunk in answer_chunks:
+                yield chunk
+
         fn_get_session_data = patch.object(
             self.session_data_manager,
             "get_session_data",
@@ -178,8 +185,8 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         fn_llm_query = patch.object(
             self.llm,
-            "generate_reply",
-            AsyncMock(return_value=Response.ok(self.answer)),
+            "generate_streamed_reply",
+            AsyncMock(return_value=Response.ok(stream_answer_chunks())),
         ).start()
 
         # Act
@@ -224,7 +231,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         fn_llm_query.assert_called_once()
 
         # Contents of the prompt sent to LLM
-        context_sent_to_llm = fn_llm_query.call_args[0][0]
+        context_sent_to_llm = fn_llm_query.call_args[0][1]
 
         self.assertIn(self.prompt[:10], context_sent_to_llm)
         if initial_session_data:

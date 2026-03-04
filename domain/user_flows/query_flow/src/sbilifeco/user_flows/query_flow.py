@@ -328,14 +328,30 @@ class QueryFlow(IQueryFlow):
 
             time_before = perf_counter()
 
-            query_response = await self._llm.generate_reply(next_full_prompt)
-            time_after = perf_counter()
-            print(
-                f"LLM responded in {time_after - time_before:.2f} seconds", flush=True
+            # query_response = await self._llm.generate_reply(next_full_prompt)
+            # time_after = perf_counter()
+            # print(
+            #     f"LLM responded in {time_after - time_before:.2f} seconds", flush=True
+            # )
+            # if not query_response.is_success:
+            #     print(
+            #         f"LLM generate_reply failed: {query_response.message}", flush=True
+            #     )
+            #     for listener in self.listeners:
+            #         await listener.on_fail(session_id, dbId, question, query_response)
+            #     return Response.fail(query_response.message, query_response.code)
+            # if query_response.payload is None:
+            #     return Response.fail("LLM did not return a valid answer", 500)
+
+            faux_request_id = uuid4().hex
+            query_response = await self._llm.generate_streamed_reply(
+                faux_request_id, next_full_prompt
             )
+
             if not query_response.is_success:
                 print(
-                    f"LLM generate_reply failed: {query_response.message}", flush=True
+                    f"LLM generate_streamed_reply failed: {query_response.message}",
+                    flush=True,
                 )
                 for listener in self.listeners:
                     await listener.on_fail(session_id, dbId, question, query_response)
@@ -343,8 +359,28 @@ class QueryFlow(IQueryFlow):
             if query_response.payload is None:
                 return Response.fail("LLM did not return a valid answer", 500)
 
-            answer = query_response.payload
-            print(answer, flush=True)
+            time_after = perf_counter()
+            print(
+                f"LLM responded in {time_after - time_before:.2f} seconds with a stream",
+                flush=True,
+            )
+
+            time_to_answer = time_after - time_before
+            time_before = perf_counter()
+
+            answer = ""
+            async for chunk in query_response.payload:
+                time_after = perf_counter()
+                print(chunk, end="", flush=True)
+                answer += chunk
+
+            time_after = perf_counter()
+            print(
+                f"\nIt took {time_after - time_before:.2f} seconds to read off the stream",
+                flush=True,
+            )
+
+            time_to_stream = time_after - time_before
 
             full_answer = next_full_prompt + "\n\n" + answer + "\n\n"
 
@@ -390,7 +426,7 @@ class QueryFlow(IQueryFlow):
                 db_id=dbId,
                 question=question,
                 answer=answer,
-                response_time_seconds=time_after - time_before,
+                response_time_seconds=time_to_answer + time_to_stream,
             )
 
             print(

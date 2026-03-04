@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "sbilifeco-user-flow-generate-query"
-version = "0.1.36"
+name = "sbilifeco-flow-query"
+version = "0.1.38"
 description = "User flow for query and reply"
 dependencies = [
     "sbilifeco-models-base>=0.1.3",
