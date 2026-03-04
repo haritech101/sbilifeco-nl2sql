@@ -53,7 +53,7 @@ class Test(IsolatedAsyncioTestCase):
 
         # Act
         query_response = await self.client.query(
-            self.db_id, session_id, question, with_thoughts
+            self.db_id, session_id, question, False, with_thoughts
         )
 
         # Assert
