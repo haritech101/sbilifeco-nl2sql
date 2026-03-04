@@ -34,6 +34,7 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_MASTER_VALUES = "master_values"
     PLACEHOLDER_TODAY = "today"
     PLACEHOLDER_IS_PII_ALLOWED = "is_pii_allowed"
+    PLACEHOLDER_SHOULD_SHOW_THOUGHTS = "should_show_thoughts"
     PLACEHOLDER_TOOLS = "tools_available"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
     SQL_SIGNATURE = "```sql"
@@ -288,6 +289,7 @@ class QueryFlow(IQueryFlow):
                 self.PLACEHOLDER_MASTER_VALUES: master_values,
                 self.PLACEHOLDER_TODAY: datetime.now().strftime("%02d %B %Y"),
                 self.PLACEHOLDER_IS_PII_ALLOWED: "Yes" if is_pii_allowed else "No",
+                self.PLACEHOLDER_SHOULD_SHOW_THOUGHTS: "Yes" if with_thoughts else "No",
                 self.PLACEHOLDER_TOOLS: tools_available,
             }
 
@@ -455,7 +457,7 @@ class QueryFlow(IQueryFlow):
                 f"{session_id}{self.SUFFIX_LAST_QA}", last_qa_to_cache
             )
 
-            return Response.ok(with_thoughts and full_answer.strip() or answer.strip())
+            return Response.ok(answer.strip())
         except Exception as e:
             print(f"Exception during query flow: {e}", flush=True)
             rsp = Response.error(e)
