@@ -6,10 +6,10 @@ WORKDIR /usr/local/answer-notify-flow
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
-    sbilifeco-flow-answer-notify==0.2.0 \
-    sbilifeco-kafka-consumer-answer-notify-trigger==0.2.0 \
-    sbilifeco-http-client-query-flow-answer-repo==0.2.0 \
-    sbilifeco-presenter-html-query-flow-answers==0.1.3
+    sbilifeco-flow-answer-notify==0.2.1 \
+    sbilifeco-kafka-consumer-answer-notify-trigger==0.2.1 \
+    sbilifeco-http-client-query-flow-answer-repo==0.2.1 \
+    sbilifeco-presenter-html-query-flow-answers==0.1.4
 
 EXPOSE 80
 

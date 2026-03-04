@@ -7,6 +7,7 @@ class QueryFlowAnswer(BaseModel):
     db_id: str
     question: str
     answer: str
+    response_time_seconds: float = -1
 
 
 class GetQueryFlowAnswersRequest(BaseModel):

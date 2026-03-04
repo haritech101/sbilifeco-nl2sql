@@ -7,9 +7,9 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-presenter-logdir-query-flow-answers"
-version = "0.1.1"
+version = "0.1.2"
 description = "Logs query flow answers inside a date-named csv files inside a directory"
 dependencies = [
-    "sbilifeco-boundary-query-flow>=0.3.0",
+    "sbilifeco-boundary-query-flow>=0.3.1",
     "sbilifeco-models-base>=0.1.3"
 ]

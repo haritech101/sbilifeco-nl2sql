@@ -551,6 +551,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertEqual(non_sql_answer.db_id, db_id)
         self.assertEqual(non_sql_answer.question, question)
         self.assertEqual(non_sql_answer.answer, non_sql_reply_first)
+        self.assertGreaterEqual(non_sql_answer.response_time_seconds, -1)
 
         # Act
         flow_response = await self.query_flow.query(

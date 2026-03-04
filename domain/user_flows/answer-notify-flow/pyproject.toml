@@ -7,9 +7,9 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-flow-answer-notify"
-version = "0.2.0"
+version = "0.2.1"
 description = "Flow to fetch non-SQL answers and notify about them to presenters"
 dependencies = [
-    "sbilifeco-boundary-answer-notify-flow>=0.2.0",
-    "sbilifeco-boundary-query-flow>=0.3.0"
+    "sbilifeco-boundary-answer-notify-flow>=0.2.1",
+    "sbilifeco-boundary-query-flow>=0.3.1"
 ]
