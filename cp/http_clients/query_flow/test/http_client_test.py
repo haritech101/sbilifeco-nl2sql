@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from sbilifeco.models.base import Response
-from sbilifeco.boundaries.query_flow import IQueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlow, QueryFlowRequest
 from faker import Faker
 from uuid import uuid4
 
@@ -30,6 +30,7 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         self.faker = Faker()
 
     async def asyncTearDown(self) -> None:
+        patch.stopall()
         await self.http_service.stop()
 
     async def test_start_session(self):
@@ -101,3 +102,25 @@ class HttpClientTest(IsolatedAsyncioTestCase):
         patched_query_method.assert_called_once_with(
             db_id, session_id, question, is_pii_allowed, with_thoughts
         )
+
+    async def test_ask(self) -> None:
+        # Arrange
+        req = QueryFlowRequest(db_id=uuid4().hex, question=self.faker.sentence())
+        fn_ask = patch.object(
+            self.flow, "ask", return_value=Response.ok(self.faker.sentence())
+        ).start()
+
+        # Act
+        response = await self.client.ask(req)
+
+        # Assert
+        # Call to flow
+        fn_ask.assert_called_once_with(req)
+
+        # Response
+        self.assertTrue(response.is_success, response.message)
+
+        fetched = response.payload
+        assert fetched is not None
+
+        self.assertTrue(fetched)

@@ -7,10 +7,10 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-kafka-consumer-answer-notify-trigger"
-version = "0.2.1"
+version = "0.2.2"
 description = "Kafka consumer for requests to trigger the answer notification flow "
 dependencies = [
-    "sbilifeco-boundary-answer-notify-flow>=0.2.1",
+    "sbilifeco-boundary-answer-notify-flow>=0.2.2",
     "sbilifeco-cp-kafka>=0.2.2",
     "sbilifeco-paths-answer-notify-flow>=0.2.0",
 ]
