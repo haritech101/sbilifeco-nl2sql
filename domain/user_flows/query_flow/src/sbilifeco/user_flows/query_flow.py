@@ -1,9 +1,10 @@
 from __future__ import annotations
+from collections.abc import AsyncIterator
 from json import dumps, loads
 from re import search
 from typing import Sequence
-from urllib.parse import quote_plus
 from uuid import uuid4
+from asyncio import create_task, get_running_loop
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -16,6 +17,7 @@ from sbilifeco.boundaries.query_flow import (
     IQueryFlow,
     QueryFlowAnswer,
     IQueryFlowListener,
+    QueryFlowRequest,
 )
 from sbilifeco.models.base import Response
 from datetime import datetime
@@ -38,6 +40,7 @@ class QueryFlow(IQueryFlow):
     PLACEHOLDER_TOOLS = "tools_available"
     TOOL_CALL_SIGNATURE = r"- Tool name:(.*)\n(.*)- Tool input:.*(\{.*\}).*"
     SQL_SIGNATURE = "```sql"
+    JSON_SIGNATURE = "```json"
 
     def __init__(self):
         self._metadata_storage: IMetadataStorage
@@ -463,4 +466,387 @@ class QueryFlow(IQueryFlow):
             rsp = Response.error(e)
             for listener in self.listeners:
                 await listener.on_fail(session_id, dbId, question, rsp)
+            return rsp
+
+    async def ask(
+        self, query_flow_request: QueryFlowRequest
+    ) -> Response[AsyncIterator[str]]:
+        try:
+            print(
+                f"Fetching cached db metadata for session: {query_flow_request.session_id}",
+                flush=True,
+            )
+            cached_db_metadata_response = (
+                await self._session_data_manager.get_session_data(
+                    f"{query_flow_request.session_id}{self.SUFFIX_METADATA}"
+                )
+            )
+            if not cached_db_metadata_response.is_success:
+                print(
+                    f"Could not get cached metadata: {cached_db_metadata_response.message}",
+                    flush=True,
+                )
+                for listener in self.listeners:
+                    create_task(
+                        listener.on_fail(
+                            query_flow_request.session_id,
+                            query_flow_request.db_id,
+                            query_flow_request.question,
+                            cached_db_metadata_response,
+                        )
+                    )
+                return Response.fail(
+                    cached_db_metadata_response.message,
+                    cached_db_metadata_response.code,
+                )
+            if cached_db_metadata_response.payload is None:
+                return Response.fail("Metadata is inexplicably None", 500)
+            db_metadata = cached_db_metadata_response.payload
+
+            # DB metadata, try cache, otherwise build
+            if db_metadata == "":
+                print("No pre-saved context found, need to generate", flush=True)
+
+                print(
+                    f"Building metadata for dbId: {query_flow_request.db_id}",
+                    flush=True,
+                )
+                db_response = await self._metadata_storage.get_db(
+                    query_flow_request.db_id,
+                    with_tables=True,
+                    with_fields=True,
+                    with_kpis=True,
+                    with_additional_info=True,
+                )
+                if not db_response.is_success:
+                    print(
+                        f"Could not get DB metadata: {db_response.message}", flush=True
+                    )
+                    for listener in self.listeners:
+                        create_task(
+                            listener.on_fail(
+                                query_flow_request.session_id,
+                                query_flow_request.db_id,
+                                query_flow_request.question,
+                                db_response,
+                            )
+                        )
+                    return Response.fail(db_response.message, db_response.code)
+                db = db_response.payload
+                if db is None:
+                    return Response.fail("Metadata is inexplicably blank", 500)
+
+                db_metadata = ""
+                db_metadata += f"Database name: {db.name}\n"
+                if db.description:
+                    db_metadata += f"Database description: {db.description}\n"
+                if db.tables is not None:
+                    for table in db.tables:
+                        db_metadata += f"\tTable name: {table.name}\n"
+                        db_metadata += f"\tTable description: {table.description}\n"
+                        if table.fields is not None:
+                            for field in table.fields:
+                                db_metadata += f"\t\tField name: {field.name}, type: {field.type}\n"
+                                if field.description:
+                                    db_metadata += (
+                                        f"\t\tField description: {field.description}\n"
+                                    )
+                                if field.aka:
+                                    db_metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+                if db.kpis:
+                    db_metadata += "KPIs:\n"
+                    for kpi in db.kpis:
+                        db_metadata += f"\tKPI name: {kpi.name}\n"
+                        db_metadata += f"\tKPI other names: {kpi.aka}\n"
+                        db_metadata += f"\tKPI description: {kpi.description}\n"
+                        db_metadata += f"\tKPI formula: {kpi.formula}\n"
+
+                if db.additional_info:
+                    db_metadata += (
+                        "Also keep in mind the following additional points.\n"
+                        f"{db.additional_info}\n"
+                    )
+            else:
+                print("Pre-saved db metadata found, using it", flush=True)
+
+            # Master values, try cache
+            print(
+                f"Fetching cached master dimension values for DB ID {query_flow_request.db_id}",
+                flush=True,
+            )
+            master_values = "Not defined"
+            cached_master_values = await self._session_data_manager.get_session_data(
+                f"{query_flow_request.db_id}{self.SUFFIX_MASTER_VALUES}"
+            )
+            if not cached_master_values.is_success:
+                print(
+                    f"Could not get master dimension values due to: {cached_master_values.message}, continuing",
+                    flush=True,
+                )
+            elif not cached_master_values.payload:
+                print("No master dimension values cached, continuing", flush=True)
+            else:
+                try:
+                    cache = loads(cached_master_values.payload)
+                    master_values = pformat(cache, indent=2)
+                except Exception as e:
+                    print(
+                        f"Could not parse master dimension values due to: {e}, continuing",
+                        flush=True,
+                    )
+
+            # Last question and answer
+            print(
+                f"Fetching cached last question and answer for session {query_flow_request.session_id}",
+                flush=True,
+            )
+            cached_last_qa_response = await self._session_data_manager.get_session_data(
+                f"{query_flow_request.session_id}{QueryFlow.SUFFIX_LAST_QA}"
+            )
+            if not cached_last_qa_response.is_success:
+                print(
+                    f"Could not get cached last QA: {cached_last_qa_response.message}",
+                    flush=True,
+                )
+                for listener in self.listeners:
+                    create_task(
+                        listener.on_fail(
+                            query_flow_request.session_id,
+                            query_flow_request.db_id,
+                            query_flow_request.question,
+                            cached_last_qa_response,
+                        )
+                    )
+                return Response.fail(
+                    cached_last_qa_response.message, cached_last_qa_response.code
+                )
+            last_qa = cached_last_qa_response.payload or "None"
+
+            # Tool calls available
+            print("Gathering tool call information", flush=True)
+            if not self._external_tools:
+                tools_available = "No external tools are available."
+            else:
+                tools_available = "The following external tools are available:\n"
+                for tool in self._external_tools:
+                    tools_available += f"- Tool name: {tool.name}\n"
+                    tools_available += f"  Description: {tool.description}\n"
+                    tools_available += "  Parameters:\n"
+                    for param in tool.params:
+                        tools_available += (
+                            f"    - Name: {param.name}\n"
+                            f"      Description: {param.description}\n"
+                            f"      Type: {param.type}\n"
+                        )
+
+            template_map = {
+                self.PLACEHOLDER_METADATA: db_metadata,
+                self.PLACEHOLDER_LAST_QA: last_qa,
+                self.PLACEHOLDER_QUESTION: query_flow_request.question,
+                self.PLACEHOLDER_MASTER_VALUES: master_values,
+                self.PLACEHOLDER_TODAY: datetime.now().strftime("%02d %B %Y"),
+                self.PLACEHOLDER_IS_PII_ALLOWED: (
+                    "Yes" if query_flow_request.is_pii_allowed else "No"
+                ),
+                self.PLACEHOLDER_SHOULD_SHOW_THOUGHTS: (
+                    "Yes" if query_flow_request.with_thoughts else "No"
+                ),
+                self.PLACEHOLDER_TOOLS: tools_available,
+            }
+
+            # Prompt template
+            print(
+                f"Preparing prompt template for DB ID {query_flow_request.db_id}",
+                flush=True,
+            )
+            prompt_template: str = ""
+            prompt_source = self._prompts_by_db.get(
+                query_flow_request.db_id, self._prompt
+            )
+            if isinstance(prompt_source, str):
+                if prompt_source.startswith("file://"):
+                    print(
+                        f"Prompt template is inside the file {prompt_source}",
+                        flush=True,
+                    )
+                    file_path = prompt_source[7:]
+                    with open(file_path, "r", encoding="utf-8") as prompt_template_file:
+                        prompt_template = prompt_template_file.read()
+                else:
+                    print("Prompt template is a raw string", flush=True)
+                    prompt_template = prompt_source
+            elif isinstance(prompt_source, (RawIOBase, BufferedIOBase)):
+                print(
+                    "Prompt template is an open binary stream, seeking to start",
+                    flush=True,
+                )
+                prompt_source.seek(0)
+                prompt_template = prompt_source.read().decode("utf-8")
+            elif isinstance(prompt_source, TextIOBase):
+                print(
+                    "Prompt template is an open text stream, seeking to start",
+                    flush=True,
+                )
+                prompt_source.seek(0)
+                prompt_template = prompt_source.read()
+
+            # Fully formed prompt
+            next_full_prompt = prompt_template.format_map(template_map)
+            print(next_full_prompt, flush=True)
+
+            # Sending prompt to LLM
+            print(f"Sending {len(next_full_prompt)} characters to LLM", flush=True)
+
+            time_before = perf_counter()
+
+            faux_request_id = uuid4().hex
+            query_response = await self._llm.generate_streamed_reply(
+                faux_request_id, next_full_prompt
+            )
+
+            # LLM has responded / failed
+            if not query_response.is_success:
+                print(
+                    f"LLM generate_streamed_reply failed: {query_response.message}",
+                    flush=True,
+                )
+                for listener in self.listeners:
+                    create_task(
+                        listener.on_fail(
+                            query_flow_request.session_id,
+                            query_flow_request.db_id,
+                            query_flow_request.question,
+                            query_response,
+                        )
+                    )
+                return Response.fail(query_response.message, query_response.code)
+            if query_response.payload is None:
+                return Response.fail("LLM did not return a valid answer", 500)
+
+            time_after = perf_counter()
+            print(
+                f"LLM responded in {time_after - time_before:.2f} seconds with a stream",
+                flush=True,
+            )
+            time_to_answer = time_after - time_before
+
+            async def stream_answer(
+                llm_answer: AsyncIterator[str],
+            ) -> AsyncIterator[str]:
+                answer = ""
+                time_before = perf_counter()
+
+                # Incrementally yield answers from the chunks obtained from the response
+                answer_chunk = ""
+                time_to_sql = 0.0
+                time_to_json = 0.0
+
+                sql_location = -1
+                json_location = -1
+                async for chunk in llm_answer:
+                    print(chunk, end="", flush=True)
+                    answer += chunk
+                    answer_chunk += chunk
+                    if sql_location < 0 and self.SQL_SIGNATURE in answer_chunk:
+                        sql_location = answer_chunk.find(self.SQL_SIGNATURE)
+                    elif (
+                        sql_location >= 0 and "```" in answer_chunk[sql_location + 6 :]
+                    ):
+                        time_to_sql = perf_counter() - time_before
+                        print(
+                            f"\nIt took {time_to_sql:.2f} seconds to read the full SQL query from the stream",
+                            flush=True,
+                        )
+
+                        complete_chunk = answer_chunk[:]
+                        delimiter_index = complete_chunk.find("```", sql_location + 6)
+                        sql_location = -1  # Reset
+
+                        yield complete_chunk[: delimiter_index + 3]
+                        answer_chunk = complete_chunk[delimiter_index + 3 :]
+
+                    if json_location < 0 and self.JSON_SIGNATURE in answer_chunk:
+                        json_location = answer_chunk.find(self.JSON_SIGNATURE)
+                    elif (
+                        json_location >= 0
+                        and "```" in answer_chunk[json_location + 7 :]
+                    ):
+                        time_to_json = perf_counter() - time_before
+                        print(
+                            f"\nIt took {time_to_json:.2f} seconds to read the full JSON from the stream",
+                            flush=True,
+                        )
+
+                        complete_chunk = answer_chunk[:]
+                        delimiter_index = complete_chunk.find("```", json_location + 7)
+                        json_location = -1  # Reset
+
+                        yield complete_chunk[: delimiter_index + 3]
+                        answer_chunk = complete_chunk[delimiter_index + 3 :]
+
+                yield answer_chunk
+
+                throughput_time = time_to_answer + (time_to_sql - time_before)
+
+                # notify listeners about the answer
+                query_flow_answer = QueryFlowAnswer(
+                    session_id=query_flow_request.session_id,
+                    db_id=query_flow_request.db_id,
+                    question=query_flow_request.question,
+                    answer=answer,
+                    response_time_seconds=throughput_time,
+                )
+
+                print(
+                    "\nNotifying listeners about the answer to the question in the query flow",
+                    flush=True,
+                )
+                for listener in self.listeners:
+                    create_task(listener.on_answer(query_flow_answer))
+
+                # Save updated metadata and last QA
+                if not cached_db_metadata_response.payload:
+                    print(
+                        f"Caching DB metadata for DB ID {query_flow_request.db_id}",
+                        flush=True,
+                    )
+                    create_task(
+                        self._session_data_manager.update_session_data(
+                            f"{query_flow_request.session_id}{self.SUFFIX_METADATA}",
+                            db_metadata,
+                        )
+                    )
+
+                print(
+                    f"Caching this question and answer for use in the next prompt during session {query_flow_request.session_id}",
+                    flush=True,
+                )
+                last_qa_to_cache = ""
+                if self.SQL_SIGNATURE not in answer and last_qa != "None":
+                    print(
+                        "This question was not answered with a SQL, so including the last Q&A for a more complete context",
+                        flush=True,
+                    )
+                    last_qa_to_cache = f"{last_qa}\n\n"
+                last_qa_to_cache += f"Q: {query_flow_request.question}\nA: {answer}\n\n"
+                create_task(
+                    self._session_data_manager.update_session_data(
+                        f"{query_flow_request.session_id}{self.SUFFIX_LAST_QA}",
+                        last_qa_to_cache,
+                    )
+                )
+
+            return Response.ok(stream_answer(query_response.payload))
+        except Exception as e:
+            print(f"Exception during query flow: {e}", flush=True)
+            rsp = Response.error(e)
+            for listener in self.listeners:
+                create_task(
+                    listener.on_fail(
+                        query_flow_request.session_id,
+                        query_flow_request.db_id,
+                        query_flow_request.question,
+                        rsp,
+                    )
+                )
             return rsp
