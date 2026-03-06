@@ -1,6 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useEffect, useState } from "react";
-import { useApi, type Schema } from "./ApiProvider";
+import { useApi, type Schema, type QueryFlowRequest } from "./ApiProvider";
+import { v4 } from "uuid";
 import Markdown from "react-markdown";
 
 type ChatMessage = {
@@ -35,7 +36,7 @@ function App() {
             return;
         }
 
-        setSchemas(response.payload);
+        setSchemas(response.payload ?? []);
     }
 
     const startASession = async () => {
@@ -44,7 +45,7 @@ function App() {
             console.error("Failed to start session:", sessionResponse.message);
             return;
         }
-        setSessionId(sessionResponse.payload);
+        setSessionId(sessionResponse.payload ?? "");
     }
 
     const handleSubmitMessage = async () => {
@@ -61,23 +62,47 @@ function App() {
 
         console.log(`Handling query request with schema ID: ${chosenSchemaId} and question: ${currentQuestion}`);
 
-        const response = await api.query(chosenSchemaId, sessionId, currentQuestion, withThoughts);
+        const req: QueryFlowRequest = {
+            session_id: sessionId,
+            request_id: v4(),
+            db_id: chosenSchemaId,
+            question: currentQuestion,
+            is_pii_allowed: false, // Set this based on your requirements
+            with_thoughts: withThoughts
+        };
+        const response = await api.ask(req);
 
         // Response recieved, either success or failure
 
-        const newMessage: ChatMessage = { role: "Me", content: "" };
+
         if (!response.is_success) {
-            newMessage.content = `Error: ${response.message}`;
-        } else {
-            newMessage.content = response.payload;
+            const newMessage: ChatMessage = { role: "Me", content: `Error: ${response.message}` };
+            updatedChat = [
+                ...updatedChat,
+                newMessage
+            ];
+
+            setChat(updatedChat);
+            setIsSeekingAnswer(false);
+            return;
         }
 
+        const decoder = new TextDecoder();
         updatedChat = [
             ...updatedChat,
-            newMessage
+            { role: "Me", content: "" }
         ];
-
         setChat(updatedChat);
+        for await (const chunk of response.payload) {
+            updatedChat = [
+                ...updatedChat.slice(0, -1),
+                {
+                    role: "Me",
+                    content: updatedChat[updatedChat.length - 1].content + decoder.decode(chunk)
+                }
+            ];
+            setChat(updatedChat);
+        }
         setIsSeekingAnswer(false);
     }
 
