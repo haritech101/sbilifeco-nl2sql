@@ -75,30 +75,49 @@ class QueryFlowMicroservice:
         await self.tool_repo.async_init()
 
         # Set up connection to LLM service
+        print(
+            f"Connecting to LLM gateway at {llm_proto}://{llm_host}:{llm_port}",
+            flush=True,
+        )
         self.llm = LLMHttpClient()
         self.llm.set_proto(llm_proto).set_host(llm_host).set_port(llm_port)
 
         # Set up connection to Metadata Storage service
+        print(
+            f"Connecting to DB metadata storage at {storage_proto}://{storage_host}:{storage_port}",
+            flush=True,
+        )
         self.storage = MetadataStorageHttpClient()
         self.storage.set_proto(storage_proto).set_host(storage_host).set_port(
             storage_port
         )
 
         # Set up connection to Session Data Manager service
+        print(
+            f"Connecting to session data manager at {session_data_proto}://{session_data_host}:{session_data_port}",
+            flush=True,
+        )
         self.session_data_manager = SessionDataManagerHttpClient()
         self.session_data_manager.set_proto(session_data_proto).set_host(
             session_data_host
         ).set_port(session_data_port)
 
         # Set up kafka producer for query flow events
+        print(f"Connecting to Kafka at {kafka_url}", flush=True)
         kafka_producer = QueryFlowEventProducer()
         kafka_producer.add_host(kafka_url)
         await kafka_producer.async_init()
 
         # Set up log directory presenter
+        print(f"Setting up logging directory at {log_dir}", flush=True)
         log_directory_presenter = LogDirectoryPresenter().set_log_directory(log_dir)
 
         # Set up query flow
+        print("Configuring flow", flush=True)
+        print(
+            f"Generic prompt (non-DB specific) prompt will be read from {self.generic_prompt_file}",
+            flush=True,
+        )
         self.flow = QueryFlow()
         (
             self.flow.set_external_tool_repo(self.tool_repo)
@@ -114,6 +133,7 @@ class QueryFlowMicroservice:
         await self.flow.async_init()
 
         # Set up http-based listener for query flow
+        print(f"Listening as HTTP service on port {flow_port}", flush=True)
         self.http_service = QueryFlowHttpService()
         self.http_service.set_query_flow(self.flow).set_http_port(flow_port)
         await self.http_service.listen()
