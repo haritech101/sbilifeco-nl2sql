@@ -7,12 +7,12 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-http-server-query-flow-answer-repo"
-version = "0.2.1"
+version = "0.2.2"
 description = "HTTP server for query flow answer repository"
 dependencies = [
     "fastapi>=0.116.1",
     "sbilifeco-models-base>=0.1.3",
-    "sbilifeco-boundary-query-flow>=0.3.1",
+    "sbilifeco-boundary-query-flow>=0.4.0",
     "sbilifeco-paths-query-flow-answer-repo>=0.2.0",
     "sbilifeco-cp-http-server>=0.1.1",
 ]
