@@ -1,5 +1,16 @@
 from typing import Protocol, Sequence
+from collections.abc import AsyncIterator
 from sbilifeco.models.base import Response, BaseModel
+from uuid import uuid4
+
+
+class QueryFlowRequest(BaseModel):
+    db_id: str
+    session_id: str = uuid4().hex
+    request_id: str = uuid4().hex
+    question: str
+    is_pii_allowed: bool = False
+    with_thoughts: bool = False
 
 
 class QueryFlowAnswer(BaseModel):
@@ -7,6 +18,7 @@ class QueryFlowAnswer(BaseModel):
     db_id: str
     question: str
     answer: str
+    response_time_seconds: float = -1
 
 
 class GetQueryFlowAnswersRequest(BaseModel):
@@ -31,6 +43,11 @@ class IQueryFlow(Protocol):
         is_pii_allowed=False,
         with_thoughts: bool = False,
     ) -> Response[str]:
+        raise NotImplementedError()
+
+    async def ask(
+        self, query_flow_request: QueryFlowRequest
+    ) -> Response[AsyncIterator[str]]:
         raise NotImplementedError()
 
 

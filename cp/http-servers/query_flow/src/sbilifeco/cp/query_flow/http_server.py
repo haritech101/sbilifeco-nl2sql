@@ -1,6 +1,10 @@
 from __future__ import annotations
+from typing import Annotated
+from traceback import format_exc
+from fastapi import Body
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from sbilifeco.cp.common.http.server import HttpServer
-from sbilifeco.boundaries.query_flow import IQueryFlow
+from sbilifeco.boundaries.query_flow import IQueryFlow, QueryFlowRequest
 from sbilifeco.cp.query_flow.paths import Paths, QueryRequest
 from sbilifeco.models.base import Response
 
@@ -55,3 +59,22 @@ class QueryFlowHttpService(HttpServer):
                 )
             except Exception as e:
                 return Response.error(e)
+
+        @self.post(Paths.ASKS)
+        async def ask(
+            req: Annotated[QueryFlowRequest, Body()],
+        ):
+            try:
+                ask_response = await self.query_flow.ask(req)
+                if not ask_response.is_success:
+                    return PlainTextResponse(
+                        content=ask_response.message, status_code=ask_response.code
+                    )
+                elif not ask_response.payload:
+                    return PlainTextResponse(
+                        content="Response is inexplicably blank", status_code=500
+                    )
+
+                return StreamingResponse(ask_response.payload, media_type="text/plain")
+            except Exception as e:
+                return PlainTextResponse(content=format_exc(), status_code=500)

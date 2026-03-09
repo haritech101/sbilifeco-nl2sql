@@ -10,7 +10,11 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from faker import Faker
-from sbilifeco.boundaries.query_flow import IQueryFlowListener, QueryFlowAnswer
+from sbilifeco.boundaries.query_flow import (
+    IQueryFlowListener,
+    QueryFlowAnswer,
+    QueryFlowRequest,
+)
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
@@ -44,6 +48,8 @@ class FlowTest(IsolatedAsyncioTestCase):
                 f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
                 "Is Personally Identifiable Information Allowed:",
                 f"{{{QueryFlow.PLACEHOLDER_IS_PII_ALLOWED}}}",
+                "Should show my thought process in the answer:",
+                f"{{{QueryFlow.PLACEHOLDER_SHOULD_SHOW_THOUGHTS}}}",
                 "Tools:",
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
@@ -73,6 +79,8 @@ class FlowTest(IsolatedAsyncioTestCase):
                 f"{{{QueryFlow.PLACEHOLDER_TODAY}}}",
                 "Is Personally Identifiable Information Allowed:",
                 f"{{{QueryFlow.PLACEHOLDER_IS_PII_ALLOWED}}}",
+                "Should show my thought process in the answer:",
+                f"{{{QueryFlow.PLACEHOLDER_SHOULD_SHOW_THOUGHTS}}}",
                 "Tools:",
                 f"{{{QueryFlow.PLACEHOLDER_TOOLS}}}",
                 self.faker.paragraph(),
@@ -164,6 +172,13 @@ class FlowTest(IsolatedAsyncioTestCase):
 
     async def __test_query(self, initial_session_data: str = "") -> None:
         # Arrange
+        answer_chunks = [self.faker.sentence() for _ in range(5)]
+        self.answer = "".join(answer_chunks)
+
+        async def stream_answer_chunks(*args, **kwargs):
+            for chunk in answer_chunks:
+                yield chunk
+
         fn_get_session_data = patch.object(
             self.session_data_manager,
             "get_session_data",
@@ -178,8 +193,8 @@ class FlowTest(IsolatedAsyncioTestCase):
 
         fn_llm_query = patch.object(
             self.llm,
-            "generate_reply",
-            AsyncMock(return_value=Response.ok(self.answer)),
+            "generate_streamed_reply",
+            AsyncMock(return_value=Response.ok(stream_answer_chunks())),
         ).start()
 
         # Act
@@ -224,7 +239,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         fn_llm_query.assert_called_once()
 
         # Contents of the prompt sent to LLM
-        context_sent_to_llm = fn_llm_query.call_args[0][0]
+        context_sent_to_llm = fn_llm_query.call_args[0][1]
 
         self.assertIn(self.prompt[:10], context_sent_to_llm)
         if initial_session_data:
@@ -551,6 +566,7 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertEqual(non_sql_answer.db_id, db_id)
         self.assertEqual(non_sql_answer.question, question)
         self.assertEqual(non_sql_answer.answer, non_sql_reply_first)
+        self.assertGreaterEqual(non_sql_answer.response_time_seconds, -1)
 
         # Act
         flow_response = await self.query_flow.query(
@@ -582,3 +598,64 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.assertNotIn(non_sql_reply_first, fn_args[1])
         self.assertNotIn(non_sql_reply_second, fn_args[1])
         self.assertIn(sql_reply, fn_args[1])
+
+    async def test_ask(self) -> None:
+        # Arrange
+        query_flow_request = QueryFlowRequest(
+            db_id=self.faker.word(),
+            question=self.faker.sentence(),
+        )
+
+        fn_get_session_data = patch.object(
+            self.session_data_manager,
+            "get_session_data",
+            AsyncMock(return_value=Response.ok("")),
+        ).start()
+
+        fn_get_db = patch.object(
+            self.metadata_storage,
+            "get_db",
+            AsyncMock(return_value=Response.ok(self.db_metadata)),
+        ).start()
+
+        fn_get_external_tools = patch.object(
+            self.external_tool_repo,
+            "fetch_tools",
+            AsyncMock(return_value=[]),
+        ).start()
+
+        async def llm_call(*args, **kwargs):
+            for chunk in [
+                self.faker.sentence(),
+                self.faker.sentence() + "```sql\n" + self.faker.sentence(),
+                self.faker.sentence() + "\n```" + "\n```json\n" + self.faker.sentence(),
+                self.faker.sentence() + "\n```" + self.faker.sentence(),
+                self.faker.sentence(),
+            ]:
+                yield chunk
+
+        fn_llm = patch.object(
+            self.llm,
+            "generate_streamed_reply",
+            AsyncMock(return_value=Response.ok(llm_call())),
+        ).start()
+
+        # Act
+        ask_response = await self.query_flow.ask(query_flow_request)
+
+        # Assert
+        # Verifying the response itself
+        self.assertTrue(ask_response.is_success, ask_response.message)
+
+        stream = ask_response.payload
+        assert stream is not None
+
+        sql_chunk = await anext(stream)
+        self.assertIn("```sql", sql_chunk)
+
+        json_chunk = await anext(stream)
+        self.assertIn("```json", json_chunk)
+
+        async for chunk in stream:
+            self.assertNotIn("```sql", chunk)
+            self.assertNotIn("```json", chunk)

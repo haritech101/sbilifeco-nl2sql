@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar
-from pydantic import BaseModel
+from traceback import format_exception
+from pydantic import BaseModel, ConfigDict
 from os.path import basename
 
 T = TypeVar("T")
@@ -12,6 +13,8 @@ class Response[T](BaseModel):
     message: str = "OK"
     payload: T | None = None
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     @classmethod
     def ok(cls, payload: T | None = None) -> Response[T]:
         return cls(payload=payload)
@@ -22,15 +25,7 @@ class Response[T](BaseModel):
 
     @classmethod
     def error(cls, e: BaseException) -> Response[T]:
-        description = e.__class__.__name__ + "\n"
-        description += "\n".join(e.args) if e.args else "\n"
-        description += "\n".join(e.__notes__) if hasattr(e, "__notes__") else "\n"
-        tb = e.__traceback__
-        while tb:
-            frame = tb.tb_frame
-            code = frame.f_code
-            description += (
-                f"{basename(code.co_filename)}: {code.co_name}: {tb.tb_lineno}\n"
-            )
-            tb = tb.tb_next
-        return cls.fail(message=description, code=500)
+        return cls.fail(
+            message=f"{e}\n{'\n'.join(format_exception(type(e), value=e, tb=e.__traceback__))}",
+            code=500,
+        )

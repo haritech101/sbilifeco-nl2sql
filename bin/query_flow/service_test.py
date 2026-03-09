@@ -12,9 +12,9 @@ from envvars import EnvVars, Defaults
 from sbilifeco.models.base import Response
 
 # Import the necessary service(s) here
-from asyncio import gather, sleep
+from asyncio import gather
 from service import QueryFlowMicroservice
-from sbilifeco.boundaries.query_flow import QueryFlowAnswer
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer, QueryFlowRequest
 from sbilifeco.cp.query_flow.http_client import QueryFlowHttpClient
 from uuid import uuid4
 from pathlib import Path
@@ -45,7 +45,8 @@ class Test(IsolatedAsyncioTestCase):
         self.consumer.add_subscription(Paths.ANSWERS.replace("/", ".")[1:])
         await self.consumer.async_init()
 
-    async def asyncTearDown(self) -> None: ...
+    async def asyncTearDown(self) -> None:
+        await self.consumer.async_shutdown()
 
     async def _test_with(self, question: str, with_thoughts: bool = True) -> str:
         # Arrange
@@ -53,7 +54,7 @@ class Test(IsolatedAsyncioTestCase):
 
         # Act
         query_response = await self.client.query(
-            self.db_id, session_id, question, with_thoughts
+            self.db_id, session_id, question, False, with_thoughts
         )
 
         # Assert
@@ -207,3 +208,29 @@ class Test(IsolatedAsyncioTestCase):
         self.assertEqual(query_flow_answer.session_id, session_id)
         self.assertEqual(query_flow_answer.db_id, self.db_id)
         self.assertEqual(query_flow_answer.question, question)
+
+    async def test_ask(self) -> None:
+        # Arrange
+        req = QueryFlowRequest(
+            db_id=self.db_id,
+            question=getenv(EnvVars.joined_tables_query, ""),
+        )
+
+        # Act
+        ask_response = await self.client.ask(req)
+
+        # Assert
+        self.assertTrue(ask_response.is_success, ask_response.message)
+
+        stream = ask_response.payload
+        assert stream is not None
+
+        sql_chunk = await anext(stream)
+        self.assertIn("```sql", sql_chunk)
+        self.assertIn("select", sql_chunk.lower())
+
+        json_chunk = await anext(stream)
+        self.assertIn("```json", json_chunk)
+
+        async for chunk in stream:
+            self.assertTrue(chunk)

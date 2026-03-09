@@ -9,7 +9,7 @@ RUN pip install \
     python-dotenv==1.1.1 \
     reportlab==4.4.9 \
     pyyaml==6.0.2 \
-    sbilifeco-http-client-query-flow==0.1.10
+    sbilifeco-http-client-query-flow==0.2.0
 
 EXPOSE 80
 
