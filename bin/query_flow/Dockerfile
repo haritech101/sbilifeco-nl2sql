@@ -11,7 +11,7 @@ RUN pip install \
     sbilifeco-http-client-llm==0.2.1 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \
-    sbilifeco-flow-query==0.2.0 \
+    sbilifeco-flow-query==0.2.1 \
     sbilifeco-http-server-query-flow==0.2.0 \
     sbilifeco-cp-mcp-client==0.1.2 \
     sbilifeco-kafka-producer-query-flow-events==0.1.5 \

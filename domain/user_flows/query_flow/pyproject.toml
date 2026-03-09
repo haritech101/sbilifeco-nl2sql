@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-flow-query"
-version = "0.2.0"
+version = "0.2.1"
 description = "User flow for query and reply"
 dependencies = [
     "sbilifeco-models-base>=0.1.3",
