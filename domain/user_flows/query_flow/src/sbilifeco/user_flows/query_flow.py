@@ -709,11 +709,11 @@ class QueryFlow(IQueryFlow):
                 return Response.fail("LLM did not return a valid answer", 500)
 
             time_after = perf_counter()
+            time_to_answer = time_after - time_before
             print(
-                f"LLM responded in {time_after - time_before:.2f} seconds with a stream",
+                f"LLM responded in {time_to_answer:.2f} seconds with a stream",
                 flush=True,
             )
-            time_to_answer = time_after - time_before
 
             async def stream_answer(
                 llm_answer: AsyncIterator[str],
@@ -771,7 +771,11 @@ class QueryFlow(IQueryFlow):
 
                 yield answer_chunk
 
-                throughput_time = time_to_answer + (time_to_sql - time_before)
+                throughput_time = time_to_answer + time_to_sql
+                print(
+                    f"\nTotal time to SQL after firing the question: {throughput_time:.2f} seconds",
+                    flush=True,
+                )
 
                 # notify listeners about the answer
                 query_flow_answer = QueryFlowAnswer(
@@ -783,7 +787,7 @@ class QueryFlow(IQueryFlow):
                 )
 
                 print(
-                    "\nNotifying listeners about the answer to the question in the query flow",
+                    "Notifying listeners about the answer to the question in the query flow",
                     flush=True,
                 )
                 for listener in self.listeners:
