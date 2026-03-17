@@ -55,6 +55,14 @@ services:
             - traefik.http.routers.population-counter.service=population-counter
             - traefik.http.services.population-counter.loadBalancer.server.url=http://redis-gateway:81
             - application=nl2sql
+    qdrant-gateway:
+        image: sbilifedockeradmin/qdrant-gateway:latest
+        restart: always
+        networks:
+            - nl2sql
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        env_file: .local/qdrant-gateway.env
     kafka-as-repo:
         image: sbilifedockeradmin/kafka-as-repo:latest
         restart: always
