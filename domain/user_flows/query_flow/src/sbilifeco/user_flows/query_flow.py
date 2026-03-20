@@ -5,7 +5,7 @@ from re import search
 from typing import Sequence
 from uuid import uuid4
 from asyncio import create_task, get_running_loop
-from sbilifeco.boundaries.metadata_storage import IMetadataStorage
+from sbilifeco.boundaries.metadata_storage import IMetadataStorage, DB, Table, Field
 from sbilifeco.boundaries.llm import ILLM
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.tool_support import (
@@ -19,6 +19,8 @@ from sbilifeco.boundaries.query_flow import (
     IQueryFlowListener,
     QueryFlowRequest,
 )
+from sbilifeco.boundaries.vectoriser import BaseVectoriser
+from sbilifeco.boundaries.vector_repo import BaseVectorRepo
 from sbilifeco.models.base import Response
 from datetime import datetime
 from pprint import pformat
@@ -52,6 +54,8 @@ class QueryFlow(IQueryFlow):
         ] = {}
         self._external_tool_repo: IExternalToolRepo
         self._external_tools: list[ExternalTool] = []
+        self._vectoriser: BaseVectoriser
+        self._vector_repo: BaseVectorRepo
         self._is_tool_call_enabled: bool = False
         self.listeners: list[IQueryFlowListener] = []
 
@@ -61,6 +65,14 @@ class QueryFlow(IQueryFlow):
 
     def set_llm(self, llm: ILLM) -> QueryFlow:
         self._llm = llm
+        return self
+
+    def set_vectoriser(self, vectoriser: BaseVectoriser) -> QueryFlow:
+        self._vectoriser = vectoriser
+        return self
+
+    def set_vector_repo(self, vector_repo: BaseVectorRepo) -> QueryFlow:
+        self._vector_repo = vector_repo
         return self
 
     def set_session_data_manager(
@@ -457,6 +469,80 @@ class QueryFlow(IQueryFlow):
         self, query_flow_request: QueryFlowRequest
     ) -> Response[AsyncIterator[str]]:
         try:
+            print("Create a vector from the given question")
+            vector_response = await self._vectoriser.vectorise(
+                uuid4().hex, query_flow_request.question
+            )
+
+            if not vector_response.is_success:
+                print(f"Unable to vectorise question: {vector_response.message}")
+                return Response.fail(vector_response.message, vector_response.code)
+
+            elif vector_response.payload is None:
+                message = "Generated vector is inexplicably empty"
+                print(message)
+                return Response.fail(message, 500)
+
+            question_vector = vector_response.payload
+
+            print(
+                "Fetch items (tables and fields) that are semantically similar to the question from the vector repo"
+            )
+            similarity_response = await self._vector_repo.search_by_vector(
+                question_vector, num_results=100
+            )
+
+            if not similarity_response.is_success:
+                print(f"Semantic search failed: {similarity_response.message}")
+                return Response.fail(
+                    similarity_response.message, similarity_response.code
+                )
+
+            elif similarity_response.payload is None:
+                message = "List of matches is inexplicably empty"
+                print(message)
+                return Response.fail(message, 500)
+
+            similar_records = similarity_response.payload
+            similar_records = [
+                record
+                for record in similar_records
+                if record.metadata
+                and record.metadata.source_id == query_flow_request.db_id
+                and record.score > 0.5
+            ]
+            similar_records = sorted(
+                similar_records, key=lambda r: r.metadata.source if r.metadata else ""
+            )
+
+            db = DB(id=query_flow_request.db_id, name="", description="", tables=[])
+
+            for record in similar_records:
+                source = record.metadata.source if record.metadata else ""
+                source_parts = source.split("/")
+
+                assert isinstance(record.document, str)
+
+                if len(source_parts) == 2:  # db/table
+                    table = Table.model_validate_json(record.document)
+
+                    assert db.tables is not None
+                    db.tables.append(table)
+
+                    if not table.fields:
+                        table.fields = []
+                elif len(source_parts) == 3:  # db/table/field
+                    _, table_name, _ = source_parts
+                    field = Field.model_validate_json(record.document)
+
+                    assert db.tables is not None
+
+                    table = next((t for t in db.tables if t.name == table_name), None)
+                    assert table is not None
+                    assert table.fields is not None
+
+                    table.fields.append(field)
+
             print(
                 f"Fetching cached db metadata for session: {query_flow_request.session_id}",
                 flush=True,
