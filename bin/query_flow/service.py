@@ -1,20 +1,24 @@
 from asyncio import run, sleep
+from os import getenv
+from pathlib import Path
+
+from dotenv import load_dotenv
+from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.common.mcp.client import MCPClient
 from sbilifeco.cp.llm.http_client import LLMHttpClient
 from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
-from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
-from sbilifeco.models.base import Response
-from sbilifeco.user_flows.query_flow import QueryFlow
-from sbilifeco.boundaries.query_flow import QueryFlowAnswer
 from sbilifeco.cp.query_flow.http_server import QueryFlowHttpService
 from sbilifeco.cp.query_flow.kafka_producer import QueryFlowEventProducer
 from sbilifeco.cp.query_flow_listener.log_directory_presenter import (
     LogDirectoryPresenter,
 )
-from os import getenv
-from pathlib import Path
-from dotenv import load_dotenv
-from envvars import EnvVars, Defaults
+from sbilifeco.cp.session_data_manager.http_client import SessionDataManagerHttpClient
+from sbilifeco.cp.vector_repo.http_client import VectorRepoHttpClient
+from sbilifeco.cp.vectoriser.http_client import VectoriserHttpClient
+from sbilifeco.models.base import Response
+from sbilifeco.user_flows.query_flow import QueryFlow
+
+from envvars import Defaults, EnvVars
 
 
 class QueryFlowMicroservice:
@@ -23,6 +27,8 @@ class QueryFlowMicroservice:
     llm: LLMHttpClient
     storage: MetadataStorageHttpClient
     session_data_manager: SessionDataManagerHttpClient
+    vectoriser: VectoriserHttpClient
+    vector_repo: VectorRepoHttpClient
     flow: QueryFlow
     http_service: QueryFlowHttpService
 
@@ -32,6 +38,18 @@ class QueryFlowMicroservice:
         llm_port = int(getenv(EnvVars.llm_port, Defaults.llm_port))
 
         mcp_server_url = getenv(EnvVars.mcp_server_url, Defaults.mcp_server_url)
+
+        vectoriser_proto = getenv(EnvVars.vectoriser_proto, Defaults.vectoriser_proto)
+        vectoriser_host = getenv(EnvVars.vectoriser_host, Defaults.vectoriser_host)
+        vectoriser_port = int(getenv(EnvVars.vectoriser_port, Defaults.vectoriser_port))
+
+        vector_repo_proto = getenv(
+            EnvVars.vector_repo_proto, Defaults.vector_repo_proto
+        )
+        vector_repo_host = getenv(EnvVars.vector_repo_host, Defaults.vector_repo_host)
+        vector_repo_port = int(
+            getenv(EnvVars.vector_repo_port, Defaults.vector_repo_port)
+        )
 
         storage_proto = getenv(
             EnvVars.metadata_storage_proto, Defaults.metadata_storage_proto
@@ -82,6 +100,36 @@ class QueryFlowMicroservice:
         self.llm = LLMHttpClient()
         self.llm.set_proto(llm_proto).set_host(llm_host).set_port(llm_port)
 
+        # Vectoriser
+        vectoriser_proto = getenv(EnvVars.vectoriser_proto, Defaults.vectoriser_proto)
+        vectoriser_host = getenv(EnvVars.vectoriser_host, Defaults.vectoriser_host)
+        vectoriser_port = int(getenv(EnvVars.vectoriser_port, Defaults.vectoriser_port))
+        print(
+            f"Connecting to vectoriser at {vectoriser_proto}://{vectoriser_host}:{vectoriser_port}",
+            flush=True,
+        )
+        self.vectoriser = VectoriserHttpClient()
+        self.vectoriser.set_proto(vectoriser_proto).set_host(vectoriser_host).set_port(
+            vectoriser_port
+        )
+
+        # Vector Repo
+        vector_repo_proto = getenv(
+            EnvVars.vector_repo_proto, Defaults.vector_repo_proto
+        )
+        vector_repo_host = getenv(EnvVars.vector_repo_host, Defaults.vector_repo_host)
+        vector_repo_port = int(
+            getenv(EnvVars.vector_repo_port, Defaults.vector_repo_port)
+        )
+        print(
+            f"Connecting to vector repo at {vector_repo_proto}://{vector_repo_host}:{vector_repo_port}",
+            flush=True,
+        )
+        self.vector_repo = VectorRepoHttpClient()
+        self.vector_repo.set_proto(vector_repo_proto).set_host(
+            vector_repo_host
+        ).set_port(vector_repo_port)
+
         # Set up connection to Metadata Storage service
         print(
             f"Connecting to DB metadata storage at {storage_proto}://{storage_host}:{storage_port}",
@@ -123,6 +171,8 @@ class QueryFlowMicroservice:
             self.flow.set_external_tool_repo(self.tool_repo)
             .set_is_tool_call_enabled(is_tool_call_enabled)
             .set_llm(self.llm)
+            .set_vectoriser(self.vectoriser)
+            .set_vector_repo(self.vector_repo)
             .set_metadata_storage(self.storage)
             .set_session_data_manager(self.session_data_manager)
             .add_listener(kafka_producer)
