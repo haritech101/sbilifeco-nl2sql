@@ -517,71 +517,44 @@ class QueryFlow(IQueryFlow):
 
             db = DB(id=query_flow_request.db_id, name="", description="", tables=[])
 
-            for record in similar_records:
-                source = record.metadata.source if record.metadata else ""
-                source_parts = source.split("/")
-
-                assert isinstance(record.document, str)
-
-                if len(source_parts) == 2:  # db/table
-                    table = Table.model_validate_json(record.document)
-
-                    assert db.tables is not None
-                    db.tables.append(table)
-
-                    if not table.fields:
-                        table.fields = []
-                elif len(source_parts) == 3:  # db/table/field
-                    _, table_name, _ = source_parts
-                    field = Field.model_validate_json(record.document)
-
-                    assert db.tables is not None
-
-                    table = next((t for t in db.tables if t.name == table_name), None)
-                    assert table is not None
-                    assert table.fields is not None
-
-                    table.fields.append(field)
-
-            print(
-                f"Fetching cached db metadata for session: {query_flow_request.session_id}",
-                flush=True,
-            )
-            cached_db_metadata_response = (
-                await self._session_data_manager.get_session_data(
-                    f"{query_flow_request.session_id}{self.SUFFIX_METADATA}"
-                )
-            )
-            if not cached_db_metadata_response.is_success:
+            if similar_records:
                 print(
-                    f"Could not get cached metadata: {cached_db_metadata_response.message}",
+                    f"Able to narrow down selective tables and fields in DB ID {query_flow_request.db_id} that are relevant to the question. Using only them to build the prompt",
                     flush=True,
                 )
-                for listener in self.listeners:
-                    create_task(
-                        listener.on_fail(
-                            query_flow_request.session_id,
-                            query_flow_request.db_id,
-                            query_flow_request.question,
-                            cached_db_metadata_response,
+                for record in similar_records:
+                    source = record.metadata.source if record.metadata else ""
+                    source_parts = source.split("/")
+
+                    assert isinstance(record.document, str)
+
+                    if len(source_parts) == 2:  # db/table
+                        table = Table.model_validate_json(record.document)
+
+                        assert db.tables is not None
+                        db.tables.append(table)
+
+                        if not table.fields:
+                            table.fields = []
+                    elif len(source_parts) == 3:  # db/table/field
+                        _, table_name, _ = source_parts
+                        field = Field.model_validate_json(record.document)
+
+                        assert db.tables is not None
+
+                        table = next(
+                            (t for t in db.tables if t.name == table_name), None
                         )
-                    )
-                return Response.fail(
-                    cached_db_metadata_response.message,
-                    cached_db_metadata_response.code,
-                )
-            if cached_db_metadata_response.payload is None:
-                return Response.fail("Metadata is inexplicably None", 500)
-            db_metadata = cached_db_metadata_response.payload
+                        assert table is not None
+                        assert table.fields is not None
 
-            # DB metadata, try cache, otherwise build
-            if db_metadata == "":
-                print("No pre-saved context found, need to generate", flush=True)
-
+                        table.fields.append(field)
+            else:
                 print(
-                    f"Building metadata for dbId: {query_flow_request.db_id}",
+                    f"Question did not match any narrowed-down tables or fields in DB {query_flow_request.db_id}, so using the entire database metadata for the prompt",
                     flush=True,
                 )
+
                 db_response = await self._metadata_storage.get_db(
                     query_flow_request.db_id,
                     with_tables=True,
@@ -607,38 +580,42 @@ class QueryFlow(IQueryFlow):
                 if db is None:
                     return Response.fail("Metadata is inexplicably blank", 500)
 
-                db_metadata = ""
-                db_metadata += f"Database name: {db.name}\n"
-                if db.description:
-                    db_metadata += f"Database description: {db.description}\n"
-                if db.tables is not None:
-                    for table in db.tables:
-                        db_metadata += f"\tTable name: {table.name}\n"
-                        db_metadata += f"\tTable description: {table.description}\n"
-                        if table.fields is not None:
-                            for field in table.fields:
-                                db_metadata += f"\t\tField name: {field.name}, type: {field.type}\n"
-                                if field.description:
-                                    db_metadata += (
-                                        f"\t\tField description: {field.description}\n"
-                                    )
-                                if field.aka:
-                                    db_metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
-                if db.kpis:
-                    db_metadata += "KPIs:\n"
-                    for kpi in db.kpis:
-                        db_metadata += f"\tKPI name: {kpi.name}\n"
-                        db_metadata += f"\tKPI other names: {kpi.aka}\n"
-                        db_metadata += f"\tKPI description: {kpi.description}\n"
-                        db_metadata += f"\tKPI formula: {kpi.formula}\n"
+            print(
+                f"Building metadata for dbId: {query_flow_request.db_id}",
+                flush=True,
+            )
+            db_metadata = ""
+            db_metadata += f"Database name: {db.name}\n"
+            if db.description:
+                db_metadata += f"Database description: {db.description}\n"
+            if db.tables is not None:
+                for table in db.tables:
+                    db_metadata += f"\tTable name: {table.name}\n"
+                    db_metadata += f"\tTable description: {table.description}\n"
+                    if table.fields is not None:
+                        for field in table.fields:
+                            db_metadata += (
+                                f"\t\tField name: {field.name}, type: {field.type}\n"
+                            )
+                            if field.description:
+                                db_metadata += (
+                                    f"\t\tField description: {field.description}\n"
+                                )
+                            if field.aka:
+                                db_metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
+            if db.kpis:
+                db_metadata += "KPIs:\n"
+                for kpi in db.kpis:
+                    db_metadata += f"\tKPI name: {kpi.name}\n"
+                    db_metadata += f"\tKPI other names: {kpi.aka}\n"
+                    db_metadata += f"\tKPI description: {kpi.description}\n"
+                    db_metadata += f"\tKPI formula: {kpi.formula}\n"
 
-                if db.additional_info:
-                    db_metadata += (
-                        "Also keep in mind the following additional points.\n"
-                        f"{db.additional_info}\n"
-                    )
-            else:
-                print("Pre-saved db metadata found, using it", flush=True)
+            if db.additional_info:
+                db_metadata += (
+                    "Also keep in mind the following additional points.\n"
+                    f"{db.additional_info}\n"
+                )
 
             # Master values, try cache
             print(
@@ -880,18 +857,6 @@ class QueryFlow(IQueryFlow):
                     create_task(listener.on_answer(query_flow_answer))
 
                 # Save updated metadata and last QA
-                if not cached_db_metadata_response.payload:
-                    print(
-                        f"Caching DB metadata for DB ID {query_flow_request.db_id}",
-                        flush=True,
-                    )
-                    create_task(
-                        self._session_data_manager.update_session_data(
-                            f"{query_flow_request.session_id}{self.SUFFIX_METADATA}",
-                            db_metadata,
-                        )
-                    )
-
                 print(
                     f"Caching this question and answer for use in the next prompt during session {query_flow_request.session_id}",
                     flush=True,
