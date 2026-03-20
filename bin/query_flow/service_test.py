@@ -213,7 +213,7 @@ class Test(IsolatedAsyncioTestCase):
         # Arrange
         req = QueryFlowRequest(
             db_id=self.db_id,
-            question=getenv(EnvVars.joined_tables_query, ""),
+            question=getenv(EnvVars.single_table_query, ""),
         )
 
         # Act
