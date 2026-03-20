@@ -16,13 +16,16 @@ from sbilifeco.boundaries.query_flow import (
     QueryFlowRequest,
 )
 from sbilifeco.boundaries.llm import ILLM
-from sbilifeco.boundaries.metadata_storage import IMetadataStorage
+from sbilifeco.boundaries.metadata_storage import IMetadataStorage, DB, Table, Field
 from sbilifeco.boundaries.session_data_manager import ISessionDataManager
 from sbilifeco.boundaries.tool_support import (
     IExternalToolRepo,
     ExternalTool,
     ExternalToolParams,
 )
+from sbilifeco.boundaries.vectoriser import BaseVectoriser
+from sbilifeco.boundaries.vector_repo import BaseVectorRepo
+from sbilifeco.models.vectorisation import VectorisedRecord, RecordMetadata
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB
 from sbilifeco.user_flows.query_flow import QueryFlow
@@ -92,6 +95,8 @@ class FlowTest(IsolatedAsyncioTestCase):
         self.session_data_manager: ISessionDataManager = AsyncMock(
             spec=ISessionDataManager
         )
+        self.vectoriser = AsyncMock(spec=BaseVectoriser)
+        self.vector_repo = AsyncMock(spec=BaseVectorRepo)
 
         self.fn_get_db = patch.object(
             self.metadata_storage,
@@ -126,6 +131,8 @@ class FlowTest(IsolatedAsyncioTestCase):
             self.query_flow.set_metadata_storage(self.metadata_storage)
             .set_llm(self.llm)
             .set_session_data_manager(self.session_data_manager)
+            .set_vectoriser(self.vectoriser)
+            .set_vector_repo(self.vector_repo)
             .set_generic_prompt(self.prompt)
             .set_prompt_by_db(self.db_id_with_prompt, self.db_specific_prompt)
             .set_external_tool_repo(self.external_tool_repo)
@@ -618,6 +625,61 @@ class FlowTest(IsolatedAsyncioTestCase):
             AsyncMock(return_value=Response.ok(self.db_metadata)),
         ).start()
 
+        fn_vectorise = patch.object(
+            self.vectoriser,
+            "vectorise",
+            return_value=Response.ok([0.1, 0.2, 0.3]),
+        ).start()
+
+        fn_search = patch.object(
+            self.vector_repo,
+            "search_by_vector",
+            return_value=Response.ok(
+                [
+                    VectorisedRecord(
+                        id=uuid4().hex,
+                        document=Table(
+                            id="employee",
+                            name="employee",
+                            description=self.faker.sentence(),
+                            fields=[],
+                        ).model_dump_json(),
+                        metadata=RecordMetadata(
+                            source_id=query_flow_request.db_id,
+                            source=f"{query_flow_request.db_id}/employee",
+                        ),
+                        score=0.9,
+                    ),
+                    VectorisedRecord(
+                        id=uuid4().hex,
+                        document=Field(
+                            id="employee_name",
+                            name="employee_name",
+                            description=self.faker.sentence(),
+                        ).model_dump_json(),
+                        metadata=RecordMetadata(
+                            source_id=query_flow_request.db_id,
+                            source=f"{query_flow_request.db_id}/employee/employee_name",
+                        ),
+                        score=0.8,
+                    ),
+                    VectorisedRecord(
+                        id=uuid4().hex,
+                        document=Field(
+                            id="department",
+                            name="department",
+                            description=self.faker.sentence(),
+                        ).model_dump_json(),
+                        metadata=RecordMetadata(
+                            source_id=query_flow_request.db_id,
+                            source=f"{query_flow_request.db_id}/employee/department",
+                        ),
+                        score=0.7,
+                    ),
+                ]
+            ),
+        ).start()
+
         fn_get_external_tools = patch.object(
             self.external_tool_repo,
             "fetch_tools",
@@ -659,3 +721,10 @@ class FlowTest(IsolatedAsyncioTestCase):
         async for chunk in stream:
             self.assertNotIn("```sql", chunk)
             self.assertNotIn("```json", chunk)
+
+        # Question should be vectorised
+        fn_vectorise.assert_called_once()
+        self.assertEqual(fn_vectorise.call_args.args[1], query_flow_request.question)
+
+        # Vector repo should be search for semantic match for the question
+        fn_search.assert_called_once_with([0.1, 0.2, 0.3], num_results=100)
