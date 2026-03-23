@@ -34,6 +34,7 @@ class LogDirectoryPresenter(IQueryFlowListener):
                 csv_writer.writerow(
                     [
                         datetime.now().isoformat(),
+                        query_flow_answer.db_id,
                         query_flow_answer.question,
                         query_flow_answer.answer,
                         query_flow_answer.response_time_seconds,
