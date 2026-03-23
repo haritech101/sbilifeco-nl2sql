@@ -6,12 +6,12 @@ WORKDIR /usr/local/query-flow
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
-    sbilifeco-models-base==0.1.4 \
-    sbilifeco-models-db-metadata==0.1.6 \
     sbilifeco-http-client-llm==0.2.1 \
     sbilifeco-http-client-metadata-storage==0.1.5 \
     sbilifeco-http-client-session-data-manager==0.1.1 \
-    sbilifeco-flow-query==0.2.1 \
+    sbilifeco-http-client-vectoriser==0.1.1 \
+    sbilifeco-http-client-vector-repo==0.1.2 \
+    sbilifeco-flow-query==0.3.0 \
     sbilifeco-http-server-query-flow==0.2.0 \
     sbilifeco-cp-mcp-client==0.1.2 \
     sbilifeco-kafka-producer-query-flow-events==0.1.5 \
