@@ -55,7 +55,7 @@ class Test(IsolatedAsyncioTestCase):
         # Arrange
         answer = QueryFlowAnswer(
             session_id=uuid4().hex,
-            db_id=uuid4().hex,
+            db_id=self.faker.word(),
             question=self.faker.sentence(),
             answer=self.faker.paragraph(),
             response_time_seconds=random() * 5,
@@ -69,16 +69,23 @@ class Test(IsolatedAsyncioTestCase):
             self.log_file_path.exists(), f"Log file {self.log_file_path} does not exist"
         )
 
+        is_db_id_found = False
         is_question_found = False
         is_answer_found = False
         with open(self.log_file_path, "r") as f:
             for line in f:
+                if answer.db_id in line:
+                    is_db_id_found = True
                 if answer.question in line:
                     is_question_found = True
                 if answer.answer in line:
                     is_answer_found = True
-                if is_question_found and is_answer_found:
+                if is_db_id_found and is_question_found and is_answer_found:
                     break
+        self.assertTrue(
+            is_db_id_found,
+            f"DB ID '{answer.db_id}' not found in log file {self.log_file_path}",
+        )
         self.assertTrue(
             is_question_found,
             f"Question '{answer.question}' not found in log file {self.log_file_path}",

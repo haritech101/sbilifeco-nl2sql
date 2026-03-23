@@ -15,7 +15,7 @@ RUN pip install \
     sbilifeco-http-server-query-flow==0.2.0 \
     sbilifeco-cp-mcp-client==0.1.2 \
     sbilifeco-kafka-producer-query-flow-events==0.1.5 \
-    sbilifeco-presenter-logdir-query-flow-answers==0.1.3
+    sbilifeco-presenter-logdir-query-flow-answers==0.1.4
 
 EXPOSE 80
 
