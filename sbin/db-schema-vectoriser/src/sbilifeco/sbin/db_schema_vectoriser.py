@@ -92,6 +92,8 @@ class DbSchemaVectoriser:
                                     f"Failure saving vector for {table.id}/{field.id}: {vectorisation_response.message}"
                                 )
 
+                    table.fields = []
+
                     print(f"Stringifying and vectorising table {table.id}")
                     stringified_table = table.model_dump_json()
 
