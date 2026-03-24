@@ -469,6 +469,14 @@ class QueryFlow(IQueryFlow):
         self, query_flow_request: QueryFlowRequest
     ) -> Response[AsyncIterator[str]]:
         try:
+            # Initialise an empty metadata that will be filled with relevant info by the similarity search process
+            db = DB(
+                id=query_flow_request.db_id,
+                name=query_flow_request.db_id,
+                description="",
+                tables=[],
+            )
+
             print("Create a vector from the given question")
             vector_response = await self._vectoriser.vectorise(
                 uuid4().hex, query_flow_request.question
@@ -476,80 +484,106 @@ class QueryFlow(IQueryFlow):
 
             if not vector_response.is_success:
                 print(f"Unable to vectorise question: {vector_response.message}")
-                return Response.fail(vector_response.message, vector_response.code)
-
             elif vector_response.payload is None:
-                message = "Generated vector is inexplicably empty"
-                print(message)
-                return Response.fail(message, 500)
-
-            question_vector = vector_response.payload
-
-            print(
-                "Fetch items (tables and fields) that are semantically similar to the question from the vector repo"
-            )
-            similarity_response = await self._vector_repo.search_by_vector(
-                question_vector, num_results=100
-            )
-
-            if not similarity_response.is_success:
-                print(f"Semantic search failed: {similarity_response.message}")
-                return Response.fail(
-                    similarity_response.message, similarity_response.code
-                )
-
-            elif similarity_response.payload is None:
-                message = "List of matches is inexplicably empty"
-                print(message)
-                return Response.fail(message, 500)
-
-            similar_records = similarity_response.payload
-            similar_records = [
-                record
-                for record in similar_records
-                if record.metadata
-                and record.metadata.source_id == query_flow_request.db_id
-                and record.score > 0.5
-            ]
-            similar_records = sorted(
-                similar_records, key=lambda r: r.metadata.source if r.metadata else ""
-            )
-
-            db = DB(id=query_flow_request.db_id, name="", description="", tables=[])
-
-            if similar_records:
-                print(
-                    f"Able to narrow down selective tables and fields in DB ID {query_flow_request.db_id} that are relevant to the question. Using only them to build the prompt",
-                    flush=True,
-                )
-                for record in similar_records:
-                    source = record.metadata.source if record.metadata else ""
-                    source_parts = source.split("/")
-
-                    assert isinstance(record.document, str)
-
-                    if len(source_parts) == 2:  # db/table
-                        table = Table.model_validate_json(record.document)
-
-                        assert db.tables is not None
-                        db.tables.append(table)
-
-                        if not table.fields:
-                            table.fields = []
-                    elif len(source_parts) == 3:  # db/table/field
-                        _, table_name, _ = source_parts
-                        field = Field.model_validate_json(record.document)
-
-                        assert db.tables is not None
-
-                        table = next(
-                            (t for t in db.tables if t.name == table_name), None
-                        )
-                        assert table is not None
-                        assert table.fields is not None
-
-                        table.fields.append(field)
+                print("Generated vector is inexplicably empty")
             else:
+                question_vector = vector_response.payload
+
+                print(
+                    "Fetch items (tables and fields) that are semantically similar to the question from the vector repo"
+                )
+                similarity_response = await self._vector_repo.search_by_vector(
+                    question_vector, num_results=100
+                )
+
+                if not similarity_response.is_success:
+                    print(f"Semantic search failed: {similarity_response.message}")
+                elif similarity_response.payload is None:
+                    print("List of matches is inexplicably empty")
+                else:
+                    similar_records = similarity_response.payload
+                    similar_records = [
+                        record
+                        for record in similar_records
+                        if record.metadata
+                        and record.metadata.source_id == query_flow_request.db_id
+                        and record.score > 0.5
+                    ]
+                    similar_records = sorted(
+                        similar_records,
+                        key=lambda r: r.metadata.source if r.metadata else "",
+                    )
+
+                    if similar_records:
+                        print(
+                            f"Able to narrow down selective tables and fields in DB ID {query_flow_request.db_id} that are relevant to the question. Using only them to build the prompt",
+                            flush=True,
+                        )
+                        for record in similar_records:
+                            source = record.metadata.source if record.metadata else ""
+                            source_parts = source.split("/")
+
+                            assert isinstance(record.document, str)
+
+                            if len(source_parts) == 2:  # db/table
+                                table_from_record = Table.model_validate_json(
+                                    record.document
+                                )
+
+                                assert db.tables is not None
+                                table = next(
+                                    (
+                                        t
+                                        for t in db.tables
+                                        if t.name == table_from_record.name
+                                    ),
+                                    None,
+                                )
+
+                                if not table:
+                                    print(
+                                        f"Table {table_from_record.name} is not yet in the list of tables. Adding it with info from the vector record to be able to include the relevant fields in the prompt",
+                                        flush=True,
+                                    )
+                                    table = table_from_record
+                                    if not table.fields:
+                                        table.fields = []
+                                else:
+                                    print(
+                                        f"Table {table_from_record.name} is already in the list of tables. Updating its description with the one from the vector record to be able to include the relevant fields in the prompt",
+                                        flush=True,
+                                    )
+                                    table.description = table_from_record.description
+
+                                db.tables.append(table)
+                            elif len(source_parts) == 3:  # db/table/field
+                                _, table_name, _ = source_parts
+                                field = Field.model_validate_json(record.document)
+
+                                assert db.tables is not None
+
+                                table = next(
+                                    (t for t in db.tables if t.id == table_name), None
+                                )
+
+                                if table is None:
+                                    print(
+                                        f"Got a relevant field for table {table_name} which is not yet in the list of tables. Adding the table with minimal info to be able to include the field in the prompt",
+                                        flush=True,
+                                    )
+                                    table = Table(
+                                        id=table_name,
+                                        name=table_name,
+                                        description="",
+                                        fields=[field],
+                                    )
+                                    db.tables.append(table)
+
+                                assert table.fields is not None
+
+                                table.fields.append(field)
+
+            if not db.tables:
                 print(
                     f"Question did not match any narrowed-down tables or fields in DB {query_flow_request.db_id}, so using the entire database metadata for the prompt",
                     flush=True,
@@ -587,11 +621,15 @@ class QueryFlow(IQueryFlow):
             db_metadata = ""
             db_metadata += f"Database name: {db.name}\n"
             if db.description:
-                db_metadata += f"Database description: {db.description}\n"
+                db_metadata += (
+                    f"Database description: {db.description or "Not Available"}\n"
+                )
             if db.tables is not None:
                 for table in db.tables:
                     db_metadata += f"\tTable name: {table.name}\n"
-                    db_metadata += f"\tTable description: {table.description}\n"
+                    db_metadata += (
+                        f"\tTable description: {table.description or "Not Available"}\n"
+                    )
                     if table.fields is not None:
                         for field in table.fields:
                             db_metadata += (
