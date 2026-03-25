@@ -7,8 +7,8 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundary-population-counter"
-version = "0.1.0"
+version = "0.1.1"
 description = "Contract for population counter, i.e. number of items that satisfy some criteria."
 dependencies = [
-    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-models-base>=0.1.4",
 ]
