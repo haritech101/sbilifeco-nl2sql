@@ -7,9 +7,9 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundary-metadata-storage"
-version = "0.1.5"
+version = "0.1.6"
 description = "Contract for metadata storage"
 dependencies = [
-    "sbilifeco-models-base>=0.1.3",
-    "sbilifeco-models-db-metadata>=0.1.6"
+    "sbilifeco-models-base>=0.1.4",
+    "sbilifeco-models-db-metadata>=0.1.7"
 ]
