@@ -8,7 +8,7 @@ RUN pip install \
     python-dotenv==1.1.1 \
     sbilifeco-flow-answer-notify==0.2.2 \
     sbilifeco-kafka-consumer-answer-notify-trigger==0.2.2 \
-    sbilifeco-http-client-query-flow-answer-repo==0.2.2 \
+    sbilifeco-http-client-query-flow-answer-repo==0.2.3 \
     sbilifeco-presenter-html-query-flow-answers==0.1.5
 
 EXPOSE 80

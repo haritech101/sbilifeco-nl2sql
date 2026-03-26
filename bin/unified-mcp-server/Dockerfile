@@ -7,7 +7,7 @@ RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv==1.1.1 \
     sbilifeco-mcp-server-unified==0.1.0 \
-    sbilifeco-http-client-population-counter==0.1.0
+    sbilifeco-http-client-population-counter==0.1.1
 
 EXPOSE 80
 

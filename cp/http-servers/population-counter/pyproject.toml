@@ -7,10 +7,10 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-http-server-population-counter"
-version = "0.1.0"
+version = "0.1.1"
 description = "HTTP server over population counter functionality"
 dependencies = [
-    "sbilifeco-models-base>=0.1.3",
+    "sbilifeco-models-base>=0.1.4",
     "sbilifeco-boundary-population-counter>=0.1.0",
     "sbilifeco-paths-population-counter>=0.1.0",
     "sbilifeco-cp-http-server>=0.1.1",

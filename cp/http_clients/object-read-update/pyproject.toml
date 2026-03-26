@@ -7,11 +7,11 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-http-client-object-read-update"
-version = "0.1.0"
+version = "0.1.1"
 description = "HTTP client for microservice to read and update updatable objects"
 dependencies = [
-    "sbilifeco-models-base>=0.1.3",
-    "sbilifeco-cp-http-client>=0.1.2",
-    "sbilifeco-boundary-object-read-update>=0.1.0",
+    "sbilifeco-models-base>=0.1.4",
+    "sbilifeco-cp-http-client>=0.1.3",
+    "sbilifeco-boundary-object-read-update>=0.1.1",
     "sbilifeco-paths-object-read-update>=0.1.0",
 ]

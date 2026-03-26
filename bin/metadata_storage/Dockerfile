@@ -5,10 +5,10 @@ WORKDIR /usr/local/metadata-storage
 
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
-    python-dotenv==1.1.0 \
-    sbilifeco-models-base==0.1.3 \
-    sbilifeco-gateway-synmetrix==0.1.4 \
-    sbilifeco-http-server-metadata-storage==0.1.5
+    python-dotenv==1.1.1 \
+    sbilifeco-models-base==0.1.4 \
+    sbilifeco-gateway-synmetrix==0.1.5 \
+    sbilifeco-http-server-metadata-storage==0.1.6
 
 EXPOSE 80
 

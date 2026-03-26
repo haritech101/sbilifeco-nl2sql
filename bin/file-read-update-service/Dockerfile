@@ -9,7 +9,7 @@ RUN pip install \
     pydantic==2.11.9 \
     pyyaml==6.0.2 \
     sbilifeco-gateway-file-read-update==0.1.0 \
-    sbilifeco-http-server-object-read-update==0.1.0
+    sbilifeco-http-server-object-read-update==0.1.1
 
 EXPOSE 80
 
