@@ -26,6 +26,7 @@ from datetime import datetime
 from pprint import pformat
 from io import TextIOBase, RawIOBase, BufferedIOBase
 from time import perf_counter
+from yaml import dump as yaml_dump
 
 
 class QueryFlow(IQueryFlow):
@@ -618,42 +619,23 @@ class QueryFlow(IQueryFlow):
                 f"Building metadata for dbId: {query_flow_request.db_id}",
                 flush=True,
             )
-            db_metadata = ""
-            db_metadata += f"Database name: {db.name}\n"
-            if db.description:
-                db_metadata += (
-                    f"Database description: {db.description or "Not Available"}\n"
-                )
-            if db.tables is not None:
-                for table in db.tables:
-                    db_metadata += f"\tTable name: {table.name}\n"
-                    db_metadata += (
-                        f"\tTable description: {table.description or "Not Available"}\n"
-                    )
-                    if table.fields is not None:
-                        for field in table.fields:
-                            db_metadata += (
-                                f"\t\tField name: {field.name}, type: {field.type}\n"
-                            )
-                            if field.description:
-                                db_metadata += (
-                                    f"\t\tField description: {field.description}\n"
-                                )
-                            if field.aka:
-                                db_metadata += f"\t\tOther names for field '{field.name}': {field.aka}\n"
-            if db.kpis:
-                db_metadata += "KPIs:\n"
-                for kpi in db.kpis:
-                    db_metadata += f"\tKPI name: {kpi.name}\n"
-                    db_metadata += f"\tKPI other names: {kpi.aka}\n"
-                    db_metadata += f"\tKPI description: {kpi.description}\n"
-                    db_metadata += f"\tKPI formula: {kpi.formula}\n"
 
-            if db.additional_info:
-                db_metadata += (
-                    "Also keep in mind the following additional points.\n"
-                    f"{db.additional_info}\n"
-                )
+            db_metadata_for_llm = {
+                "name": db.name,
+                "desc": db.description,
+                "tables": [
+                    {
+                        "name": table.name,
+                        "desc": table.description,
+                        "fields": [
+                            f"{field.name} ({field.type}), {field.description}"
+                            for field in (table.fields or [])
+                        ],
+                    }
+                    for table in (db.tables or [])
+                ],
+            }
+            db_metadata = yaml_dump(db_metadata_for_llm, sort_keys=False)
 
             # Master values, try cache
             print(
@@ -779,6 +761,9 @@ class QueryFlow(IQueryFlow):
             # Fully formed prompt
             next_full_prompt = prompt_template.format_map(template_map)
             print(next_full_prompt, flush=True)
+
+            with open("./formed_prompt.txt", "w", encoding="utf-8") as f:
+                f.write(next_full_prompt)
 
             # Sending prompt to LLM
             print(f"Sending {len(next_full_prompt)} characters to LLM", flush=True)
