@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Protocol, AsyncIterator
+from typing import Protocol, AsyncIterator, Sequence
 from sbilifeco.models.base import Response, BaseModel
 
 
@@ -19,4 +19,4 @@ class SuggestedQuestion(BaseModel):
 class IQuestionSuggestionFlow(Protocol):
     async def suggest(
         self, req: QuestionSuggestionRequest
-    ) -> Response[AsyncIterator[SuggestedQuestion]]: ...
+    ) -> Response[AsyncIterator[Sequence[SuggestedQuestion]]]: ...
