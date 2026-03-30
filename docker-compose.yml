@@ -169,6 +169,8 @@ services:
     question-suggestion-flow:
         image: sbilifedockeradmin/question-suggestion-flow:latest
         restart: always
+        networks:
+            - nl2sql
         env_file: .local/question-suggestion-flow.env
         volumes:
             - ./.local/query-suggestion-prompt.txt:/var/lib/question-suggestion-flow/prompt.txt:ro
