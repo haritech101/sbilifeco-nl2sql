@@ -6,6 +6,7 @@ from pprint import pformat, pprint
 from traceback import format_exc, format_exception
 from typing import AsyncIterator, Optional, Any, Sequence
 from urllib import request
+from re import compile, DOTALL
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -133,6 +134,8 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
             async def __stream_questions() -> (
                 AsyncIterator[Sequence[SuggestedQuestion]]
             ):
+                pattern = compile(r"```json\s*(\{.*\})\s*```", flags=DOTALL)
+
                 while True:
                     print(
                         f"Sending {len(filled_context)} characters to LLM", flush=True
@@ -150,11 +153,21 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
                         continue
 
                     llm_reply = llm_response.payload
+
                     print(f"Received {len(llm_reply)} characters from LLM", flush=True)
                     try:
+                        match = pattern.search(llm_reply)
+                        if not match:
+                            print(
+                                "LLM response does not contain valid JSON in expected format",
+                                flush=True,
+                            )
+                            continue
+
+                        json_content = match.group(1)
                         yield [
                             SuggestedQuestion(question=item)
-                            for item in json_loads(llm_reply)
+                            for item in json_loads(json_content).get("questions", [])
                         ]
                     except Exception as e:
                         print(f"Error parsing LLM response: {e}", flush=True)
