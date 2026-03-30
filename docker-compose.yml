@@ -165,6 +165,15 @@ services:
         labels:
             - traefik.http.routers.answer-notify-flow.rule=PathPrefix(`/api/v1/answer-notify-requests`)
             - application=nl2sql
+
+    question-suggestion-flow:
+        image: sbilifedockeradmin/question-suggestion-flow:latest
+        restart: always
+        env_file: .local/question-suggestion-flow.env
+        volumes:
+            - ./.local/query-suggestion-prompt.txt:/var/lib/question-suggestion-flow/prompt.txt:ro
+        labels:
+            - traefik.http.routers.question-suggestion-flow.rule=PathPrefix(`/api/v1/question-suggestions`)
     query-generator-ui:
         image: sbilifedockeradmin/query-generator-ui:latest
         restart: always
