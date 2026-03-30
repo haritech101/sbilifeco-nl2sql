@@ -173,7 +173,7 @@ services:
             - nl2sql
         env_file: .local/question-suggestion-flow.env
         volumes:
-            - ./.local/query-suggestion-prompt.txt:/var/lib/question-suggestion-flow/prompt.txt:ro
+            - ./.local/question-suggestion-prompt.txt:/var/lib/question-suggestion-flow/prompt.txt:ro
         labels:
             - traefik.http.routers.question-suggestion-flow.rule=PathPrefix(`/api/v1/question-suggestions`)
             - application=nl2sql
