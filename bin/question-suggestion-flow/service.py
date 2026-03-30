@@ -1,19 +1,16 @@
 from asyncio import run, sleep
-from curses import meta
-from dotenv import load_dotenv
 from os import getenv
-from envvars import EnvVars, Defaults
+
+from dotenv import load_dotenv
+from envvars import Defaults, EnvVars
 
 # import required modules here
-from sbilifeco.flows.question_suggestion_flow import QuestionSuggestionFlow
+from sbilifeco.cp.llm.http_client import LLMHttpClient
+from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
 from sbilifeco.cp.question_suggestion_flow.http_server import (
     QuestionSuggestionHttpServer,
 )
-from sbilifeco.cp.question_suggestion_flow.http_client import (
-    QuestionSuggestionHttpClient,
-)
-from sbilifeco.cp.metadata_storage.http_client import MetadataStorageHttpClient
-from sbilifeco.cp.llm.http_client import LLMHttpClient
+from sbilifeco.flows.question_suggestion_flow import QuestionSuggestionFlow
 
 
 class QuestionSuggestionMicroservice:
