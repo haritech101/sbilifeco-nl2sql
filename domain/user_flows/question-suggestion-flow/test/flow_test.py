@@ -89,7 +89,11 @@ class Test(IsolatedAsyncioTestCase):
         fn_llm_reply = patch.object(
             self.llm,
             "generate_reply",
-            AsyncMock(return_value=Response.ok(dumps(suggested_questions))),
+            AsyncMock(
+                return_value=Response.ok(
+                    f'```json\n{{"questions": {dumps(suggested_questions)}}}\n```'
+                )
+            ),
         ).start()
 
         # Act
