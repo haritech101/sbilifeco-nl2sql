@@ -7,9 +7,10 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-flow-query"
-version = "0.3.0"
+version = "0.4.0"
 description = "User flow for query and reply. Use a sequence of gateway calls to get the job done. Implements IQueryFlow interface."
 dependencies = [
+    "pyyaml>=6.0.2",
     "sbilifeco-models-base>=0.1.4",
     "sbilifeco-boundary-metadata-storage>=0.1.6",
     "sbilifeco-boundaries-llm>=0.2.0",
