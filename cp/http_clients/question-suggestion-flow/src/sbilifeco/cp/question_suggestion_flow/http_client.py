@@ -39,7 +39,7 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
             # Send request
             session = Session()
             res = await get_running_loop().run_in_executor(
-                None, partial(session.send, http_req.prepare())
+                None, partial(session.send, http_req.prepare(), stream=True)
             )
             if not res.ok:
                 return Response.fail(res.text, res.status_code)
