@@ -90,7 +90,9 @@ class Test(IsolatedAsyncioTestCase):
         #     f"**/api/v1/updatable-objects/{selected_file}", handle_get_file
         # )
 
-        await self.__login()
+        # await self.__login()
+        await self.page.goto(self.home_url)
+        await self.page.wait_for_load_state("networkidle")
 
         # Act
         await self.page.select_option("#which-file", selected_file)

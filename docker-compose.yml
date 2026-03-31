@@ -9,6 +9,8 @@ services:
         command:
             - --api.insecure=true
             - --providers.docker=true
+            - --accesslog=true
+            - --log.level=DEBUG
             - --providers.docker.constraints=Label(`application`, `nl2sql`)
         ports:
             - 11200:80
@@ -63,6 +65,14 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         env_file: .local/qdrant-gateway.env
+        labels:
+            - traefik.http.routers.vectoriser.rule=PathPrefix(`/api/v1/vectors`)
+            - traefik.http.routers.vectoriser.service=vectoriser
+            - traefik.http.services.vectoriser.loadBalancer.server.url=http://qdrant-gateway
+            - traefik.http.routers.vector-repo.rule=PathPrefix(`/api/v1/vectorised-data`)
+            - traefik.http.routers.vector-repo.service=vector-repo
+            - traefik.http.services.vector-repo.loadBalancer.server.url=http://qdrant-gateway:81
+            - application=nl2sql
     kafka-as-repo:
         image: sbilifedockeradmin/kafka-as-repo:latest
         restart: always
@@ -154,6 +164,18 @@ services:
             - ./.local/.jinja-templates:/var/lib/sbilifeco/templates:ro
         labels:
             - traefik.http.routers.answer-notify-flow.rule=PathPrefix(`/api/v1/answer-notify-requests`)
+            - application=nl2sql
+
+    question-suggestion-flow:
+        image: sbilifedockeradmin/question-suggestion-flow:latest
+        restart: always
+        networks:
+            - nl2sql
+        env_file: .local/question-suggestion-flow.env
+        volumes:
+            - ./.local/question-suggestion-prompt.txt:/var/lib/question-suggestion-flow/prompt.txt:ro
+        labels:
+            - traefik.http.routers.question-suggestion-flow.rule=PathPrefix(`/api/v1/question-suggestions`)
             - application=nl2sql
     query-generator-ui:
         image: sbilifedockeradmin/query-generator-ui:latest

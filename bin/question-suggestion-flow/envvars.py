@@ -1,0 +1,25 @@
+class EnvVars:
+    test_type = "TEST_TYPE"
+    http_port = "HTTP_PORT"
+    staging_host = "STAGING_HOST"
+    db_id = "DB_ID"
+    metadata_storage_proto = "METADATA_STORAGE_PROTO"
+    metadata_storage_host = "METADATA_STORAGE_HOST"
+    metadata_storage_port = "METADATA_STORAGE_PORT"
+    llm_proto = "LLM_PROTO"
+    llm_host = "LLM_HOST"
+    llm_port = "LLM_PORT"
+    prompt_file = "PROMPT_FILE"
+
+
+class Defaults:
+    test_type = "unit"  # or "integration" or "staging"
+    http_port = "80"
+    staging_host = "localhost"
+    metadata_storage_proto = "http"
+    metadata_storage_host = "localhost"
+    metadata_storage_port = "80"
+    llm_proto = "http"
+    llm_host = "localhost"
+    llm_port = "80"
+    prompt_file = "/var/lib/question-suggestion-flow/prompt.txt"

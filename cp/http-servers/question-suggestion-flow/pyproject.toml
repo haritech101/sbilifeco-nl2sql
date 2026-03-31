@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sbilifeco-http-server-question-suggestion-flow"
+version = "0.1.1"
+description = "HTTP server over question suggestion flow"
+dependencies = [
+    "sbilifeco-cp-http-server>=0.1.1",
+    "sbilifeco-boundary-question-suggestion-flow>=0.1.0",
+    "sbilifeco-paths-question-suggestion-flow>=0.1.0",
+]
