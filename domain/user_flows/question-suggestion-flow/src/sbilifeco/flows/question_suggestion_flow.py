@@ -150,6 +150,9 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
 
                     print(f"Received {len(llm_reply)} characters from LLM", flush=True)
                     try:
+                        print(
+                            "Extracting the questions from the LLM response", flush=True
+                        )
                         match = pattern.search(llm_reply)
                         if not match:
                             print(
@@ -159,20 +162,21 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
                             continue
 
                         json_content = match.group(1)
+                        print("Yielding questions to caller", flush=True)
                         yield [
                             SuggestedQuestion(question=item)
                             for item in json_loads(json_content).get("questions", [])
                         ]
                     except Exception as e:
                         print(f"Error parsing LLM response: {e}", flush=True)
-                        continue
+                        print(format_exc(), flush=True)
 
                     await sleep(req.interval_in_seconds)
 
             return Response.ok(__stream_questions())
         except Exception as e:
-            print(f"Error while generating question suggestions: {e}")
-            print(format_exc())
+            print(f"Error while generating question suggestions: {e}", flush=True)
+            print(format_exc(), flush=True)
             return Response.error(e)
         finally:
             ...

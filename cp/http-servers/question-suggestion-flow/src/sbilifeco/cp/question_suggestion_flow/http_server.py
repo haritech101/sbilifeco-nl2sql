@@ -55,6 +55,10 @@ class QuestionSuggestionHttpServer(HttpServer):
 
                 async def stream_as_events():
                     async for suggestions in stream:
+                        print(
+                            "Received list of suggestions from flow, yielding to HTTP client as an event stream event",
+                            flush=True,
+                        )
                         yield f"event: suggestion\ndata: {json_dumps([suggestion.model_dump() for suggestion in suggestions])}\n\n"
 
                 return StreamingResponse(

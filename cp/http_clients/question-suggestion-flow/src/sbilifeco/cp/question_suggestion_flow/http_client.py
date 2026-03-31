@@ -60,18 +60,25 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
                         chunk = None
 
                     if not chunk:
+                        print("Event is empty, continuing", flush=True)
                         continue
                     try:
+                        print(
+                            "Received event stream event from server, parsing",
+                            flush=True,
+                        )
                         matches = pattern.match(chunk)
                         if not matches or len(matches.groups()) != 2:
                             print(
-                                "Data from stream is not in expected format, skipping chunk."
+                                "Data from stream is not in expected format, skipping chunk.",
+                                flush=True,
                             )
                             continue
 
                         if matches.group(1) != "suggestion":
                             print(
-                                f"Received event of type {matches.group(1)}, expected 'suggested_questions'. Skipping chunk."
+                                f"Received event of type {matches.group(1)}, expected 'suggested_questions'. Skipping chunk.",
+                                flush=True,
                             )
                             continue
 
@@ -79,17 +86,21 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
                         questions = [
                             SuggestedQuestion.model_validate(item) for item in payload
                         ]
+                        print(
+                            "Extracted questions from event stream event, yielding to caller",
+                            flush=True,
+                        )
                         yield questions
                     except Exception as e:
-                        print(f"Error in stream parsing: {e}")
-                        print(format_exc())
+                        print(f"Error in stream parsing: {e}", flush=True)
+                        print(format_exc(), flush=True)
                         continue
 
             # Return response
             return Response.ok(__pick_stream())
         except Exception as e:
-            print(f"Error: {e}")
-            print(format_exc())
+            print(f"Error: {e}", flush=True)
+            print(format_exc(), flush=True)
             return Response.error(e)
         finally:
             ...
