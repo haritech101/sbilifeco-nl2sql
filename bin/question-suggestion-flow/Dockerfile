@@ -6,10 +6,10 @@ WORKDIR /usr/local/question-suggestion-flow
 RUN pip install \
     --extra-index-url https://api.repoforge.io/yWf4uV/ \
     python-dotenv>=1.1.1 \
-    sbilifeco-flow-question-suggestion>=0.1.0 \
+    sbilifeco-flow-question-suggestion>=0.1.1 \
     sbilifeco-http-client-llm>=0.2.1 \
     sbilifeco-http-client-metadata-storage>=0.1.6 \
-    sbilifeco-http-server-question-suggestion-flow>=0.1.0
+    sbilifeco-http-server-question-suggestion-flow>=0.1.1
 
 
 EXPOSE 80
