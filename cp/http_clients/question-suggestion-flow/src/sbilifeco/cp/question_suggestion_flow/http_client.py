@@ -46,7 +46,19 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
 
             # Triage response
             async def __pick_stream():
-                for chunk in res.iter_content(chunk_size=8192, decode_unicode=True):
+                chunks_iterator = res.iter_content(chunk_size=8192, decode_unicode=True)
+
+                while True:
+                    try:
+                        chunk = await wait_for(
+                            get_running_loop().run_in_executor(
+                                None, partial(next, chunks_iterator, None)
+                            ),
+                            req.interval_in_seconds,
+                        )
+                    except TimeoutError:
+                        chunk = None
+
                     if not chunk:
                         continue
                     try:
