@@ -2,31 +2,24 @@ import sys
 
 sys.path.append("./src")
 
-from asyncio import gather, sleep
-from datetime import date, datetime
+from json import dumps
 from os import getenv
-from pprint import pformat, pprint
-from random import randint
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
-from uuid import uuid4
-from json import dumps
 
 from dotenv import load_dotenv
-from envvars import Defaults, EnvVars
+from envvars import EnvVars
 from faker import Faker
-from sbilifeco.boundaries.llm import ILLM
-from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 
 # Import the necessary service(s) here
+from sbilifeco.boundaries.llm import ILLM
+from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.question_suggestion_flow import (
     QuestionSuggestionRequest,
-    SuggestedQuestion,
 )
+from sbilifeco.flows.question_suggestion_flow import QuestionSuggestionFlow
 from sbilifeco.models.base import Response
 from sbilifeco.models.db_metadata import DB, Field, Table
-
-from sbilifeco.flows.question_suggestion_flow import QuestionSuggestionFlow
 
 
 class Test(IsolatedAsyncioTestCase):
@@ -121,7 +114,11 @@ class Test(IsolatedAsyncioTestCase):
         fn_llm_reply.assert_called_once()
         context = fn_llm_reply.call_args.args[0]
         self.assertIn(db_metadata.name, context)
+
+        assert db_metadata.tables is not None
         self.assertIn(db_metadata.tables[0].name, context)
+
+        assert db_metadata.tables[0].fields is not None
         self.assertIn(db_metadata.tables[0].fields[0].name, context)
 
         # At least one question should be suggested in the stream
