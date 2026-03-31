@@ -71,3 +71,4 @@ class Test(IsolatedAsyncioTestCase):
         assert suggestions is not None
         for suggestion in suggestions:
             self.assertTrue(suggestion.question)
+            print(suggestion.question)
