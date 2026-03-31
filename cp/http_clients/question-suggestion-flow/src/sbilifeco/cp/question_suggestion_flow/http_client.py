@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from asyncio import get_running_loop
+from asyncio import get_running_loop, wait_for
 from functools import partial
 from json import loads as json_loads
 from re import compile
