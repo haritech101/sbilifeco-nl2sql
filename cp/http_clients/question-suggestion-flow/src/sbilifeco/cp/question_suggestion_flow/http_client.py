@@ -54,7 +54,7 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
                             get_running_loop().run_in_executor(
                                 None, partial(next, chunks_iterator, None)
                             ),
-                            req.interval_in_seconds,
+                            2 * req.interval_in_seconds,
                         )
                     except TimeoutError:
                         chunk = None
