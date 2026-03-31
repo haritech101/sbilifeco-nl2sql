@@ -57,13 +57,13 @@ class QuestionSuggestionHttpClient(HttpClient, IQuestionSuggestionFlow):
                             )
                             continue
 
-                        if matches.group(1) != "suggested_questions":
+                        if matches.group(1) != "suggestion":
                             print(
                                 f"Received event of type {matches.group(1)}, expected 'suggested_questions'. Skipping chunk."
                             )
                             continue
 
-                        payload = json_loads(chunk)
+                        payload = json_loads(matches.group(2))
                         questions = [
                             SuggestedQuestion.model_validate(item) for item in payload
                         ]
