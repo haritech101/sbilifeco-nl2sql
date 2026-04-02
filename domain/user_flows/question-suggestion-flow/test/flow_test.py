@@ -74,6 +74,9 @@ class Test(IsolatedAsyncioTestCase):
             self.faker.sentence() for _ in range(request.num_suggestions_per_batch)
         ]
 
+        async def __stream_reply():
+            yield f'```json\n{{"questions": {dumps(suggested_questions)}}}\n```'
+
         fn_get_db = patch.object(
             self.metadata_storage,
             "get_db",
@@ -81,12 +84,8 @@ class Test(IsolatedAsyncioTestCase):
         ).start()
         fn_llm_reply = patch.object(
             self.llm,
-            "generate_reply",
-            AsyncMock(
-                return_value=Response.ok(
-                    f'```json\n{{"questions": {dumps(suggested_questions)}}}\n```'
-                )
-            ),
+            "generate_streamed_reply",
+            AsyncMock(side_effect=[Response.ok(__stream_reply()) for _ in range(10)]),
         ).start()
 
         # Act
@@ -112,7 +111,8 @@ class Test(IsolatedAsyncioTestCase):
 
         # Was LLM called to generate question suggestions based on the DB metadata?
         fn_llm_reply.assert_called_once()
-        context = fn_llm_reply.call_args.args[0]
+        llm_request = fn_llm_reply.call_args.args[0]
+        context = llm_request.context
         self.assertIn(db_metadata.name, context)
 
         assert db_metadata.tables is not None
