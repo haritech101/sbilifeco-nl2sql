@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-boundary-question-suggestion-flow"
-version = "0.1.0"
+version = "0.2.0"
 description = "Contract class to build a flow to suggest questions possible for a given database schema"
 dependencies = [
 	"sbilifeco-models-base>=0.1.4"
