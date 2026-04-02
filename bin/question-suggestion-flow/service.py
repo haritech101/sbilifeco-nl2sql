@@ -69,7 +69,8 @@ class QuestionSuggestionMicroservice:
         while True:
             await sleep(3600)
 
-    async def stop(self): ...
+    async def stop(self):
+        await self.http_server.stop()
 
 
 if __name__ == "__main__":
