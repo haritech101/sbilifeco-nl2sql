@@ -7,11 +7,11 @@ where = ["src"]
 
 [project]
 name = "sbilifeco-flow-question-suggestion"
-version = "0.1.1"
+version = "0.2.0"
 description = "Flow for suggesting questions given a database ID. Implements IQuestionSuggestionFlow contract"
 dependencies = [
-    "sbilifeco-boundaries-llm>=0.2.0",
+    "sbilifeco-boundary-llm>=0.3.0",
     "sbilifeco-boundary-metadata-storage>=0.1.6",
-    "sbilifeco-boundary-question-suggestion-flow>=0.1.0",
+    "sbilifeco-boundary-question-suggestion-flow>=0.2.0",
     "pyyaml>=6.0.2",
 ]

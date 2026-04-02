@@ -6,9 +6,10 @@ from json import loads as json_loads
 from re import DOTALL, compile
 from traceback import format_exc
 from typing import Any, AsyncIterator, Sequence
+from random import randint
 
 # Import other required contracts/modules here
-from sbilifeco.boundaries.llm import ILLM
+from sbilifeco.boundaries.llm import ILLM, LLMRequest
 from sbilifeco.boundaries.metadata_storage import IMetadataStorage
 from sbilifeco.boundaries.question_suggestion_flow import (
     IQuestionSuggestionFlow,
@@ -122,6 +123,7 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
             filled_context = context_template.format(
                 db_metadata=metadata_as_context,
                 num_suggestions=req.num_suggestions_per_batch,
+                random_seed=randint(0, 10000),
             )
             print(f"{filled_context}", flush=True)
 
@@ -134,21 +136,34 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
                     print(
                         f"Sending {len(filled_context)} characters to LLM", flush=True
                     )
-                    llm_response = await self.llm.generate_reply(filled_context)
+                    llm_request = LLMRequest(
+                        context=filled_context, randomness=req.randomness
+                    )
+                    llm_response = await self.llm.generate_streamed_reply(llm_request)
 
                     if not llm_response.is_success:
                         print(
                             f"Failure fetching reply from LLM: {llm_response.message}"
                         )
+                        yield []
                         continue
 
                     elif llm_response.payload is None:
                         print("LLM response is inexplicably empty", flush=True)
+                        yield []
                         continue
 
-                    llm_reply = llm_response.payload
+                    llm_stream = llm_response.payload
 
-                    print(f"Received {len(llm_reply)} characters from LLM", flush=True)
+                    print(
+                        "Received stream from LLM, reading into a single string",
+                        flush=True,
+                    )
+
+                    llm_reply = ""
+                    async for chunk in llm_stream:
+                        llm_reply += chunk
+
                     try:
                         print(
                             "Extracting the questions from the LLM response", flush=True
@@ -159,6 +174,7 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
                                 "LLM response does not contain valid JSON in expected format",
                                 flush=True,
                             )
+                            yield []
                             continue
 
                         json_content = match.group(1)
