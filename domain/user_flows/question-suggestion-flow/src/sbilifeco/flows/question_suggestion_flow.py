@@ -6,6 +6,7 @@ from json import loads as json_loads
 from re import DOTALL, compile
 from traceback import format_exc
 from typing import Any, AsyncIterator, Sequence
+from random import randint
 
 # Import other required contracts/modules here
 from sbilifeco.boundaries.llm import ILLM
@@ -122,6 +123,7 @@ class QuestionSuggestionFlow(IQuestionSuggestionFlow):
             filled_context = context_template.format(
                 db_metadata=metadata_as_context,
                 num_suggestions=req.num_suggestions_per_batch,
+                random_seed=randint(0, 10000),
             )
             print(f"{filled_context}", flush=True)
 
